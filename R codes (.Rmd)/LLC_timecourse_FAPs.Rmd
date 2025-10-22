@@ -280,32 +280,6 @@ DimPlot(LLC_FAPs, reduction = "umap", group.by = "seurat_clusters", cells.highli
 ```
 
 
-## Collagen gene expression scoring by condition
-
-```{r}
-Idents(LLC_FAPs) <- "orig.ident"
-
-### Find Collagen genes in data set
-grep("^Col", rownames(LLC_FAPs), value = TRUE)
-
-collagen_genes <- c("Col9a1", "Col19a1", "Col3a1", "Col5a2", "Col4a4", "Col4a3", "Col6a3", "Col5a1", "Col9a3", "Col20a1", "Col11a1", "Col25a1", "Col24a1", "Col15a1", "Col27a1", "Col9a2", "Col8a2", "Col16a1", "Col26a1", "Col1a2", "Col28a1", "Col4a1", "Col4a2", "Col5a3", "Col12a1", "Col6a6", "Col6a5", "Col6a4", "Col7a1", "Col10a1", "Col13a1", "Col6a2", "Col6a1", "Col18a1", "Col23a1", "Col1a1", "Col4a3bp", "Col14a1", "Col22a1", "Col2a1", "Col8a1", "Col11a2", "Col17a1", "Col4a6", "Col4a5")
-
-### Score cells
-collagen_score <- AddModuleScore_UCell(LLC_FAPs, features = list(collagen_genes), name = "collagen_score")
-
-means_collagen_score <- collagen_score@meta.data %>%
-  group_by(orig.ident) %>%
-  summarise(average_collagen_score = mean(signature_1collagen_score, na.rm = TRUE))
-
-print(means_collagen_score)
-
-VlnPlot(collagen_score, features = "signature_1collagen_score", group.by = "orig.ident", pt.size = 0) +
-  theme(legend.position = "none", axis.text.x = element_text(angle = 45)) +
-  labs(x = NULL, y = "Collagen Score", title = NULL) +
-  geom_hline(yintercept = 0, linetype = "solid", color = "black")
-```
-
-
 
 # DEGs
 
@@ -415,53 +389,4 @@ ggplot(LLC_FAPs_pseudotime_data, aes(monocle3_pseudotime, seurat_clusters, fill 
   geom_boxplot(show.legend = FALSE) +
   labs(x = "Pseudotime", y = NULL) +
   theme_classic()
-```
-
-
-
-# Branch Analyses
-
-## Stem branch
-
-```{r, include=FALSE}
-choose_graph_segments(LLC_FAPs_cds)
-```
-
-```{r, include=FALSE}
-FAPs_stem_branch <- choose_cells(LLC_FAPs_cds)
-```
-
-```{r, include=FALSE}
-FAPs_stem_branch_deg <- graph_test(FAPs_stem_branch, neighbor_graph = "principal_graph", cores = 1)
-FAPs_stem_branch_deg <- FAPs_stem_branch_deg %>%
-  arrange(q_value) %>%
-  filter(status == "OK" & q_value <0.05) %>%
-  na.omit(FAPs_stem_branch_deg)
-```
-
-```{r, include=FALSE}
-write.csv(FAPs_stem_branch_deg, file = "DEGs_FAPs_stem_branch.csv", row.names = TRUE)
-```
-
-
-## Pro-remodeling branch
-
-```{r, include=FALSE}
-choose_graph_segments(LLC_FAPs_cds)
-```
-
-```{r, include=FALSE}
-FAPs_remodel_branch <- choose_cells(LLC_FAPs_cds)
-```
-
-```{r, include=FALSE}
-FAPs_remodel_branch_deg <- graph_test(FAPs_remodel_branch, neighbor_graph = "principal_graph", cores = 1)
-FAPs_remodel_branch_deg <- FAPs_remodel_branch_deg %>%
-  arrange(q_value) %>%
-  filter(status == "OK" & q_value <0.05) %>%
-  na.omit(FAPs_remodel_branch_deg)
-```
-
-```{r, include=FALSE}
-write.csv(FAPs_remodel_branch_deg, file = "DEGs_FAPs_Pro-remodeling_branch.csv", row.names = TRUE)
 ```
