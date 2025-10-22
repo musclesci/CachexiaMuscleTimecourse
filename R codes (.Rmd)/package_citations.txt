@@ -1,0 +1,1551 @@
+
+=====  AnnotationDbi  =====
+To cite package ‘AnnotationDbi’ in
+publications use:
+
+  Pagès H, Carlson M, Falcon S, Li N
+  (2024). _AnnotationDbi:
+  Manipulation of SQLite-based
+  annotations in Bioconductor_.
+  doi:10.18129/B9.bioc.AnnotationDbi
+  <https://doi.org/10.18129/B9.bioc.AnnotationDbi>,
+  R package version 1.66.0,
+  <https://bioconductor.org/packages/AnnotationDbi>.
+
+A BibTeX entry for LaTeX users is
+
+  @Manual{,
+    title = {AnnotationDbi: Manipulation of SQLite-based annotations in Bioconductor},
+    author = {Hervé Pagès and Marc Carlson and Seth Falcon and Nianhua Li},
+    year = {2024},
+    note = {R package version 1.66.0},
+    url = {https://bioconductor.org/packages/AnnotationDbi},
+    doi = {10.18129/B9.bioc.AnnotationDbi},
+  }
+
+ATTENTION: This citation information
+has been auto-generated from the
+package DESCRIPTION file and may
+need manual editing, see
+‘help("citation")’.
+
+=====  Biobase  =====
+To cite package ‘Biobase’ in
+publications use:
+
+  Orchestrating high-throughput
+  genomic analysis with
+  Bioconductor. W. Huber, V.J.
+  Carey, R. Gentleman, ..., M.
+  Morgan Nature Methods, 2015:12,
+  115.
+
+A BibTeX entry for LaTeX users is
+
+  @Article{,
+    author = {W. Huber and V. J. Carey and R. Gentleman and S. Anders and M. Carlson and B. S. Carvalho and H. C. Bravo and S. Davis and L. Gatto and T. Girke and R. Gottardo and F. Hahne and K. D. Hansen and R. A. Irizarry and M. Lawrence and M. I. Love and J. MacDonald and V. Obenchain and A. K. {Ole's} and H. {Pag`es} and A. Reyes and P. Shannon and G. K. Smyth and D. Tenenbaum and L. Waldron and M. Morgan},
+    title = {{O}rchestrating high-throughput genomic analysis with {B}ioconductor},
+    journal = {Nature Methods},
+    year = {2015},
+    volume = {12},
+    number = {2},
+    pages = {115--121},
+    url = {http://www.nature.com/nmeth/journal/v12/n2/full/nmeth.3252.html},
+  }
+
+=====  BiocGenerics  =====
+To cite package ‘BiocGenerics’ in
+publications use:
+
+  Orchestrating high-throughput
+  genomic analysis with
+  Bioconductor. W. Huber, V.J.
+  Carey, R. Gentleman, ..., M.
+  Morgan Nature Methods, 2015:12,
+  115.
+
+A BibTeX entry for LaTeX users is
+
+  @Article{,
+    author = {{Huber} and {W.} and {Carey} and V. J. and {Gentleman} and {R.} and {Anders} and {S.} and {Carlson} and {M.} and {Carvalho} and B. S. and {Bravo} and H. C. and {Davis} and {S.} and {Gatto} and {L.} and {Girke} and {T.} and {Gottardo} and {R.} and {Hahne} and {F.} and {Hansen} and K. D. and {Irizarry} and R. A. and {Lawrence} and {M.} and {Love} and M. I. and {MacDonald} and {J.} and {Obenchain} and {V.} and {{Ole's}} and A. K. and {{Pag`es}} and {H.} and {Reyes} and {A.} and {Shannon} and {P.} and {Smyth} and G. K. and {Tenenbaum} and {D.} and {Waldron} and {L.} and {Morgan} and {M.}},
+    title = {{O}rchestrating high-throughput genomic analysis with {B}ioconductor},
+    journal = {Nature Methods},
+    year = {2015},
+    volume = {12},
+    number = {2},
+    pages = {115--121},
+    url = {http://www.nature.com/nmeth/journal/v12/n2/full/nmeth.3252.html},
+  }
+
+=====  CellChat  =====
+To cite package ‘CellChat’ in
+publications use:
+
+  Jin S (2024). _CellChat: Inference
+  and analysis of cell-cell
+  communication from single-cell and
+  spatially resolved transcriptomics
+  data_. R package version 2.1.2,
+  commit
+  534b91d41085f547077d9c5ecf378ed3128cf095,
+  <https://github.com/jinworks/CellChat>.
+
+A BibTeX entry for LaTeX users is
+
+  @Manual{,
+    title = {CellChat: Inference and analysis of cell-cell communication from
+single-cell and spatially resolved transcriptomics data},
+    author = {Suoqin Jin},
+    year = {2024},
+    note = {R package version 2.1.2, commit 534b91d41085f547077d9c5ecf378ed3128cf095},
+    url = {https://github.com/jinworks/CellChat},
+  }
+
+ATTENTION: This citation information
+has been auto-generated from the
+package DESCRIPTION file and may
+need manual editing, see
+‘help("citation")’.
+
+=====  ClusterProfiler  =====
+
+=====  ComplexHeatmap  =====
+The methods within the code package
+can be cited as:
+
+  Gu, Z. (2016) Complex heatmaps
+  reveal patterns and correlations
+  in multidimensional genomic data.
+  Bioinformatics.
+
+  Gu, Z. (2022) Complex Heatmap
+  Visualization. iMeta.
+
+This free open-source software
+implements academic research by the
+authors and co-workers. If you use
+it, please support the project by
+citing the appropriate journal
+articles.
+
+To see these entries in BibTeX
+format, use 'print(<citation>,
+bibtex=TRUE)', 'toBibtex(.)', or set
+'options(citation.bibtex.max=999)'.
+
+=====  DDRTree  =====
+To cite package ‘DDRTree’ in
+publications use:
+
+  Qiu X, Trapnell C, Mao Q, Wang L
+  (2017). _DDRTree: Learning
+  Principal Graphs with DDRTree_. R
+  package version 0.1.5,
+  <https://CRAN.R-project.org/package=DDRTree>.
+
+A BibTeX entry for LaTeX users is
+
+  @Manual{,
+    title = {DDRTree: Learning Principal Graphs with DDRTree},
+    author = {Xiaojie Qiu and Cole Trapnell and Qi Mao and Li Wang},
+    year = {2017},
+    note = {R package version 0.1.5},
+    url = {https://CRAN.R-project.org/package=DDRTree},
+  }
+
+ATTENTION: This citation information
+has been auto-generated from the
+package DESCRIPTION file and may
+need manual editing, see
+‘help("citation")’.
+
+=====  EnhancedVolcano  =====
+To cite package ‘EnhancedVolcano’ in
+publications use:
+
+  Blighe K, Rana S, Lewis M (2024).
+  _EnhancedVolcano:
+  Publication-ready volcano plots
+  with enhanced colouring and
+  labeling_.
+  doi:10.18129/B9.bioc.EnhancedVolcano
+  <https://doi.org/10.18129/B9.bioc.EnhancedVolcano>,
+  R package version 1.22.0,
+  <https://bioconductor.org/packages/EnhancedVolcano>.
+
+A BibTeX entry for LaTeX users is
+
+  @Manual{,
+    title = {EnhancedVolcano: Publication-ready volcano plots with enhanced colouring and
+labeling},
+    author = {Kevin Blighe and Sharmila Rana and Myles Lewis},
+    year = {2024},
+    note = {R package version 1.22.0},
+    url = {https://bioconductor.org/packages/EnhancedVolcano},
+    doi = {10.18129/B9.bioc.EnhancedVolcano},
+  }
+
+=====  GenomeInfoDb  =====
+To cite package ‘GenomeInfoDb’ in
+publications use:
+
+  Arora S, Morgan M, Carlson M,
+  Pagès H (2024). _GenomeInfoDb:
+  Utilities for manipulating
+  chromosome names, including
+  modifying them to follow a
+  particular naming style_.
+  doi:10.18129/B9.bioc.GenomeInfoDb
+  <https://doi.org/10.18129/B9.bioc.GenomeInfoDb>,
+  R package version 1.40.1,
+  <https://bioconductor.org/packages/GenomeInfoDb>.
+
+A BibTeX entry for LaTeX users is
+
+  @Manual{,
+    title = {GenomeInfoDb: Utilities for manipulating chromosome names, including modifying
+them to follow a particular naming style},
+    author = {Sonali Arora and Martin Morgan and Marc Carlson and Hervé Pagès},
+    year = {2024},
+    note = {R package version 1.40.1},
+    url = {https://bioconductor.org/packages/GenomeInfoDb},
+    doi = {10.18129/B9.bioc.GenomeInfoDb},
+  }
+
+=====  GenomicRanges  =====
+To cite package ‘GenomicRanges’ in
+publications use:
+
+  Lawrence M, Huber W, Pag\`es H,
+  Aboyoun P, Carlson M, et al.
+  (2013) Software for Computing and
+  Annotating Genomic Ranges. PLoS
+  Comput Biol 9(8): e1003118.
+  doi:10.1371/journal.pcbi.1003118
+
+A BibTeX entry for LaTeX users is
+
+  @Article{,
+    title = {Software for Computing and Annotating Genomic Ranges},
+    author = {Michael Lawrence and Wolfgang Huber and Herv\'e Pag\`es and Patrick Aboyoun and Marc Carlson and Robert Gentleman and Martin Morgan and Vincent Carey},
+    year = {2013},
+    journal = {{PLoS} Computational Biology},
+    volume = {9},
+    issue = {8},
+    doi = {10.1371/journal.pcbi.1003118},
+    url = {http://www.ploscompbiol.org/article/info%3Adoi%2F10.1371%2Fjournal.pcbi.1003118},
+  }
+
+=====  IRanges  =====
+To cite package ‘IRanges’ in
+publications use:
+
+  Lawrence M, Huber W, Pag\`es H,
+  Aboyoun P, Carlson M, et al.
+  (2013) Software for Computing and
+  Annotating Genomic Ranges. PLoS
+  Comput Biol 9(8): e1003118.
+  doi:10.1371/journal.pcbi.1003118
+
+A BibTeX entry for LaTeX users is
+
+  @Article{,
+    title = {Software for Computing and Annotating Genomic Ranges},
+    author = {Michael Lawrence and Wolfgang Huber and Herv\'e Pag\`es and Patrick Aboyoun and Marc Carlson and Robert Gentleman and Martin Morgan and Vincent Carey},
+    year = {2013},
+    journal = {{PLoS} Computational Biology},
+    volume = {9},
+    issue = {8},
+    doi = {10.1371/journal.pcbi.1003118},
+    url = {http://www.ploscompbiol.org/article/info%3Adoi%2F10.1371%2Fjournal.pcbi.1003118},
+  }
+
+=====  Matrix  =====
+To cite package ‘Matrix’ in
+publications use:
+
+  Bates D, Maechler M, Jagan M
+  (2024). _Matrix: Sparse and Dense
+  Matrix Classes and Methods_. R
+  package version 1.7-0,
+  <https://CRAN.R-project.org/package=Matrix>.
+
+A BibTeX entry for LaTeX users is
+
+  @Manual{,
+    title = {Matrix: Sparse and Dense Matrix Classes and Methods},
+    author = {Douglas Bates and Martin Maechler and Mikael Jagan},
+    year = {2024},
+    note = {R package version 1.7-0},
+    url = {https://CRAN.R-project.org/package=Matrix},
+  }
+
+=====  MatrixGenerics  =====
+To cite package ‘MatrixGenerics’ in
+publications use:
+
+  Ahlmann-Eltze C, Hickey P, Pagès H
+  (2024). _MatrixGenerics: S4
+  Generic Summary Statistic
+  Functions that Operate on
+  Matrix-Like Objects_.
+  doi:10.18129/B9.bioc.MatrixGenerics
+  <https://doi.org/10.18129/B9.bioc.MatrixGenerics>,
+  R package version 1.16.0,
+  <https://bioconductor.org/packages/MatrixGenerics>.
+
+A BibTeX entry for LaTeX users is
+
+  @Manual{,
+    title = {MatrixGenerics: S4 Generic Summary Statistic Functions that Operate on
+Matrix-Like Objects},
+    author = {Constantin Ahlmann-Eltze and Peter Hickey and Hervé Pagès},
+    year = {2024},
+    note = {R package version 1.16.0},
+    url = {https://bioconductor.org/packages/MatrixGenerics},
+    doi = {10.18129/B9.bioc.MatrixGenerics},
+  }
+
+=====  NMF  =====
+To cite the package 'NMF' in
+publications use:
+
+  Renaud Gaujoux, Cathal Seoighe
+  (2010). A flexible R package for
+  nonnegative matrix factorization.
+  BMC Bioinformatics 2010, 11:367.
+  [https://bmcbioinformatics.biomedcentral.com/articles/10.1186/1471-2105-11-367]
+
+Vignette(s):
+
+  Renaud Gaujoux [aut], Cathal
+  Seoighe [aut], Nicolas Sauwen
+  [cre] (2024). Using the package
+  NMF. CRAN. R package version 0.28.
+  [https://cran.r-project.org/package=NMF]
+
+Technical documentation:
+
+  Renaud Gaujoux [aut], Cathal
+  Seoighe [aut], Nicolas Sauwen
+  [cre] (2024). Algorithms and
+  Framework for Nonnegative Matrix
+  Factorization (NMF) CRAN. R
+  package version 0.28.
+  [https://cran.r-project.org/package=NMF]
+
+To see these entries in BibTeX
+format, use 'print(<citation>,
+bibtex=TRUE)', 'toBibtex(.)', or set
+'options(citation.bibtex.max=999)'.
+
+=====  RColorBrewer  =====
+To cite package ‘RColorBrewer’ in
+publications use:
+
+  Neuwirth E (2022). _RColorBrewer:
+  ColorBrewer Palettes_. R package
+  version 1.1-3,
+  <https://CRAN.R-project.org/package=RColorBrewer>.
+
+A BibTeX entry for LaTeX users is
+
+  @Manual{,
+    title = {RColorBrewer: ColorBrewer Palettes},
+    author = {Erich Neuwirth},
+    year = {2022},
+    note = {R package version 1.1-3},
+    url = {https://CRAN.R-project.org/package=RColorBrewer},
+  }
+
+=====  Rcpp  =====
+To cite package ‘Rcpp’ in
+publications use:
+
+  Eddelbuettel D, Francois R,
+  Allaire J, Ushey K, Kou Q, Russell
+  N, Ucar I, Bates D, Chambers J
+  (2024). _Rcpp: Seamless R and C++
+  Integration_. R package version
+  1.0.13,
+  <https://CRAN.R-project.org/package=Rcpp>.
+
+  Eddelbuettel D, François R (2011).
+  “Rcpp: Seamless R and C++
+  Integration.” _Journal of
+  Statistical Software_, *40*(8),
+  1-18. doi:10.18637/jss.v040.i08
+  <https://doi.org/10.18637/jss.v040.i08>.
+
+  Eddelbuettel D (2013). _Seamless R
+  and C++ Integration with Rcpp_.
+  Springer, New York.
+  doi:10.1007/978-1-4614-6868-4
+  <https://doi.org/10.1007/978-1-4614-6868-4>,
+  ISBN 978-1-4614-6867-7.
+
+  Eddelbuettel D, Balamuta J (2018).
+  “Extending R with C++: A Brief
+  Introduction to Rcpp.” _The
+  American Statistician_, *72*(1),
+  28-36.
+  doi:10.1080/00031305.2017.1375990
+  <https://doi.org/10.1080/00031305.2017.1375990>.
+
+To see these entries in BibTeX
+format, use 'print(<citation>,
+bibtex=TRUE)', 'toBibtex(.)', or set
+'options(citation.bibtex.max=999)'.
+
+=====  S4Vectors  =====
+To cite package ‘S4Vectors’ in
+publications use:
+
+  Pagès H, Lawrence M, Aboyoun P
+  (2024). _S4Vectors: Foundation of
+  vector-like and list-like
+  containers in Bioconductor_.
+  doi:10.18129/B9.bioc.S4Vectors
+  <https://doi.org/10.18129/B9.bioc.S4Vectors>,
+  R package version 0.42.1,
+  <https://bioconductor.org/packages/S4Vectors>.
+
+A BibTeX entry for LaTeX users is
+
+  @Manual{,
+    title = {S4Vectors: Foundation of vector-like and list-like containers in
+Bioconductor},
+    author = {Hervé Pagès and Michael Lawrence and Patrick Aboyoun},
+    year = {2024},
+    note = {R package version 0.42.1},
+    url = {https://bioconductor.org/packages/S4Vectors},
+    doi = {10.18129/B9.bioc.S4Vectors},
+  }
+
+=====  Seurat  =====
+To cite Seurat in publications,
+please use:
+
+  Hao et al. Dictionary learning for
+  integrative, multimodal and
+  scalable single-cell analysis.
+  Nature Biotechnology (2023)
+  [Seurat V5]
+
+  Hao and Hao et al. Integrated
+  analysis of multimodal single-cell
+  data. Cell (2021) [Seurat V4]
+
+  Stuart and Butler et al.
+  Comprehensive Integration of
+  Single-Cell Data. Cell (2019)
+  [Seurat V3]
+
+  Butler et al. Integrating
+  single-cell transcriptomic data
+  across different conditions,
+  technologies, and species. Nat
+  Biotechnol (2018) [Seurat V2]
+
+  Satija and Farrell et al. Spatial
+  reconstruction of single-cell gene
+  expression data. Nat Biotechnol
+  (2015) [Seurat V1]
+
+To see these entries in BibTeX
+format, use 'print(<citation>,
+bibtex=TRUE)', 'toBibtex(.)', or set
+'options(citation.bibtex.max=999)'.
+
+=====  SeuratObject  =====
+To cite package ‘SeuratObject’ in
+publications use:
+
+  Hoffman P, Satija R, Collins D,
+  Hao Y, Hartman A, Molla G, Butler
+  A, Stuart T (2024). _SeuratObject:
+  Data Structures for Single Cell
+  Data_. R package version 5.0.2,
+  <https://CRAN.R-project.org/package=SeuratObject>.
+
+A BibTeX entry for LaTeX users is
+
+  @Manual{,
+    title = {SeuratObject: Data Structures for Single Cell Data},
+    author = {Paul Hoffman and Rahul Satija and David Collins and Yuhan Hao and Austin Hartman and Gesmira Molla and Andrew Butler and Tim Stuart},
+    year = {2024},
+    note = {R package version 5.0.2},
+    url = {https://CRAN.R-project.org/package=SeuratObject},
+  }
+
+=====  SeuratWrappers  =====
+To cite package ‘SeuratWrappers’ in
+publications use:
+
+  Satija R, Butler A, Hoffman P,
+  Stuart T (2022). _SeuratWrappers:
+  Community-Provided Methods and
+  Extensions for the Seurat Object_.
+  R package version 0.3.1, commit
+  d28512f804d5fe05e6d68900ca9221020d52cf1d,
+  <https://github.com/satijalab/seurat-wrappers>.
+
+A BibTeX entry for LaTeX users is
+
+  @Manual{,
+    title = {SeuratWrappers: Community-Provided Methods and Extensions for the Seurat Object},
+    author = {Rahul Satija and Andrew Butler and Paul Hoffman and Tim Stuart},
+    year = {2022},
+    note = {R package version 0.3.1, commit d28512f804d5fe05e6d68900ca9221020d52cf1d},
+    url = {https://github.com/satijalab/seurat-wrappers},
+  }
+
+=====  SingleCellExperiment  =====
+To cite package
+‘SingleCellExperiment’ in
+publications use:
+
+  Amezquita R, Lun A, Becht E, Carey
+  V, Carpp L, Geistlinger L, Marini
+  F, Rue-Albrecht K, Risso D,
+  Soneson C, Waldron L, Pages H,
+  Smith M, Huber W, Morgan M,
+  Gottardo R, Hicks S (2020).
+  “Orchestrating single-cell
+  analysis with Bioconductor.”
+  _Nature Methods_, *17*, 137-145.
+  <https://www.nature.com/articles/s41592-019-0654-x>.
+
+A BibTeX entry for LaTeX users is
+
+  @Article{,
+    title = {Orchestrating single-cell analysis with Bioconductor},
+    author = {Robert Amezquita and Aaron Lun and Etienne Becht and Vince Carey and Lindsay Carpp and Ludwig Geistlinger and Federico Marini and Kevin Rue-Albrecht and Davide Risso and Charlotte Soneson and Levi Waldron and Herve Pages and Mike Smith and Wolfgang Huber and Martin Morgan and Raphael Gottardo and Stephanie Hicks},
+    year = {2020},
+    volume = {17},
+    pages = {137--145},
+    journal = {Nature Methods},
+    url = {https://www.nature.com/articles/s41592-019-0654-x},
+  }
+
+=====  SummarizedExperiment  =====
+To cite package
+‘SummarizedExperiment’ in
+publications use:
+
+  Morgan M, Obenchain V, Hester J,
+  Pagès H (2024).
+  _SummarizedExperiment:
+  SummarizedExperiment container_.
+  doi:10.18129/B9.bioc.SummarizedExperiment
+  <https://doi.org/10.18129/B9.bioc.SummarizedExperiment>,
+  R package version 1.34.0,
+  <https://bioconductor.org/packages/SummarizedExperiment>.
+
+A BibTeX entry for LaTeX users is
+
+  @Manual{,
+    title = {SummarizedExperiment: SummarizedExperiment container},
+    author = {Martin Morgan and Valerie Obenchain and Jim Hester and Hervé Pagès},
+    year = {2024},
+    note = {R package version 1.34.0},
+    url = {https://bioconductor.org/packages/SummarizedExperiment},
+    doi = {10.18129/B9.bioc.SummarizedExperiment},
+  }
+
+=====  UCell  =====
+To cite package ‘UCell’ in
+publications use:
+
+  Andreatta M, Carmona SJ (2021).
+  “UCell: Robust and scalable
+  single-cell gene signature
+  scoring.” _Comput Struct
+  Biotechnol J._, *19*, 3796-3798.
+  doi:10.1016/j.csbj.2021.06.043
+  <https://doi.org/10.1016/j.csbj.2021.06.043>.
+
+A BibTeX entry for LaTeX users is
+
+  @Article{,
+    author = {Massimo Andreatta and Santiago J. Carmona},
+    title = {UCell: Robust and scalable single-cell gene signature scoring},
+    journal = {Comput Struct Biotechnol J.},
+    year = {2021},
+    volume = {19},
+    pages = {3796-3798},
+    doi = {10.1016/j.csbj.2021.06.043},
+  }
+
+=====  base  =====
+To cite R in publications use:
+
+  R Core Team (2024). _R: A Language
+  and Environment for Statistical
+  Computing_. R Foundation for
+  Statistical Computing, Vienna,
+  Austria.
+  <https://www.R-project.org/>.
+
+A BibTeX entry for LaTeX users is
+
+  @Manual{,
+    title = {R: A Language and Environment for Statistical Computing},
+    author = {{R Core Team}},
+    organization = {R Foundation for Statistical Computing},
+    address = {Vienna, Austria},
+    year = {2024},
+    url = {https://www.R-project.org/},
+  }
+
+We have invested a lot of time and
+effort in creating R, please cite it
+when using it for data analysis. See
+also ‘citation("pkgname")’ for
+citing R packages.
+
+=====  circlize  =====
+To cite package ‘circlize’ in
+publications use:
+
+  Gu, Z. (2014) circlize implements
+  and enhances circular
+  visualization in R.
+  Bioinformatics.
+
+A BibTeX entry for LaTeX users is
+
+  @Article{,
+    title = {circlize implements and enhances circular visualization in R},
+    author = {Zuguang Gu and Lei Gu and Roland Eils and Matthias Schlesner and Benedikt Brors},
+    journal = {Bioinformatics},
+    volume = {30},
+    issue = {19},
+    pages = {2811-2812},
+    year = {2014},
+  }
+
+=====  cluster  =====
+To cite the R package cluster in
+publications use:
+
+  Maechler, M., Rousseeuw, P.,
+  Struyf, A., Hubert, M., Hornik,
+  K.(2023).  cluster: Cluster
+  Analysis Basics and Extensions. R
+  package version 2.1.6.
+
+A BibTeX entry for LaTeX users is
+
+  @Manual{,
+    title = {cluster: Cluster Analysis Basics and Extensions},
+    author = {Martin Maechler and Peter Rousseeuw and Anja Struyf and Mia Hubert and Kurt Hornik},
+    year = {2023},
+    url = {https://CRAN.R-project.org/package=cluster},
+    note = {R package version 2.1.6 --- For new features, see the 'NEWS' and the 'Changelog' file in the package source)},
+  }
+
+=====  cowplot  =====
+To cite package ‘cowplot’ in
+publications use:
+
+  Wilke C (2024). _cowplot:
+  Streamlined Plot Theme and Plot
+  Annotations for 'ggplot2'_. R
+  package version 1.1.3,
+  <https://CRAN.R-project.org/package=cowplot>.
+
+A BibTeX entry for LaTeX users is
+
+  @Manual{,
+    title = {cowplot: Streamlined Plot Theme and Plot Annotations for 'ggplot2'},
+    author = {Claus O. Wilke},
+    year = {2024},
+    note = {R package version 1.1.3},
+    url = {https://CRAN.R-project.org/package=cowplot},
+  }
+
+=====  data.table  =====
+To cite package ‘data.table’ in
+publications use:
+
+  Barrett T, Dowle M, Srinivasan A,
+  Gorecki J, Chirico M, Hocking T,
+  Schwendinger B (2024).
+  _data.table: Extension of
+  `data.frame`_. R package version
+  1.16.2,
+  <https://CRAN.R-project.org/package=data.table>.
+
+A BibTeX entry for LaTeX users is
+
+  @Manual{,
+    title = {data.table: Extension of `data.frame`},
+    author = {Tyson Barrett and Matt Dowle and Arun Srinivasan and Jan Gorecki and Michael Chirico and Toby Hocking and Benjamin Schwendinger},
+    year = {2024},
+    note = {R package version 1.16.2},
+    url = {https://CRAN.R-project.org/package=data.table},
+  }
+
+=====  datasets  =====
+The ‘datasets’ package is part of R.
+To cite R in publications use:
+
+  R Core Team (2024). _R: A Language
+  and Environment for Statistical
+  Computing_. R Foundation for
+  Statistical Computing, Vienna,
+  Austria.
+  <https://www.R-project.org/>.
+
+A BibTeX entry for LaTeX users is
+
+  @Manual{,
+    title = {R: A Language and Environment for Statistical Computing},
+    author = {{R Core Team}},
+    organization = {R Foundation for Statistical Computing},
+    address = {Vienna, Austria},
+    year = {2024},
+    url = {https://www.R-project.org/},
+  }
+
+We have invested a lot of time and
+effort in creating R, please cite it
+when using it for data analysis. See
+also ‘citation("pkgname")’ for
+citing R packages.
+
+=====  dplyr  =====
+To cite package ‘dplyr’ in
+publications use:
+
+  Wickham H, François R, Henry L,
+  Müller K, Vaughan D (2023).
+  _dplyr: A Grammar of Data
+  Manipulation_. R package version
+  1.1.4,
+  <https://CRAN.R-project.org/package=dplyr>.
+
+A BibTeX entry for LaTeX users is
+
+  @Manual{,
+    title = {dplyr: A Grammar of Data Manipulation},
+    author = {Hadley Wickham and Romain François and Lionel Henry and Kirill Müller and Davis Vaughan},
+    year = {2023},
+    note = {R package version 1.1.4},
+    url = {https://CRAN.R-project.org/package=dplyr},
+  }
+
+=====  forcats  =====
+To cite package ‘forcats’ in
+publications use:
+
+  Wickham H (2023). _forcats: Tools
+  for Working with Categorical
+  Variables (Factors)_. R package
+  version 1.0.0,
+  <https://CRAN.R-project.org/package=forcats>.
+
+A BibTeX entry for LaTeX users is
+
+  @Manual{,
+    title = {forcats: Tools for Working with Categorical Variables (Factors)},
+    author = {Hadley Wickham},
+    year = {2023},
+    note = {R package version 1.0.0},
+    url = {https://CRAN.R-project.org/package=forcats},
+  }
+
+=====  ggbeeswarm  =====
+To cite package ‘ggbeeswarm’ in
+publications use:
+
+  Clarke E, Sherrill-Mix S, Dawson C
+  (2023). _ggbeeswarm: Categorical
+  Scatter (Violin Point) Plots_. R
+  package version 0.7.2,
+  <https://CRAN.R-project.org/package=ggbeeswarm>.
+
+A BibTeX entry for LaTeX users is
+
+  @Manual{,
+    title = {ggbeeswarm: Categorical Scatter (Violin Point) Plots},
+    author = {Erik Clarke and Scott Sherrill-Mix and Charlotte Dawson},
+    year = {2023},
+    note = {R package version 0.7.2},
+    url = {https://CRAN.R-project.org/package=ggbeeswarm},
+  }
+
+=====  ggplot2  =====
+To cite ggplot2 in publications,
+please use
+
+  H. Wickham. ggplot2: Elegant
+  Graphics for Data Analysis.
+  Springer-Verlag New York, 2016.
+
+A BibTeX entry for LaTeX users is
+
+  @Book{,
+    author = {Hadley Wickham},
+    title = {ggplot2: Elegant Graphics for Data Analysis},
+    publisher = {Springer-Verlag New York},
+    year = {2016},
+    isbn = {978-3-319-24277-4},
+    url = {https://ggplot2.tidyverse.org},
+  }
+
+=====  ggrepel  =====
+To cite package ‘ggrepel’ in
+publications use:
+
+  Slowikowski K (2024). _ggrepel:
+  Automatically Position
+  Non-Overlapping Text Labels with
+  'ggplot2'_. R package version
+  0.9.6,
+  <https://CRAN.R-project.org/package=ggrepel>.
+
+A BibTeX entry for LaTeX users is
+
+  @Manual{,
+    title = {ggrepel: Automatically Position Non-Overlapping Text Labels with
+'ggplot2'},
+    author = {Kamil Slowikowski},
+    year = {2024},
+    note = {R package version 0.9.6},
+    url = {https://CRAN.R-project.org/package=ggrepel},
+  }
+
+=====  grDevices  =====
+The ‘grDevices’ package is part of
+R.  To cite R in publications use:
+
+  R Core Team (2024). _R: A Language
+  and Environment for Statistical
+  Computing_. R Foundation for
+  Statistical Computing, Vienna,
+  Austria.
+  <https://www.R-project.org/>.
+
+A BibTeX entry for LaTeX users is
+
+  @Manual{,
+    title = {R: A Language and Environment for Statistical Computing},
+    author = {{R Core Team}},
+    organization = {R Foundation for Statistical Computing},
+    address = {Vienna, Austria},
+    year = {2024},
+    url = {https://www.R-project.org/},
+  }
+
+We have invested a lot of time and
+effort in creating R, please cite it
+when using it for data analysis. See
+also ‘citation("pkgname")’ for
+citing R packages.
+
+=====  graphics  =====
+The ‘graphics’ package is part of R.
+To cite R in publications use:
+
+  R Core Team (2024). _R: A Language
+  and Environment for Statistical
+  Computing_. R Foundation for
+  Statistical Computing, Vienna,
+  Austria.
+  <https://www.R-project.org/>.
+
+A BibTeX entry for LaTeX users is
+
+  @Manual{,
+    title = {R: A Language and Environment for Statistical Computing},
+    author = {{R Core Team}},
+    organization = {R Foundation for Statistical Computing},
+    address = {Vienna, Austria},
+    year = {2024},
+    url = {https://www.R-project.org/},
+  }
+
+We have invested a lot of time and
+effort in creating R, please cite it
+when using it for data analysis. See
+also ‘citation("pkgname")’ for
+citing R packages.
+
+=====  grid  =====
+The ‘grid’ package is part of R.  To
+cite R in publications use:
+
+  R Core Team (2024). _R: A Language
+  and Environment for Statistical
+  Computing_. R Foundation for
+  Statistical Computing, Vienna,
+  Austria.
+  <https://www.R-project.org/>.
+
+A BibTeX entry for LaTeX users is
+
+  @Manual{,
+    title = {R: A Language and Environment for Statistical Computing},
+    author = {{R Core Team}},
+    organization = {R Foundation for Statistical Computing},
+    address = {Vienna, Austria},
+    year = {2024},
+    url = {https://www.R-project.org/},
+  }
+
+We have invested a lot of time and
+effort in creating R, please cite it
+when using it for data analysis. See
+also ‘citation("pkgname")’ for
+citing R packages.
+
+=====  gridExtra  =====
+To cite package ‘gridExtra’ in
+publications use:
+
+  Auguie B (2017). _gridExtra:
+  Miscellaneous Functions for "Grid"
+  Graphics_. R package version 2.3,
+  <https://CRAN.R-project.org/package=gridExtra>.
+
+A BibTeX entry for LaTeX users is
+
+  @Manual{,
+    title = {gridExtra: Miscellaneous Functions for "Grid" Graphics},
+    author = {Baptiste Auguie},
+    year = {2017},
+    note = {R package version 2.3},
+    url = {https://CRAN.R-project.org/package=gridExtra},
+  }
+
+=====  harmony  =====
+To cite package ‘harmony’ in
+publications use:
+
+  Korsunsky I, Hemberg M, Patikas N,
+  Yao H, Millard N, Fan J,
+  Slowikowski K, Raychaudhuri S
+  (2024). _harmony: Fast, Sensitive,
+  and Accurate Integration of Single
+  Cell Data_. R package version
+  1.2.3,
+  <https://CRAN.R-project.org/package=harmony>.
+
+A BibTeX entry for LaTeX users is
+
+  @Manual{,
+    title = {harmony: Fast, Sensitive, and Accurate Integration of Single Cell Data},
+    author = {Ilya Korsunsky and Martin Hemberg and Nikolaos Patikas and Hongcheng Yao and Nghia Millard and Jean Fan and Kamil Slowikowski and Soumya Raychaudhuri},
+    year = {2024},
+    note = {R package version 1.2.3},
+    url = {https://CRAN.R-project.org/package=harmony},
+  }
+
+=====  hdf5r  =====
+To cite package ‘hdf5r’ in
+publications use:
+
+  Hoefling H, Annau M (2025).
+  _hdf5r: Interface to the 'HDF5'
+  Binary Data Format_. R package
+  version 1.3.12,
+  <https://CRAN.R-project.org/package=hdf5r>.
+
+A BibTeX entry for LaTeX users is
+
+  @Manual{,
+    title = {hdf5r: Interface to the 'HDF5' Binary Data Format},
+    author = {Holger Hoefling and Mario Annau},
+    year = {2025},
+    note = {R package version 1.3.12},
+    url = {https://CRAN.R-project.org/package=hdf5r},
+  }
+
+=====  igraph  =====
+To cite 'igraph' in publications
+use:
+
+  Csardi G, Nepusz T (2006). “The
+  igraph software package for
+  complex network research.”
+  _InterJournal_, *Complex Systems*,
+  1695. <https://igraph.org>.
+
+Csárdi G, Nepusz T, Traag V, Horvát
+S, Zanini F, Noom D, Müller K
+(2025). _igraph: Network Analysis
+and Visualization in R_.
+doi:10.5281/zenodo.7682609
+<https://doi.org/10.5281/zenodo.7682609>,
+R package version 2.0.3,
+<https://CRAN.R-project.org/package=igraph>.
+
+To see these entries in BibTeX
+format, use 'print(<citation>,
+bibtex=TRUE)', 'toBibtex(.)', or set
+'options(citation.bibtex.max=999)'.
+
+=====  irlba  =====
+To cite package ‘irlba’ in
+publications use:
+
+  Baglama J, Reichel L, Lewis B
+  (2022). _irlba: Fast Truncated
+  Singular Value Decomposition and
+  Principal Components Analysis for
+  Large Dense and Sparse Matrices_.
+  R package version 2.3.5.1,
+  <https://CRAN.R-project.org/package=irlba>.
+
+A BibTeX entry for LaTeX users is
+
+  @Manual{,
+    title = {irlba: Fast Truncated Singular Value Decomposition and Principal
+Components Analysis for Large Dense and Sparse Matrices},
+    author = {Jim Baglama and Lothar Reichel and B. W. Lewis},
+    year = {2022},
+    note = {R package version 2.3.5.1},
+    url = {https://CRAN.R-project.org/package=irlba},
+  }
+
+=====  lubridate  =====
+To cite lubridate in publications
+use:
+
+  Garrett Grolemund, Hadley Wickham
+  (2011). Dates and Times Made Easy
+  with lubridate. Journal of
+  Statistical Software, 40(3), 1-25.
+  URL
+  https://www.jstatsoft.org/v40/i03/.
+
+A BibTeX entry for LaTeX users is
+
+  @Article{,
+    title = {Dates and Times Made Easy with {lubridate}},
+    author = {Garrett Grolemund and Hadley Wickham},
+    journal = {Journal of Statistical Software},
+    year = {2011},
+    volume = {40},
+    number = {3},
+    pages = {1--25},
+    url = {https://www.jstatsoft.org/v40/i03/},
+  }
+
+=====  matrixStats  =====
+To cite package ‘matrixStats’ in
+publications use:
+
+  Bengtsson H (2024). _matrixStats:
+  Functions that Apply to Rows and
+  Columns of Matrices (and to
+  Vectors)_. R package version
+  1.4.1,
+  <https://CRAN.R-project.org/package=matrixStats>.
+
+A BibTeX entry for LaTeX users is
+
+  @Manual{,
+    title = {matrixStats: Functions that Apply to Rows and Columns of Matrices (and to
+Vectors)},
+    author = {Henrik Bengtsson},
+    year = {2024},
+    note = {R package version 1.4.1},
+    url = {https://CRAN.R-project.org/package=matrixStats},
+  }
+
+=====  methods  =====
+The ‘methods’ package is part of R.
+To cite R in publications use:
+
+  R Core Team (2024). _R: A Language
+  and Environment for Statistical
+  Computing_. R Foundation for
+  Statistical Computing, Vienna,
+  Austria.
+  <https://www.R-project.org/>.
+
+A BibTeX entry for LaTeX users is
+
+  @Manual{,
+    title = {R: A Language and Environment for Statistical Computing},
+    author = {{R Core Team}},
+    organization = {R Foundation for Statistical Computing},
+    address = {Vienna, Austria},
+    year = {2024},
+    url = {https://www.R-project.org/},
+  }
+
+We have invested a lot of time and
+effort in creating R, please cite it
+when using it for data analysis. See
+also ‘citation("pkgname")’ for
+citing R packages.
+
+=====  monocle3  =====
+To cite package ‘monocle3’ in
+publications use:
+
+  Cole Trapnell and Davide
+  Cacchiarelli et al (2014): The
+  dynamics and regulators of cell
+  fate decisions are revealed by
+  pseudo-temporal ordering of single
+  cells. Nature Biotechnology
+
+  Xiaojie Qiu et al (2017):
+  Single-cell mRNA quantification
+  and differential analysis with
+  Census. Nature Methods
+
+  Xiaojie Qiu et al (2017): Reverse
+  graph embedding resolves complex
+  single-cell developmental
+  trajectories. Nature Methods
+
+  Junyue Cao, Malte Spielmann et al
+  (2019): The single-cell
+  transcriptional landscape of
+  mammalian organogenesis. Nature
+
+To see these entries in BibTeX
+format, use 'print(<citation>,
+bibtex=TRUE)', 'toBibtex(.)', or set
+'options(citation.bibtex.max=999)'.
+
+=====  msigdbr  =====
+To cite package ‘msigdbr’ in
+publications use:
+
+  Dolgalev I (2025). _msigdbr:
+  MSigDB Gene Sets for Multiple
+  Organisms in a Tidy Data Format_.
+  R package version 10.0.1,
+  <https://CRAN.R-project.org/package=msigdbr>.
+
+A BibTeX entry for LaTeX users is
+
+  @Manual{,
+    title = {msigdbr: MSigDB Gene Sets for Multiple Organisms in a Tidy Data Format},
+    author = {Igor Dolgalev},
+    year = {2025},
+    note = {R package version 10.0.1},
+    url = {https://CRAN.R-project.org/package=msigdbr},
+  }
+
+=====  org.Mm.eg.db  =====
+To cite package ‘org.Mm.eg.db’ in
+publications use:
+
+  Carlson M (2024). _org.Mm.eg.db:
+  Genome wide annotation for Mouse_.
+  R package version 3.19.1.
+
+A BibTeX entry for LaTeX users is
+
+  @Manual{,
+    title = {org.Mm.eg.db: Genome wide annotation for Mouse},
+    author = {Marc Carlson},
+    year = {2024},
+    note = {R package version 3.19.1},
+  }
+
+ATTENTION: This citation information
+has been auto-generated from the
+package DESCRIPTION file and may
+need manual editing, see
+‘help("citation")’.
+
+=====  pheatmap  =====
+To cite package ‘pheatmap’ in
+publications use:
+
+  Kolde R (2019). _pheatmap: Pretty
+  Heatmaps_. R package version
+  1.0.12,
+  <https://CRAN.R-project.org/package=pheatmap>.
+
+A BibTeX entry for LaTeX users is
+
+  @Manual{,
+    title = {pheatmap: Pretty Heatmaps},
+    author = {Raivo Kolde},
+    year = {2019},
+    note = {R package version 1.0.12},
+    url = {https://CRAN.R-project.org/package=pheatmap},
+  }
+
+ATTENTION: This citation information
+has been auto-generated from the
+package DESCRIPTION file and may
+need manual editing, see
+‘help("citation")’.
+
+=====  presto  =====
+To cite package ‘presto’ in
+publications use:
+
+  Korsunsky I, Nathan A, Millard N,
+  Raychaudhuri S (2024). _presto:
+  Fast Functions for Differential
+  Expression using Wilcox and AUC_.
+  R package version 1.0.0, commit
+  31dc97fed5e2e7fc323ae4af62f72181cc51d9a3,
+  <https://github.com/immunogenomics/presto>.
+
+A BibTeX entry for LaTeX users is
+
+  @Manual{,
+    title = {presto: Fast Functions for Differential Expression using Wilcox and AUC},
+    author = {Ilya Korsunsky and Aparna Nathan and Nghia Millard and Soumya Raychaudhuri},
+    year = {2024},
+    note = {R package version 1.0.0, commit 31dc97fed5e2e7fc323ae4af62f72181cc51d9a3},
+    url = {https://github.com/immunogenomics/presto},
+  }
+
+=====  purrr  =====
+To cite package ‘purrr’ in
+publications use:
+
+  Wickham H, Henry L (2023). _purrr:
+  Functional Programming Tools_. R
+  package version 1.0.2,
+  <https://CRAN.R-project.org/package=purrr>.
+
+A BibTeX entry for LaTeX users is
+
+  @Manual{,
+    title = {purrr: Functional Programming Tools},
+    author = {Hadley Wickham and Lionel Henry},
+    year = {2023},
+    note = {R package version 1.0.2},
+    url = {https://CRAN.R-project.org/package=purrr},
+  }
+
+=====  readr  =====
+To cite package ‘readr’ in
+publications use:
+
+  Wickham H, Hester J, Bryan J
+  (2024). _readr: Read Rectangular
+  Text Data_. R package version
+  2.1.5,
+  <https://CRAN.R-project.org/package=readr>.
+
+A BibTeX entry for LaTeX users is
+
+  @Manual{,
+    title = {readr: Read Rectangular Text Data},
+    author = {Hadley Wickham and Jim Hester and Jennifer Bryan},
+    year = {2024},
+    note = {R package version 2.1.5},
+    url = {https://CRAN.R-project.org/package=readr},
+  }
+
+=====  registry  =====
+To cite package ‘registry’ in
+publications use:
+
+  Meyer D (2019). _registry:
+  Infrastructure for R Package
+  Registries_. R package version
+  0.5-1,
+  <https://CRAN.R-project.org/package=registry>.
+
+A BibTeX entry for LaTeX users is
+
+  @Manual{,
+    title = {registry: Infrastructure for R Package Registries},
+    author = {David Meyer},
+    year = {2019},
+    note = {R package version 0.5-1},
+    url = {https://CRAN.R-project.org/package=registry},
+  }
+
+ATTENTION: This citation information
+has been auto-generated from the
+package DESCRIPTION file and may
+need manual editing, see
+‘help("citation")’.
+
+=====  rngtools  =====
+To cite package ‘rngtools’ in
+publications use:
+
+  Gaujoux R (2021). _rngtools:
+  Utility Functions for Working with
+  Random Number Generators_. R
+  package version 1.5.2,
+  <https://CRAN.R-project.org/package=rngtools>.
+
+A BibTeX entry for LaTeX users is
+
+  @Manual{,
+    title = {rngtools: Utility Functions for Working with Random Number Generators},
+    author = {Renaud Gaujoux},
+    year = {2021},
+    note = {R package version 1.5.2},
+    url = {https://CRAN.R-project.org/package=rngtools},
+  }
+
+=====  scDblFinder  =====
+To cite package ‘scDblFinder’ in
+publications use:
+
+  Germain P, Lun A, Garcia Meixide
+  C, Macnair W, Robinson M (2022).
+  “Doublet identification in
+  single-cell sequencing data using
+  scDblFinder.” _f1000research_.
+  doi:10.12688/f1000research.73600.2
+  <https://doi.org/10.12688/f1000research.73600.2>.
+
+A BibTeX entry for LaTeX users is
+
+  @Article{,
+    title = {Doublet identification in single-cell sequencing data using scDblFinder},
+    author = {Pierre-Luc Germain and Aaron Lun and Carlos {Garcia Meixide} and Will Macnair and Mark D. Robinson},
+    year = {2022},
+    journal = {f1000research},
+    doi = {10.12688/f1000research.73600.2},
+  }
+
+=====  sp  =====
+To cite package sp in publications
+use:
+
+  Pebesma E, Bivand R (2005).
+  “Classes and methods for spatial
+  data in R.” _R News_, *5*(2),
+  9-13.
+  <https://CRAN.R-project.org/doc/Rnews/>.
+
+  Bivand R, Pebesma E, Gomez-Rubio V
+  (2013). _Applied spatial data
+  analysis with R, Second edition_.
+  Springer, NY.
+  <https://asdar-book.org/>.
+
+To see these entries in BibTeX
+format, use 'print(<citation>,
+bibtex=TRUE)', 'toBibtex(.)', or set
+'options(citation.bibtex.max=999)'.
+
+=====  stats  =====
+The ‘stats’ package is part of R.
+To cite R in publications use:
+
+  R Core Team (2024). _R: A Language
+  and Environment for Statistical
+  Computing_. R Foundation for
+  Statistical Computing, Vienna,
+  Austria.
+  <https://www.R-project.org/>.
+
+A BibTeX entry for LaTeX users is
+
+  @Manual{,
+    title = {R: A Language and Environment for Statistical Computing},
+    author = {{R Core Team}},
+    organization = {R Foundation for Statistical Computing},
+    address = {Vienna, Austria},
+    year = {2024},
+    url = {https://www.R-project.org/},
+  }
+
+We have invested a lot of time and
+effort in creating R, please cite it
+when using it for data analysis. See
+also ‘citation("pkgname")’ for
+citing R packages.
+
+=====  stats4  =====
+The ‘stats4’ package is part of R.
+To cite R in publications use:
+
+  R Core Team (2024). _R: A Language
+  and Environment for Statistical
+  Computing_. R Foundation for
+  Statistical Computing, Vienna,
+  Austria.
+  <https://www.R-project.org/>.
+
+A BibTeX entry for LaTeX users is
+
+  @Manual{,
+    title = {R: A Language and Environment for Statistical Computing},
+    author = {{R Core Team}},
+    organization = {R Foundation for Statistical Computing},
+    address = {Vienna, Austria},
+    year = {2024},
+    url = {https://www.R-project.org/},
+  }
+
+We have invested a lot of time and
+effort in creating R, please cite it
+when using it for data analysis. See
+also ‘citation("pkgname")’ for
+citing R packages.
+
+=====  stringr  =====
+To cite package ‘stringr’ in
+publications use:
+
+  Wickham H (2023). _stringr:
+  Simple, Consistent Wrappers for
+  Common String Operations_. R
+  package version 1.5.1,
+  <https://CRAN.R-project.org/package=stringr>.
+
+A BibTeX entry for LaTeX users is
+
+  @Manual{,
+    title = {stringr: Simple, Consistent Wrappers for Common String Operations},
+    author = {Hadley Wickham},
+    year = {2023},
+    note = {R package version 1.5.1},
+    url = {https://CRAN.R-project.org/package=stringr},
+  }
+
+=====  tibble  =====
+To cite package ‘tibble’ in
+publications use:
+
+  Müller K, Wickham H (2023).
+  _tibble: Simple Data Frames_. R
+  package version 3.2.1,
+  <https://CRAN.R-project.org/package=tibble>.
+
+A BibTeX entry for LaTeX users is
+
+  @Manual{,
+    title = {tibble: Simple Data Frames},
+    author = {Kirill Müller and Hadley Wickham},
+    year = {2023},
+    note = {R package version 3.2.1},
+    url = {https://CRAN.R-project.org/package=tibble},
+  }
+
+=====  tidyr  =====
+To cite package ‘tidyr’ in
+publications use:
+
+  Wickham H, Vaughan D, Girlich M
+  (2024). _tidyr: Tidy Messy Data_.
+  R package version 1.3.1,
+  <https://CRAN.R-project.org/package=tidyr>.
+
+A BibTeX entry for LaTeX users is
+
+  @Manual{,
+    title = {tidyr: Tidy Messy Data},
+    author = {Hadley Wickham and Davis Vaughan and Maximilian Girlich},
+    year = {2024},
+    note = {R package version 1.3.1},
+    url = {https://CRAN.R-project.org/package=tidyr},
+  }
+
+=====  tidyverse  =====
+To cite package ‘tidyverse’ in
+publications use:
+
+  Wickham H, Averick M, Bryan J,
+  Chang W, McGowan LD, François R,
+  Grolemund G, Hayes A, Henry L,
+  Hester J, Kuhn M, Pedersen TL,
+  Miller E, Bache SM, Müller K, Ooms
+  J, Robinson D, Seidel DP, Spinu V,
+  Takahashi K, Vaughan D, Wilke C,
+  Woo K, Yutani H (2019). “Welcome
+  to the tidyverse.” _Journal of
+  Open Source Software_, *4*(43),
+  1686. doi:10.21105/joss.01686
+  <https://doi.org/10.21105/joss.01686>.
+
+A BibTeX entry for LaTeX users is
+
+  @Article{,
+    title = {Welcome to the {tidyverse}},
+    author = {Hadley Wickham and Mara Averick and Jennifer Bryan and Winston Chang and Lucy D'Agostino McGowan and Romain François and Garrett Grolemund and Alex Hayes and Lionel Henry and Jim Hester and Max Kuhn and Thomas Lin Pedersen and Evan Miller and Stephan Milton Bache and Kirill Müller and Jeroen Ooms and David Robinson and Dana Paige Seidel and Vitalie Spinu and Kohske Takahashi and Davis Vaughan and Claus Wilke and Kara Woo and Hiroaki Yutani},
+    year = {2019},
+    journal = {Journal of Open Source Software},
+    volume = {4},
+    number = {43},
+    pages = {1686},
+    doi = {10.21105/joss.01686},
+  }
+
+=====  utils  =====
+The ‘utils’ package is part of R.
+To cite R in publications use:
+
+  R Core Team (2024). _R: A Language
+  and Environment for Statistical
+  Computing_. R Foundation for
+  Statistical Computing, Vienna,
+  Austria.
+  <https://www.R-project.org/>.
+
+A BibTeX entry for LaTeX users is
+
+  @Manual{,
+    title = {R: A Language and Environment for Statistical Computing},
+    author = {{R Core Team}},
+    organization = {R Foundation for Statistical Computing},
+    address = {Vienna, Austria},
+    year = {2024},
+    url = {https://www.R-project.org/},
+  }
+
+We have invested a lot of time and
+effort in creating R, please cite it
+when using it for data analysis. See
+also ‘citation("pkgname")’ for
+citing R packages.
+
+=====  viridis  =====
+To cite viridis/viridisLite in
+publications use:
+
+  Simon Garnier, Noam Ross, Robert
+  Rudis, Antônio P. Camargo, Marco
+  Sciaini, and Cédric Scherer
+  (2024). viridis(Lite) -
+  Colorblind-Friendly Color Maps for
+  R. viridis package version 0.6.5.
+
+A BibTeX entry for LaTeX users is
+
+  @Manual{,
+    title = {{viridis(Lite)} - Colorblind-Friendly Color Maps for R},
+    author = {{Garnier} and {Simon} and {Ross} and {Noam} and {Rudis} and {Robert} and {Camargo} and Antônio Pedro and {Sciaini} and {Marco} and {Scherer} and {Cédric}},
+    year = {2024},
+    note = {viridis package version 0.6.5},
+    url = {https://sjmgarnier.github.io/viridis/},
+    doi = {10.5281/zenodo.4679423},
+  }
+
+=====  viridisLite  =====
+To cite viridis/viridisLite in
+publications use:
+
+  Simon Garnier, Noam Ross, Robert
+  Rudis, Antônio P. Camargo, Marco
+  Sciaini, and Cédric Scherer
+  (2023). viridis(Lite) -
+  Colorblind-Friendly Color Maps for
+  R. viridisLite package version
+  0.4.2.
+
+A BibTeX entry for LaTeX users is
+
+  @Manual{,
+    title = {{viridis(Lite)} - Colorblind-Friendly Color Maps for R},
+    author = {{Garnier} and {Simon} and {Ross} and {Noam} and {Rudis} and {Robert} and {Camargo} and Antônio Pedro and {Sciaini} and {Marco} and {Scherer} and {Cédric}},
+    year = {2023},
+    note = {viridisLite package version 0.4.2},
+    url = {https://sjmgarnier.github.io/viridis/},
+    doi = {10.5281/zenodo.4678327},
+  }
