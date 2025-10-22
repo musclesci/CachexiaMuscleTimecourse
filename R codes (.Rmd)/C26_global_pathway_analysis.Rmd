@@ -63,7 +63,7 @@ Idents(C26_Schwann_cells) <- "orig.ident"
 ### DEGs for each cluster already generated
 
 
-## Subset DEGs for p_val_adj < 0.05 and acg_log2FC > 0.2
+## Subset DEGs for p_val_adj < 0.05 and avg_log2FC > 0.2
 
 ```{r, include=FALSE}
 # --- MuSCs ---
@@ -306,3 +306,4 @@ write.csv(DEGs_C26_Schwann_cells_upkegg, file = "DEGs_C26_Schwann_cells_upkegg.c
 
 # Schwann cells
 ### Ras
+
