@@ -598,21 +598,6 @@ cluster_colours <- c(
 ```
 
 
-
-## Heatmap, interaction strength between all cell types
-
-```{r}
-netVisual_heatmap(cellchat_Sham_all, slot.name = "net", measure = "weight", color.heatmap = "Reds")
-
-netVisual_heatmap(cellchat_2_weeks_all, slot.name = "net", measure = "weight", color.heatmap = "Reds")
-
-netVisual_heatmap(cellchat_2.5_weeks_all, slot.name = "net", measure = "weight", color.heatmap = "Reds")
-
-netVisual_heatmap(cellchat_3.5_weeks_all, slot.name = "net", measure = "weight", color.heatmap = "Reds")
-```
-
-
-
 # All cells to MuSCs
 
 ## Circle plot from all cells to MuSCs
@@ -676,16 +661,12 @@ cellchat_2_weeks_all <- identifyCommunicationPatterns(cellchat_2_weeks_all, patt
 cellchat_2.5_weeks_all <- identifyCommunicationPatterns(cellchat_2.5_weeks_all, pattern = "outgoing", k = 2)
 cellchat_3.5_weeks_all <- identifyCommunicationPatterns(cellchat_3.5_weeks_all, pattern = "outgoing", k = 2)
 
-windows(width = 20, height = 16)
 netAnalysis_dot(cellchat_Sham_all, pattern = "outgoing", pathway.show = c("LAMININ", "MIF", "SELL", "TGFb", "VCAM", "BMP", "CADM", "COLLAGEN"))
 
-windows(width = 20, height = 16)
 netAnalysis_dot(cellchat_2_weeks_all, pattern = "outgoing", pathway.show = c("LAMININ", "MIF", "SELL", "TGFb", "VCAM", "BMP", "CADM", "COLLAGEN"))
 
-windows(width = 20, height = 16)
 netAnalysis_dot(cellchat_2.5_weeks_all, pattern = "outgoing", pathway.show = c("LAMININ", "MIF", "SELL", "TGFb", "VCAM", "BMP", "CADM", "COLLAGEN"))
 
-windows(width = 20, height = 16)
 netAnalysis_dot(cellchat_3.5_weeks_all, pattern = "outgoing", pathway.show = c("LAMININ", "MIF", "SELL", "TGFb", "VCAM", "BMP", "CADM", "COLLAGEN"))
 ```
 
@@ -707,16 +688,12 @@ cellchat_2_weeks_all <- identifyCommunicationPatterns(cellchat_2_weeks_all, patt
 cellchat_2.5_weeks_all <- identifyCommunicationPatterns(cellchat_2.5_weeks_all, pattern = "outgoing", k = 2)
 cellchat_3.5_weeks_all <- identifyCommunicationPatterns(cellchat_3.5_weeks_all, pattern = "outgoing", k = 2)
 
-windows(width = 20, height = 16)
 netAnalysis_dot(cellchat_Sham_all, pattern = "outgoing", pathway.show = c("LAMININ", "VCAM", "CADM", "COLLAGEN"))
 
-windows(width = 20, height = 16)
 netAnalysis_dot(cellchat_2_weeks_all, pattern = "outgoing", pathway.show = c("LAMININ", "VCAM", "CADM", "COLLAGEN"))
 
-windows(width = 20, height = 16)
 netAnalysis_dot(cellchat_2.5_weeks_all, pattern = "outgoing", pathway.show = c("LAMININ", "VCAM","CADM", "COLLAGEN"))
 
-windows(width = 20, height = 16)
 netAnalysis_dot(cellchat_3.5_weeks_all, pattern = "outgoing", pathway.show = c("LAMININ", "VCAM", "CADM", "COLLAGEN"))
 ```
 
@@ -816,197 +793,4 @@ netVisual_chord_gene(cellchat_Sham_all, signaling = "COLLAGEN", targets.use = "M
 netVisual_chord_gene(cellchat_2_weeks_all, signaling = "COLLAGEN", targets.use = "MuSCs", color.use = cluster_colours, show.legend = FALSE)
 netVisual_chord_gene(cellchat_2.5_weeks_all, signaling = "COLLAGEN", targets.use = "MuSCs", color.use = cluster_colours, show.legend = FALSE)
 netVisual_chord_gene(cellchat_3.5_weeks_all, signaling = "COLLAGEN", targets.use = "MuSCs", color.use = cluster_colours, show.legend = FALSE)
-```
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-### NOTE - TGFb signaling contribution switches from the resident cells to the immune cells as early as 2 weeks. Let's take a closer look into how the signaling changes over the course of cachexia.
-
-
-## Chord plot of TGFb signaling
-
-```{r}
-par(mfrow = c(1, 1), xpd = TRUE)
-par(cex = 0.5)
-
-netVisual_chord_gene(cellchat_Sham_all, signaling = "TGFb")
-netVisual_chord_gene(cellchat_2_weeks_all, signaling = "TGFb")
-netVisual_chord_gene(cellchat_2.5_weeks_all, signaling = "TGFb")
-netVisual_chord_gene(cellchat_3.5_weeks_all, signaling = "TGFb")
-
-netVisual_chord_gene(cellchat_Sham_all, signaling = "TGFb", targets.use = "MuSCs")
-```
-
-
-## Heatmaps of TGFb signaling
-
-```{r}
-par(mfrow = c(1,2), xpd = TRUE)
-
-netVisual_heatmap(cellchat_Sham_all, signaling = "TGFb", title.name = "Sham TGFb signaling", color.heatmap = "Reds")
-
-netVisual_heatmap(cellchat_2_weeks_all, signaling = "TGFb", title.name = "2 weeks TGFb signaling", color.heatmap = "Reds")
-
-netVisual_heatmap(cellchat_2.5_weeks_all, signaling = "TGFb", title.name = "2.5 weeks TGFb signaling", color.heatmap = "Reds")
-
-netVisual_heatmap(cellchat_3.5_weeks_all, signaling = "TGFb", title.name = "3.5 weeks TGFb signaling", color.heatmap = "Reds")
-```
-
-### The bars on the edge of the heatmap indicate communication strength of the TGFb pathway. Notice how the MuSCs go from the 3rd most important reciever to not at all. Let's see how the interaction strength of TGFb signaling changes in each population with cachexia.
-
-## Extract interaction strengths of senders and receivers
-
-```{r}
-Sham_TGFb_index <- which(cellchat_Sham_all@netP$pathways == "TGFb")
-Sham_TGFb_weights <- cellchat_Sham_all@netP$prob[,,Sham_TGFb_index]
-
-two_weeks_TGFb_index <- which(cellchat_2_weeks_all@netP$pathways == "TGFb")
-two_weeks_TGFb_weights <- cellchat_2_weeks_all@netP$prob[,,two_weeks_TGFb_index]
-
-two.five_weeks_TGFb_index <- which(cellchat_2.5_weeks_all@netP$pathways == "TGFb")
-two.five_weeks_TGFb_weights <- cellchat_2.5_weeks_all@netP$prob[,,two.five_weeks_TGFb_index]
-
-three.five_weeks_TGFb_index <- which(cellchat_3.5_weeks_all@netP$pathways == "TGFb")
-three.five_weeks_TGFb_weights <- cellchat_3.5_weeks_all@netP$prob[,,three.five_weeks_TGFb_index]
-
-# Export
-write.csv(Sham_TGFb_weights, file = "Sham_TGFb_weights.csv", row.names = TRUE)
-write.csv(two_weeks_TGFb_weights, file = "two_weeks_TGFb_weights.csv", row.names = TRUE)
-write.csv(two.five_weeks_TGFb_weights, file = "two.five_weeks_TGFb_weights.csv", row.names = TRUE)
-write.csv(three.five_weeks_TGFb_weights, file = "three.five_weeks_TGFb_weights.csv", row.names = TRUE)
-```
-
-
-## Violin plots for TGFb receptor signaling in MuSCs
-
-```{r}
-Idents(LLC_MuSCs) <- "orig.ident"
-
-VlnPlot(LLC_MuSCs, features = "Tgfbr1", pt.size = 0) +
-  theme(legend.position = "none", axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1), plot.title = element_text(face = "italic")) +
-  labs(x = NULL, y = "Expression", title = "Tgfbr1")
-
-VlnPlot(LLC_MuSCs, features = "Tgfbr2", pt.size = 0) +
-  theme(legend.position = "none", axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1), plot.title = element_text(face = "italic")) +
-  labs(x = NULL, y = "Expression", title = "Tgfbr2")
-
-VlnPlot(LLC_MuSCs, features = "Tgfbr3", pt.size = 0) +
-  theme(legend.position = "none", axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1), plot.title = element_text(face = "italic")) +
-  labs(x = NULL, y = "Expression", title = "Tgfbr3")
-
-VlnPlot(LLC_MuSCs, features = "Acvr1", pt.size = 0) +
-    theme(legend.position = "none", axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1), plot.title = element_text(face = "italic")) +
-    labs(x = NULL, y = "Expression", title = "Acvr1")
-```
-
-
-## Violin plots of Tgfb in cell types
-
-```{r}
-Idents(LLC_combined) <- "seurat_clusters"
-
-VlnPlot(LLC_combined, features = "Tgfb1", pt.size = 0) +
-    theme(legend.position = "none", axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1), plot.title = element_text(face = "italic")) +
-    labs(x = NULL, y = "Expression", title = "Tgfb1")
-
-VlnPlot(LLC_combined, features = "Tgfb2", pt.size = 0) +
-    theme(legend.position = "none", axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1), plot.title = element_text(face = "italic")) +
-    labs(x = NULL, y = "Expression", title = "Tgfb2")
-
-VlnPlot(LLC_combined, features = "Tgfb3", pt.size = 0) +
-    theme(legend.position = "none", axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1), plot.title = element_text(face = "italic")) +
-    labs(x = NULL, y = "Expression", title = "Tgfb3")
-```
-
-
-## Violin plots of Tgfb1 in cell types by condition
-
-```{r}
-Idents(LLC_Endothelial_cells) <- "orig.ident"
-Idents(LLC_vSMCs) <- "orig.ident"
-Idents(LLC_Platelets) <- "orig.ident"
-Idents(LLC_Monocytes_macrophages) <- "orig.ident"
-Idents(LLC_B_cells) <- "orig.ident"
-Idents(LLC_T_NK_cells) <- "orig.ident"
-
-VlnPlot(LLC_Endothelial_cells, features = "Tgfb1", pt.size = 0) +
-    theme(legend.position = "none", axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1), plot.title = element_text(face = "italic")) +
-    labs(x = NULL, y = "Expression", title = "Endothelial cells Tgfb1")
-
-VlnPlot(LLC_vSMCs, features = "Tgfb1", pt.size = 0) +
-    theme(legend.position = "none", axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1), plot.title = element_text(face = "italic")) +
-    labs(x = NULL, y = "Expression", title = "vSMCs Tgfb1")
-
-VlnPlot(LLC_Platelets, features = "Tgfb1", pt.size = 0) +
-    theme(legend.position = "none", axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1), plot.title = element_text(face = "italic")) +
-    labs(x = NULL, y = "Expression", title = "Platelets Tgfb1")
-
-VlnPlot(LLC_Monocytes_macrophages, features = "Tgfb1", pt.size = 0) +
-    theme(legend.position = "none", axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1), plot.title = element_text(face = "italic")) +
-    labs(x = NULL, y = "Expression", title = "Monocytes/macrophages Tgfb1")
-
-VlnPlot(LLC_B_cells, features = "Tgfb1", pt.size = 0) +
-    theme(legend.position = "none", axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1), plot.title = element_text(face = "italic")) +
-    labs(x = NULL, y = "Expression", title = "B cells Tgfb1")
-
-VlnPlot(LLC_T_NK_cells, features = "Tgfb1", pt.size = 0) +
-    theme(legend.position = "none", axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1), plot.title = element_text(face = "italic")) +
-    labs(x = NULL, y = "Expression", title = "T/NK cells Tgfb1")
-```
-
-
-## Violin plots of Tgfb2 in cell types by condition
-
-```{r}
-Idents(LLC_vSMCs) <- "orig.ident"
-Idents(LLC_FAPs) <- "orig.ident"
-Idents(LLC_Platelets) <- "orig.ident"
-
-VlnPlot(LLC_vSMCs, features = "Tgfb2", pt.size = 0) +
-    theme(legend.position = "none", axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1), plot.title = element_text(face = "italic")) +
-    labs(x = NULL, y = "Expression", title = "vSMCs Tgfb2")
-
-VlnPlot(LLC_FAPs, features = "Tgfb2", pt.size = 0) +
-    theme(legend.position = "none", axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1), plot.title = element_text(face = "italic")) +
-    labs(x = NULL, y = "Expression", title = "FAPs Tgfb2")
-
-VlnPlot(LLC_Platelets, features = "Tgfb2", pt.size = 0) +
-    theme(legend.position = "none", axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1), plot.title = element_text(face = "italic")) +
-    labs(x = NULL, y = "Expression", title = "Platelets Tgfb2")
-```
-
-
-## Violin plots of Tgfb2 in cell types by condition
-
-```{r}
-Idents(LLC_vSMCs) <- "orig.ident"
-
-VlnPlot(LLC_vSMCs, features = "Tgfb3", pt.size = 0) +
-    theme(legend.position = "none", axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1), plot.title = element_text(face = "italic")) +
-    labs(x = NULL, y = "Expression", title = "vSMCs Tgfb3")
 ```
