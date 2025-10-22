@@ -572,68 +572,6 @@ VlnPlot(SC_senescence_module_score, features = "signature_1senescence_score", gr
 
 
 
-# Collagen scoring by subcluster
-
-```{r}
-Idents(MuSCs_combined) <- "seurat_clusters"
-
-### Find Collagen genes in data set
-grep("^Col", rownames(MuSCs_combined), value = TRUE)
-
-collagen_genes <- c("Col9a1", "Col19a1", "Col3a1", "Col5a2", "Col4a4", "Col4a3", "Col6a3", "Col5a1", "Col9a3", "Col20a1", "Col11a1", "Col25a1", "Col24a1", "Col15a1", "Col27a1", "Col9a2", "Col8a2", "Col16a1", "Col26a1", "Col1a2", "Col28a1", "Col4a1", "Col4a2", "Col5a3", "Col12a1", "Col6a6", "Col6a5", "Col6a4", "Col7a1", "Col10a1", "Col13a1", "Col6a2", "Col6a1", "Col18a1", "Col23a1", "Col1a1", "Col4a3bp", "Col14a1", "Col22a1", "Col2a1", "Col8a1", "Col11a2", "Col17a1", "Col4a6", "Col4a5")
-
-### Score cells
-collagen_score <- AddModuleScore_UCell(MuSCs_combined, features = list(collagen_genes), name = "collagen_score")
-
-means_collagen_score <- collagen_score@meta.data %>%
-  group_by(seurat_clusters) %>%
-  summarise(average_collagen_score = mean(signature_1collagen_score, na.rm = TRUE))
-
-print(means_collagen_score)
-
-VlnPlot(collagen_score, features = "signature_1collagen_score", group.by = "seurat_clusters", pt.size = 0) +
-  theme(legend.position = "none", axis.text.x = element_text(angle = 45)) +
-  labs(x = NULL, y = "Collagen Score", title = NULL) +
-  geom_hline(yintercept = 0, linetype = "solid", color = "black")
-
-VlnPlot(MuSCs_combined, features = "Sdc4", pt.size = 0) +
-  theme(legend.position = "none", axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1)) +
-  labs(x = NULL, y = "Expression", title = "Sdc4")
-```
-
-
-
-# Laminin scoring by subcluster
-
-```{r}
-Idents(MuSCs_combined) <- "seurat_clusters"
-
-### Find Collagen genes in data set
-grep("^Lam", rownames(MuSCs_combined), value = TRUE)
-
-laminin_genes <- c("Lamc2", "Lamc1", "Lamb3", "Lamc3", "Lama5", "Lamb2", "Lama2", "Lama4", "Lamb1", "Lama1", "Lama3")
-
-### Score cells
-laminin_score <- AddModuleScore_UCell(MuSCs_combined, features = list(laminin_genes), name = "laminin_score")
-
-means_laminin_score <- laminin_score@meta.data %>%
-  group_by(seurat_clusters) %>%
-  summarise(average_laminin_score = mean(signature_1laminin_score, na.rm = TRUE))
-
-print(means_laminin_score)
-
-VlnPlot(laminin_score, features = "signature_1laminin_score", group.by = "seurat_clusters", pt.size = 0) +
-  theme(legend.position = "none", axis.text.x = element_text(angle = 45)) +
-  labs(x = NULL, y = "Laminin Score", title = NULL) +
-  geom_hline(yintercept = 0, linetype = "solid", color = "black")
-
-VlnPlot(MuSCs_combined, features = "Dag1", pt.size = 0) +
-  theme(legend.position = "none", axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1)) +
-  labs(x = NULL, y = "Expression", title = "Dag1")
-```
-
-
-
 # Cell matrix adhesion scoring 
 
 ## Create gene list
@@ -667,81 +605,6 @@ VlnPlot(cell_adhesion_module_score, features = "signature_1cell_adhesion_score",
   theme(legend.position = "none", axis.text.x = element_text(angle = 45)) +
   labs(x = NULL, y = "Cell adhesion to matrix Score", title = NULL) +
   geom_hline(yintercept = 0, linetype = "solid", color = "black")
-```
-
-
-
-# Compare C26 and LLC cachectic subclusters
-
-## Find common upregulated genes in cachectic subclusters
-```{r, include = FALSE}
-C26_cachectic_genes <- read.csv("C:/Users/nwb_l/Documents/r_projects/Pryce_2025_scRNAseq/C26_MuSCs/DEGs_C26_MuSCs_subclusters.csv")
-
-C26_cachectic_genes <- C26_cachectic_genes %>%
-  filter(cluster == "Cachectic", p_val_adj < 0.05) %>%
-  select(gene)
-
-C26_cachectic_genes <- C26_cachectic_genes$gene
-
-
-LLC_cachectic_genes <- read.csv("C:/Users/nwb_l/Documents/r_projects/LLC_timecourse/MuSCs/DEGs_LLC_MuSCs_subclusters.csv")
-
-LLC_cachectic_genes <- LLC_cachectic_genes %>%
-  filter(cluster == "Cachectic", p_val_adj < 0.05) %>%
-  select(gene)
-
-LLC_cachectic_genes <- LLC_cachectic_genes$gene
-
-
-common_cachectic_genes <- intersect(C26_cachectic_genes, LLC_cachectic_genes)
-common_cachectic_genes <- common_cachectic_genes[!grepl("^NA\\.", common_cachectic_genes)]
-
-write.csv(common_cachectic_genes, file = "common_cachectic_genes.csv", row.names = FALSE)
-```
-
-
-## Venn diagram
-
-```{r}
-venn_data_cachectic <- list(
-  C26 = C26_cachectic_genes,
-  LLC = LLC_cachectic_genes
-)
-
-ggvenn(venn_data_cachectic, 
-       fill_color = c("green", "purple", "blue"),
-       stroke_color = "black",
-       text_size = 5,
-       show_percentage = FALSE) +
-  ggtitle("Common Genes Cachectic Subcluster") +
-  theme(plot.title = element_text(hjust = 0.5,
-                                  size = 16,
-                                  face = "bold"))
-```
-
-
-## Plot to show common genes between conditions
-
-```{r}
-common_cachectic_genes <- c(
-  "Mt1", "Mt2", "Sdc4", "Fth1", "Errfi1", "Lmna", "Eif1", "Pnrc1",
-  "Nfkbia", "Glis3", "Samd4", "Cebpb", "Runx1", "Arid5b", "Ifitm3", "Tgif1",
-  "Cfh", "Osmr", "Hbb-bs", "Ugcg", "Sat1", "Ctsl", "Pim1", "Sbno2",
-  "Trib1", "Tmem176b", "Slc39a14"
-)
-
-Idents(MuSCs_combined) <- "orig.ident"
-
-vln_plots <- lapply(common_cachectic_genes, function(gene) {
-  VlnPlot(MuSCs_combined, features = gene, pt.size = 0) +
-    theme(
-      legend.position = "none",
-      axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1)
-    ) +
-    labs(x = NULL, y = "Expression", title = gene)
-})
-
-do.call(grid.arrange, c(vln_plots, ncol = 4))
 ```
 
 
@@ -1189,29 +1052,6 @@ ggplot(go_ecm_down, aes(x = FoldEnrichment,
   scale_color_gradient(low = "blue", high = "red", name = "adj. p-value") +
   labs(x = "Fold Enrichment", y = NULL, 
        title = "DOWN GO Cachectic MuSCs") +
-  theme_minimal() +
-  theme(
-    axis.line = element_line(color = "black"),
-    axis.ticks = element_line(color = "black")
-  )
-```
-
-### Cancer related
-
-```{r}
-cancer_pathways <- c(5, 7, 8, 12, 31, 33)
-kegg_cancer <- DEGs_cachectic_MuSCs_upkegg[cancer_pathways, ]
-
-kegg_cancer$Description <- gsub(" - Mus musculus \\(house mouse\\)$", "", kegg_cancer$Description)
-
-ggplot(kegg_cancer, aes(x = FoldEnrichment, 
-                           y = reorder(Description, FoldEnrichment),
-                           size = Count, 
-                           color = p.adjust)) +
-  geom_point() +
-  scale_color_gradient(low = "blue", high = "red", name = "adj. p-value") +
-  labs(x = "Fold Enrichment", y = NULL, 
-       title = "KEGG Cachectic MuSCs") +
   theme_minimal() +
   theme(
     axis.line = element_line(color = "black"),
