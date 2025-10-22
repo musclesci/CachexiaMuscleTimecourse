@@ -130,7 +130,7 @@ DEGs_Schwann_cells_3.5_v_Sham <- FindMarkers(LLC_Schwann_cells, ident.1 = "3.5_w
 ```
 
 
-## Subset DEGs for p_val_adj < 0.05 and acg_log2FC > 0.2
+## Subset DEGs for p_val_adj < 0.05 and avg_log2FC > 0.2
 
 ```{r, include=FALSE}
 # --- MuSCs ---
@@ -500,7 +500,7 @@ write.csv(DEGs_Schwann_cells_3.5_v_Sham_upkegg, file = "DEGs_Schwann_cells_3.5_v
 
 
 
-# Signaling pathway	2-weeks	2.5-weeks	3.5-weeks	Total
+# Signaling pathway	2-weeks	2.5-weeks	3.5-weeks	Total counts
 IL-17	0	0	7	7
 JAK-STAT	1	2	4	7
 TNF	0	0	5	5
@@ -529,51 +529,3 @@ Oxytocin	0	1	0	1
 AcGMP-PKG	0	1	0	1
 Rap1	0	1	0	1
 cAMP	0	1	0	1
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
