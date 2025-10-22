@@ -1,0 +1,404 @@
+---
+title: "Collao_2025_processing"
+author: "Alex Brown"
+date: "2025-07-21"
+output: html_document
+---
+
+
+
+# Load packages
+
+```{r, include=FALSE}
+library(Seurat)
+library(SeuratWrappers)
+library(tidyverse)
+library(Biobase)
+library(BiocGenerics)
+library(ggplot2)
+library(cowplot)
+library(grid)
+library(gridExtra)
+library(RColorBrewer)
+library(ggbeeswarm)
+library(pheatmap)
+library(viridis)
+library(EnhancedVolcano)
+library(scDblFinder)
+library(UCell)
+```
+
+
+
+# Read in the data (from Collao et al. 2025; doi 10.1152/ajpcell.00115.2025)
+
+```{r, include=FALSE}
+con_24h_data <- Read10X("C:/Users/nwb_l/Documents/r_projects/Collao_2025_scRNAseq/data/CON_24-hours_filtered_feature_bc_matrix")
+
+ir_24h_data <- Read10X("C:/Users/nwb_l/Documents/r_projects/LLC_timecourse/data/2weeks_filtered_feature_bc_matrix")
+
+con_56d_data <- Read10X("C:/Users/nwb_l/Documents/r_projects/Collao_2025_scRNAseq/data/CON_56-days_filtered_feature_bc_matrix")
+
+ir_56d_data <- Read10X("C:/Users/nwb_l/Documents/r_projects/Collao_2025_scRNAseq/data/IR_56-days_filtered_feature_bc_matrix")
+```
+
+
+
+# Create Seurat Object
+
+```{r, include=FALSE}
+con_24h_seurat <- CreateSeuratObject(counts = con_24h_data, min.cells = 3, project = "CTL-24h")
+
+ir_24h_seurat <- CreateSeuratObject(counts = ir_24h_data, min.cells = 3, project = "IR-24h")
+
+con_56d_seurat <- CreateSeuratObject(counts = con_56d_data, min.cells = 3, project = "CTL-56d")
+
+ir_56d_seurat <- CreateSeuratObject(counts = ir_56d_data, min.cells = 3, project = "IR-56d")
+```
+
+
+
+# 1. QC
+
+## % mitochondrial reads
+
+```{r, include=FALSE}
+con_24h_seurat[["percent.mito"]] <- PercentageFeatureSet(con_24h_seurat, pattern = "^mt-")
+ir_24h_seurat[["percent.mito"]] <- PercentageFeatureSet(ir_24h_seurat, pattern = "^mt-")
+con_56d_seurat[["percent.mito"]] <- PercentageFeatureSet(con_56d_seurat, pattern = "^mt-")
+ir_56d_seurat[["percent.mito"]] <- PercentageFeatureSet(ir_56d_seurat, pattern = "^mt-")
+```
+
+
+
+# 2. Filtering
+
+```{r, include=FALSE}
+con_24h_seurat_filtered <- subset(con_24h_seurat, subset = nFeature_RNA > 200 & nFeature_RNA < 60000 & nCount_RNA > 500 & nCount_RNA < 15000 & percent.mito < 10)
+ir_24h_seurat_filtered <- subset(ir_24h_seurat, subset = nFeature_RNA > 200 & nFeature_RNA < 60000 & nCount_RNA > 500 & nCount_RNA < 15000 & percent.mito < 10)
+con_56d_seurat_filtered <- subset(con_56d_seurat, subset = nFeature_RNA > 200 & nFeature_RNA < 60000 & nCount_RNA > 500 & nCount_RNA < 15000 & percent.mito < 10)
+ir_56d_seurat_filtered <- subset(ir_56d_seurat, subset = nFeature_RNA > 200 & nFeature_RNA < 60000 & nCount_RNA > 500 & nCount_RNA < 15000 & percent.mito < 10)
+```
+
+
+
+# 3. Pre-process
+
+```{r, include=FALSE}
+all_genes_con_24h <- rownames(con_24h_seurat_filtered)
+all_genes_ir_24h <- rownames(ir_24h_seurat_filtered)
+all_genes_con_56d <- rownames(con_56d_seurat_filtered)
+all_genes_ir_56d <- rownames(ir_56d_seurat_filtered)
+```
+
+
+## Control 24 hours
+
+```{r, include=FALSE}
+con_24h_seurat_norm <- con_24h_seurat_filtered %>%
+  NormalizeData(normalization.method = "LogNormalize", scale.factor = 10000) %>%
+  FindVariableFeatures(selection.method = "vst", nfeatures = 2000) %>%
+  ScaleData(features = all_genes_con_24h) %>%
+  RunPCA(npcs = 50)
+```
+
+```{r}
+ElbowPlot(con_24h_seurat_norm, ndims = 50) ### to check dims
+```
+
+```{r, include=FALSE}
+con_24h_seurat_norm <- con_24h_seurat_norm %>%
+  FindNeighbors(dims = 1:44) %>%
+  FindClusters(resolution = 0.1) %>%
+  RunUMAP(dims = 1:44)
+```
+
+
+## Irradiated 24 hours
+
+```{r, include=FALSE}
+ir_24h_seurat_norm <- ir_24h_seurat_filtered %>%
+  NormalizeData(normalization.method = "LogNormalize", scale.factor = 10000) %>%
+  FindVariableFeatures(selection.method = "vst", nfeatures = 2000) %>%
+  ScaleData(features = all_genes_ir_24h) %>%
+  RunPCA(npcs = 50)
+```
+
+```{r}
+ElbowPlot(ir_24h_seurat_norm, ndims = 50) ### to check dims
+```
+
+```{r, include=FALSE}
+ir_24h_seurat_norm <- ir_24h_seurat_norm %>%
+  FindNeighbors(dims = 1:40) %>%
+  FindClusters(resolution = 0.1) %>%
+  RunUMAP(dims = 1:40)
+```
+
+
+## Control 56 days
+
+```{r, include=FALSE}
+con_56d_seurat_norm <- con_56d_seurat_filtered %>%
+  NormalizeData(normalization.method = "LogNormalize", scale.factor = 10000) %>%
+  FindVariableFeatures(selection.method = "vst", nfeatures = 2000) %>%
+  ScaleData(features = all_genes_con_56d) %>%
+  RunPCA(npcs = 50)
+```
+
+```{r}
+ElbowPlot(con_56d_seurat_norm, ndims = 50) ### to check dims
+```
+
+```{r, include=FALSE}
+con_56d_seurat_norm <- con_56d_seurat_norm %>%
+  FindNeighbors(dims = 1:42) %>%
+  FindClusters(resolution = 0.1) %>%
+  RunUMAP(dims = 1:42)
+```
+
+
+## Irradiated 56 days
+
+```{r, include=FALSE}
+ir_56d_seurat_norm <- ir_56d_seurat_filtered %>%
+  NormalizeData(normalization.method = "LogNormalize", scale.factor = 10000) %>%
+  FindVariableFeatures(selection.method = "vst", nfeatures = 2000) %>%
+  ScaleData(features = all_genes_ir_56d) %>%
+  RunPCA(npcs = 50)
+```
+
+```{r}
+ElbowPlot(ir_56d_seurat_norm, ndims = 50) ### to check dims
+```
+
+```{r, include=FALSE}
+ir_56d_seurat_norm <- ir_56d_seurat_norm %>%
+  FindNeighbors(dims = 1:41) %>%
+  FindClusters(resolution = 0.1) %>%
+  RunUMAP(dims = 1:41)
+```
+
+
+
+# 4. scDblFinder
+
+```{r, include=FALSE}
+con_24h_dbl <- scDblFinder(GetAssayData(con_24h_seurat_norm, slot = "counts"), clusters = Idents(con_24h_seurat_norm))
+
+con_24h_seurat_norm$scDblFinder.class <- con_24h_dbl$scDblFinder.class
+
+
+ir_24h_dbl <- scDblFinder(GetAssayData(ir_24h_seurat_norm, slot = "counts"), clusters = Idents(ir_24h_seurat_norm))
+
+ir_24h_seurat_norm$scDblFinder.class <- ir_24h_dbl$scDblFinder.class
+
+
+con_56d_dbl <- scDblFinder(GetAssayData(con_56d_seurat_norm, slot = "counts"), clusters = Idents(con_56d_seurat_norm))
+
+con_56d_seurat_norm$scDblFinder.class <- con_56d_dbl$scDblFinder.class
+
+
+ir_56d_dbl <- scDblFinder(GetAssayData(ir_56d_seurat_norm, slot = "counts"), clusters = Idents(ir_56d_seurat_norm))
+
+ir_56d_seurat_norm$scDblFinder.class <- ir_56d_dbl$scDblFinder.class
+```
+
+
+## Remove Doublets
+
+```{r, include=FALSE}
+con_24h_singlets <- subset(con_24h_seurat_norm, subset = scDblFinder.class == "singlet")
+
+ir_24h_singlets <- subset(ir_24h_seurat_norm, subset = scDblFinder.class == "singlet")
+
+con_56d_singlets <- subset(con_56d_seurat_norm, subset = scDblFinder.class == "singlet")
+
+ir_56d_singlets <- subset(ir_56d_seurat_norm, subset = scDblFinder.class == "singlet")
+```
+
+
+
+# 5. Combine conditions
+
+## Merge data
+
+```{r, include=FALSE}
+ordered_datasets <- c(con_24h_singlets, ir_24h_singlets, con_56d_singlets, ir_56d_singlets)
+
+features_merge <- SelectIntegrationFeatures(object.list = ordered_datasets)
+```
+
+
+## Find anchors
+
+```{r, include=FALSE}
+anchors_merge <- FindIntegrationAnchors(object.list = list(con_24h_singlets, ir_24h_singlets, con_56d_singlets, ir_56d_singlets), anchor.features = features_merge)
+```
+
+
+## Combine data
+
+```{r, include=FALSE}
+ir_combined <- IntegrateData(anchorset = anchors_merge)
+
+DefaultAssay(ir_combined) <- "integrated"
+```
+
+
+
+# 6. Reprocess
+
+## Scale data and run PCA
+```{r, include=FALSE}
+all_genes <- rownames(ir_combined)
+ir_combined <- ScaleData(ir_combined, features = all_genes)
+ir_combined <- RunPCA(ir_combined, npcs = 50)
+```
+
+```{r}
+ElbowPlot(ir_combined, ndims = 50) ### to check dims
+```
+
+
+## Cluster
+
+```{r, include=FALSE}
+ir_combined <- ir_combined %>%
+  FindNeighbors(dims = 1:41) %>%
+  FindClusters(resolution = 0.1)
+
+Idents(ir_combined) <- "seurat_clusters"
+
+umap.method = 'umap-learn'
+metric = 'correlation'
+
+ir_combined <- RunUMAP(ir_combined, reduction = "pca", dims = 1:41)
+```
+
+
+
+# 7. Annotate cells
+
+```{r, include=FALSE}
+cluster_ids <- levels(ir_combined$seurat_clusters)
+```
+
+
+## Order conditions
+
+```{r, include=FALSE}
+ir_combined$orig.ident <- factor(ir_combined$orig.ident, levels = c("CTL-24h", "IR-24h", "CTL-56d", "IR-56d"))
+```
+
+
+## Annotate clusters
+
+```{r}
+DefaultAssay(ir_combined) <- "RNA"
+Idents(ir_combined) <- "seurat_clusters"
+
+DotPlot(object = ir_combined, features = c("Pax7", "Acta1", "Cdh5", "Myl9", "Pdgfrb", "Pdgfra", "Mmrn1", "Cd68", "Csf1r", "S100a9", "Ms4a1", "Nkg7", "Il7r", "Ptn", "Mpz", "Gypa")) +
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1, face = "italic")) +
+  scale_color_gradientn(colors = c("red", "white", "blue")) +
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust = 1, face = "italic"))
+```
+
+```{r, include=FALSE}
+cluster_labels <- c("Endothelial cells", 
+                 "Myonuclei", 
+                 "FAPs", 
+                 "B cells",
+                 "MuSCs",
+                 "Monocytes/macrophages",
+                 "Neutrophils",
+                 "Endothelial cells",
+                 "T cells/NK cells",
+                 "vSMCs",
+                 "Pericytes",
+                 "Erythrocytes",
+                 "Endothelial cells",
+                 "Schwann cells",
+                 "Neural/glial cells")
+
+cluster_to_cell_type <- setNames(cluster_labels, cluster_ids)
+
+ir_combined$seurat_clusters <- cluster_labels[ir_combined$seurat_clusters]
+
+ir_combined$seurat_clusters <- factor(ir_combined$seurat_clusters, levels = c("MuSCs", 
+            "Myonuclei", 
+            "Endothelial cells",
+            "vSMCs",
+            "Pericytes",
+            "FAPs",
+            "Monocytes/macrophages",
+            "Neutrophils",
+            "B cells",
+            "T cells/NK cells",
+            "Neural/glial cells",
+            "Schwann cells",
+            "Erythrocytes"))
+```
+
+```{r, include=FALSE}
+DefaultAssay(ir_combined) <- "RNA"
+
+Idents(ir_combined) <- ir_combined$seurat_clusters
+
+ir_combined <- JoinLayers(ir_combined, what = "all")
+```
+
+
+
+# 8. Subset MuSCs
+
+```{r, include=FALSE}
+Idents(ir_combined) <- "seurat_clusters"
+
+ir_MuSCs <- subset(ir_combined, idents = "MuSCs")
+```
+
+
+## DEGs per condition
+
+```{r, include=FALSE}
+Idents(ir_MuSCs) <- "orig.ident"
+
+DEGs_ir_MuSCs <- FindAllMarkers(object = ir_MuSCs, group.by = "orig.ident", test.use = "LR", only.pos = TRUE, min.pct = 0.25, logfc.threshold = 0.25)
+```
+
+
+
+# Cell scoring
+
+## Create gene list
+```{r, include=FALSE}
+cachexia_gene_list <- cachexia_gene_list <- read.csv("C:/Users/nwb_l/Documents/r_projects/LLC_timecourse/MuSCs_combined/DEGs_MuSCs_combined_subclusters.csv")
+
+cachexia_gene_list <- cachexia_gene_list[cachexia_gene_list$cluster == "Cachectic" & cachexia_gene_list$p_val_adj < 0.05, ]
+
+cachexia_gene_list <- cachexia_gene_list$gene
+```
+
+
+## AddModuleScore by orig.ident
+
+```{r, include=FALSE}
+cachexia_score <- AddModuleScore_UCell(ir_MuSCs, features = list(cachexia_gene_list), name = "cachexia_score")
+
+means_cachexia_score <- cachexia_score@meta.data %>%
+  group_by(orig.ident) %>%
+  summarise(average_cachexia_score = mean(signature_1cachexia_score, na.rm = TRUE))
+```
+
+```{r}
+print(means_cachexia_score)
+```
+
+
+```{r}
+VlnPlot(cachexia_score, features = "signature_1cachexia_score", group.by = "orig.ident") +
+  theme(legend.position = "none", axis.text.x = element_text(angle = 45)) +
+  labs(x = NULL, y = "Cachexia Score", title = NULL) +
+  geom_hline(yintercept = 0, linetype = "solid", color = "black")
+```

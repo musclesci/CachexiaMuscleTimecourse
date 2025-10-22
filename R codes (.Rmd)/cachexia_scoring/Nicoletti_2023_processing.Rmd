@@ -1,0 +1,575 @@
+---
+title: "Nicoletti_2023_processing"
+author: "Alex Brown"
+date: "2025-07-23"
+output: html_document
+---
+
+
+
+# Load packages
+
+```{r, include=FALSE}
+library(Seurat)
+library(SeuratWrappers)
+library(tidyverse)
+library(Biobase)
+library(BiocGenerics)
+library(ggplot2)
+library(cowplot)
+library(grid)
+library(gridExtra)
+library(RColorBrewer)
+library(ggbeeswarm)
+library(pheatmap)
+library(viridis)
+library(EnhancedVolcano)
+library(scDblFinder)
+library(UCell)
+```
+
+
+
+# Read in the data (From Nicoletti et al. 2023; doi: 10.1016/j.isci.2023.107114)
+
+```{r, include=FALSE}
+ctl_1_data <- Read10X("C:/Users/nwb_l/Documents/r_projects/Nicoletti_2023_scRNAseq/data/ctl_1_filtered_bc_matrix")
+
+ctl_2_data <- Read10X("C:/Users/nwb_l/Documents/r_projects/Nicoletti_2023_scRNAseq/data/ctl_2_filtered_bc_matrix")
+
+den2d_1_data <- Read10X("C:/Users/nwb_l/Documents/r_projects/Nicoletti_2023_scRNAseq/data/den_2d_1_filtered_bc_matrix")
+
+den2d_2_data <- Read10X("C:/Users/nwb_l/Documents/r_projects/Nicoletti_2023_scRNAseq/data/den_2d_2_filtered_bc_matrix")
+
+den5d_1_data <- Read10X("C:/Users/nwb_l/Documents/r_projects/Nicoletti_2023_scRNAseq/data/den_5d_1_filtered_bc_matrix")
+
+den5d_2_data <- Read10X("C:/Users/nwb_l/Documents/r_projects/Nicoletti_2023_scRNAseq/data/den_5d_2_filtered_bc_matrix")
+
+den15d_1_data <- Read10X("C:/Users/nwb_l/Documents/r_projects/Nicoletti_2023_scRNAseq/data/den_15d_1_filtered_bc_matrix")
+
+den15d_2_data <- Read10X("C:/Users/nwb_l/Documents/r_projects/Nicoletti_2023_scRNAseq/data/den_15d_2_filtered_bc_matrix")
+```
+
+
+
+# Create Seurat Object
+
+```{r, include=FALSE}
+ctl_1_seurat <- CreateSeuratObject(counts = ctl_1_data, min.cells = 3, project = "CTL_1")
+
+ctl_2_seurat <- CreateSeuratObject(counts = ctl_2_data, min.cells = 3, project = "CTL_2")
+
+den2d_1_seurat <- CreateSeuratObject(counts = den2d_1_data, min.cells = 3, project = "DEN2d_1")
+
+den2d_2_seurat <- CreateSeuratObject(counts = den2d_2_data, min.cells = 3, project = "DEN2d_2")
+
+den5d_1_seurat <- CreateSeuratObject(counts = den5d_1_data, min.cells = 3, project = "DEN5d_1")
+
+den5d_2_seurat <- CreateSeuratObject(counts = den5d_2_data, min.cells = 3, project = "DEN5d_2")
+
+den15d_1_seurat <- CreateSeuratObject(counts = den15d_1_data, min.cells = 3, project = "DEN15d_1")
+
+den15d_2_seurat <- CreateSeuratObject(counts = den15d_2_data, min.cells = 3, project = "DEN15d_2")
+```
+
+
+
+# 1. QC
+
+## % mitochondrial reads
+
+```{r, include=FALSE}
+ctl_1_seurat[["percent.mito"]] <- PercentageFeatureSet(ctl_1_seurat, pattern = "^mt-")
+
+ctl_2_seurat[["percent.mito"]] <- PercentageFeatureSet(ctl_2_seurat, pattern = "^mt-")
+
+den2d_1_seurat[["percent.mito"]] <- PercentageFeatureSet(den2d_1_seurat, pattern = "^mt-")
+
+den2d_2_seurat[["percent.mito"]] <- PercentageFeatureSet(den2d_2_seurat, pattern = "^mt-")
+
+den5d_1_seurat[["percent.mito"]] <- PercentageFeatureSet(den5d_1_seurat, pattern = "^mt-")
+
+den5d_2_seurat[["percent.mito"]] <- PercentageFeatureSet(den5d_2_seurat, pattern = "^mt-")
+
+den15d_1_seurat[["percent.mito"]] <- PercentageFeatureSet(den15d_1_seurat, pattern = "^mt-")
+
+den15d_2_seurat[["percent.mito"]] <- PercentageFeatureSet(den15d_2_seurat, pattern = "^mt-")
+```
+
+
+
+# 2. Filtering
+
+```{r, include=FALSE}
+ctl_1_seurat_filtered <- subset(ctl_1_seurat, subset = nFeature_RNA > 200 & nFeature_RNA < 60000 & nCount_RNA > 500 & nCount_RNA < 15000 & percent.mito < 10)
+
+ctl_2_seurat_filtered <- subset(ctl_2_seurat, subset = nFeature_RNA > 200 & nFeature_RNA < 60000 & nCount_RNA > 500 & nCount_RNA < 15000 & percent.mito < 10)
+
+den2d_1_seurat_filtered <- subset(den2d_1_seurat, subset = nFeature_RNA > 200 & nFeature_RNA < 60000 & nCount_RNA > 500 & nCount_RNA < 15000 & percent.mito < 10)
+
+den2d_2_seurat_filtered <- subset(den2d_2_seurat, subset = nFeature_RNA > 200 & nFeature_RNA < 60000 & nCount_RNA > 500 & nCount_RNA < 15000 & percent.mito < 10)
+
+den5d_1_seurat_filtered <- subset(den5d_1_seurat, subset = nFeature_RNA > 200 & nFeature_RNA < 60000 & nCount_RNA > 500 & nCount_RNA < 15000 & percent.mito < 10)
+
+den5d_2_seurat_filtered <- subset(den5d_2_seurat, subset = nFeature_RNA > 200 & nFeature_RNA < 60000 & nCount_RNA > 500 & nCount_RNA < 15000 & percent.mito < 10)
+
+den15d_1_seurat_filtered <- subset(den15d_1_seurat, subset = nFeature_RNA > 200 & nFeature_RNA < 60000 & nCount_RNA > 500 & nCount_RNA < 15000 & percent.mito < 10)
+
+den15d_2_seurat_filtered <- subset(den15d_2_seurat, subset = nFeature_RNA > 200 & nFeature_RNA < 60000 & nCount_RNA > 500 & nCount_RNA < 15000 & percent.mito < 10)
+```
+
+
+
+# 3. Pre-process
+
+```{r, include=FALSE}
+all_genes_ctl_1 <- rownames(ctl_1_seurat_filtered)
+all_genes_ctl_2 <- rownames(ctl_2_seurat_filtered)
+all_genes_den2d_1 <- rownames(den2d_1_seurat_filtered)
+all_genes_den2d_2 <- rownames(den2d_2_seurat_filtered)
+all_genes_den5d_1 <- rownames(den5d_1_seurat_filtered)
+all_genes_den5d_2 <- rownames(den5d_2_seurat_filtered)
+all_genes_den15d_1 <- rownames(den15d_1_seurat_filtered)
+all_genes_den15d_2 <- rownames(den15d_2_seurat_filtered)
+```
+
+
+## CTL_1
+
+```{r, include=FALSE}
+ctl_1_seurat_norm <- ctl_1_seurat_filtered %>%
+  NormalizeData(normalization.method = "LogNormalize", scale.factor = 10000) %>%
+  FindVariableFeatures(selection.method = "vst", nfeatures = 2000) %>%
+  ScaleData(features = all_genes_ctl_1) %>%
+  RunPCA(npcs = 50)
+```
+
+```{r}
+ElbowPlot(ctl_1_seurat_norm, ndims = 50) ### to check dims
+```
+
+```{r, include=FALSE}
+ctl_1_seurat_norm <- ctl_1_seurat_norm %>%
+  FindNeighbors(dims = 1:42) %>%
+  FindClusters(resolution = 0.1) %>%
+  RunUMAP(dims = 1:42)
+```
+
+
+## CTL_2
+
+```{r, include=FALSE}
+ctl_2_seurat_norm <- ctl_2_seurat_filtered %>%
+  NormalizeData(normalization.method = "LogNormalize", scale.factor = 10000) %>%
+  FindVariableFeatures(selection.method = "vst", nfeatures = 2000) %>%
+  ScaleData(features = all_genes_ctl_2) %>%
+  RunPCA(npcs = 50)
+```
+
+```{r}
+ElbowPlot(ctl_2_seurat_norm, ndims = 50) ### to check dims
+```
+
+```{r, include=FALSE}
+ctl_2_seurat_norm <- ctl_2_seurat_norm %>%
+  FindNeighbors(dims = 1:42) %>%
+  FindClusters(resolution = 0.1) %>%
+  RunUMAP(dims = 1:42)
+```
+
+
+## DEN2d_1
+
+```{r, include=FALSE}
+den2d_1_seurat_norm <- den2d_1_seurat_filtered %>%
+  NormalizeData(normalization.method = "LogNormalize", scale.factor = 10000) %>%
+  FindVariableFeatures(selection.method = "vst", nfeatures = 2000) %>%
+  ScaleData(features = all_genes_den2d_1) %>%
+  RunPCA(npcs = 50)
+```
+
+```{r}
+ElbowPlot(den2d_1_seurat_norm, ndims = 50) ### to check dims
+```
+
+```{r, include=FALSE}
+den2d_1_seurat_norm <- den2d_1_seurat_norm %>%
+  FindNeighbors(dims = 1:41) %>%
+  FindClusters(resolution = 0.1) %>%
+  RunUMAP(dims = 1:41)
+```
+
+
+
+## DEN2d_2
+
+```{r, include=FALSE}
+den2d_2_seurat_norm <- den2d_2_seurat_filtered %>%
+  NormalizeData(normalization.method = "LogNormalize", scale.factor = 10000) %>%
+  FindVariableFeatures(selection.method = "vst", nfeatures = 2000) %>%
+  ScaleData(features = all_genes_den2d_2) %>%
+  RunPCA(npcs = 50)
+```
+
+```{r}
+ElbowPlot(den2d_2_seurat_norm, ndims = 50) ### to check dims
+```
+
+```{r, include=FALSE}
+den2d_2_seurat_norm <- den2d_2_seurat_norm %>%
+  FindNeighbors(dims = 1:38) %>%
+  FindClusters(resolution = 0.1) %>%
+  RunUMAP(dims = 1:38)
+```
+
+
+## DEN5d_1
+
+```{r, include=FALSE}
+den5d_1_seurat_norm <- den5d_1_seurat_filtered %>%
+  NormalizeData(normalization.method = "LogNormalize", scale.factor = 10000) %>%
+  FindVariableFeatures(selection.method = "vst", nfeatures = 2000) %>%
+  ScaleData(features = all_genes_den5d_1) %>%
+  RunPCA(npcs = 50)
+```
+
+```{r}
+ElbowPlot(den5d_1_seurat_norm, ndims = 50) ### to check dims
+```
+
+```{r, include=FALSE}
+den5d_1_seurat_norm <- den5d_1_seurat_norm %>%
+  FindNeighbors(dims = 1:43) %>%
+  FindClusters(resolution = 0.1) %>%
+  RunUMAP(dims = 1:43)
+```
+
+
+## DEN5d_2
+
+```{r, include=FALSE}
+den5d_2_seurat_norm <- den5d_2_seurat_filtered %>%
+  NormalizeData(normalization.method = "LogNormalize", scale.factor = 10000) %>%
+  FindVariableFeatures(selection.method = "vst", nfeatures = 2000) %>%
+  ScaleData(features = all_genes_den5d_2) %>%
+  RunPCA(npcs = 50)
+```
+
+```{r}
+ElbowPlot(den5d_2_seurat_norm, ndims = 50) ### to check dims
+```
+
+```{r, include=FALSE}
+den5d_2_seurat_norm <- den5d_2_seurat_norm %>%
+  FindNeighbors(dims = 1:42) %>%
+  FindClusters(resolution = 0.1) %>%
+  RunUMAP(dims = 1:42)
+```
+
+
+## DEN15d_1
+
+```{r, include=FALSE}
+den15d_1_seurat_norm <- den15d_1_seurat_filtered %>%
+  NormalizeData(normalization.method = "LogNormalize", scale.factor = 10000) %>%
+  FindVariableFeatures(selection.method = "vst", nfeatures = 2000) %>%
+  ScaleData(features = all_genes_den15d_1) %>%
+  RunPCA(npcs = 50)
+```
+
+```{r}
+ElbowPlot(den15d_1_seurat_norm, ndims = 50) ### to check dims
+```
+
+```{r, include=FALSE}
+den15d_1_seurat_norm <- den15d_1_seurat_norm %>%
+  FindNeighbors(dims = 1:42) %>%
+  FindClusters(resolution = 0.1) %>%
+  RunUMAP(dims = 1:42)
+```
+
+
+
+## DEN15d_2
+
+```{r, include=FALSE}
+den15d_2_seurat_norm <- den15d_2_seurat_filtered %>%
+  NormalizeData(normalization.method = "LogNormalize", scale.factor = 10000) %>%
+  FindVariableFeatures(selection.method = "vst", nfeatures = 2000) %>%
+  ScaleData(features = all_genes_den15d_2) %>%
+  RunPCA(npcs = 50)
+```
+
+```{r}
+ElbowPlot(den15d_2_seurat_norm, ndims = 50) ### to check dims
+```
+
+```{r, include=FALSE}
+den15d_2_seurat_norm <- den15d_2_seurat_norm %>%
+  FindNeighbors(dims = 1:38) %>%
+  FindClusters(resolution = 0.1) %>%
+  RunUMAP(dims = 1:38)
+```
+
+
+
+# 4. scDblFinder
+
+```{r, include=FALSE}
+ctl_1_dbl <- scDblFinder(GetAssayData(ctl_1_seurat_norm, slot = "counts"), clusters = Idents(ctl_1_seurat_norm))
+
+ctl_1_seurat_norm$scDblFinder.class <- ctl_1_dbl$scDblFinder.class
+
+
+ctl_2_dbl <- scDblFinder(GetAssayData(ctl_2_seurat_norm, slot = "counts"), clusters = Idents(ctl_2_seurat_norm))
+
+ctl_2_seurat_norm$scDblFinder.class <- ctl_2_dbl$scDblFinder.class
+
+
+den2d_1_dbl <- scDblFinder(GetAssayData(den2d_1_seurat_norm, slot = "counts"), clusters = Idents(den2d_1_seurat_norm))
+
+den2d_1_seurat_norm$scDblFinder.class <- den2d_1_dbl$scDblFinder.class
+
+
+den2d_2_dbl <- scDblFinder(GetAssayData(den2d_2_seurat_norm, slot = "counts"), clusters = Idents(den2d_2_seurat_norm))
+
+den2d_2_seurat_norm$scDblFinder.class <- den2d_2_dbl$scDblFinder.class
+
+
+den5d_1_dbl <- scDblFinder(GetAssayData(den5d_1_seurat_norm, slot = "counts"), clusters = Idents(den5d_1_seurat_norm))
+
+den5d_1_seurat_norm$scDblFinder.class <- den5d_1_dbl$scDblFinder.class
+
+
+den5d_2_dbl <- scDblFinder(GetAssayData(den5d_2_seurat_norm, slot = "counts"), clusters = Idents(den5d_2_seurat_norm))
+
+den5d_2_seurat_norm$scDblFinder.class <- den5d_2_dbl$scDblFinder.class
+
+
+den15d_1_dbl <- scDblFinder(GetAssayData(den15d_1_seurat_norm, slot = "counts"), clusters = Idents(den15d_1_seurat_norm))
+
+den15d_1_seurat_norm$scDblFinder.class <- den15d_1_dbl$scDblFinder.class
+
+
+den15d_2_dbl <- scDblFinder(GetAssayData(den15d_2_seurat_norm, slot = "counts"), clusters = Idents(den15d_2_seurat_norm))
+
+den15d_2_seurat_norm$scDblFinder.class <- den15d_2_dbl$scDblFinder.class
+```
+
+
+## Remove Doublets
+
+```{r, include=FALSE}
+ctl_1_singlets <- subset(ctl_1_seurat_norm, subset = scDblFinder.class == "singlet")
+
+ctl_2_singlets <- subset(ctl_2_seurat_norm, subset = scDblFinder.class == "singlet")
+
+den2d_1_singlets <- subset(den2d_1_seurat_norm, subset = scDblFinder.class == "singlet")
+
+den2d_2_singlets <- subset(den2d_2_seurat_norm, subset = scDblFinder.class == "singlet")
+
+den5d_1_singlets <- subset(den5d_1_seurat_norm, subset = scDblFinder.class == "singlet")
+
+den5d_2_singlets <- subset(den5d_2_seurat_norm, subset = scDblFinder.class == "singlet")
+
+den15d_1_singlets <- subset(den15d_1_seurat_norm, subset = scDblFinder.class == "singlet")
+
+den15d_2_singlets <- subset(den15d_2_seurat_norm, subset = scDblFinder.class == "singlet")
+```
+
+
+
+# 5. Combine conditions
+
+## Merge data
+
+```{r, include=FALSE}
+ordered_datasets <- c(ctl_1_singlets, ctl_2_singlets, den2d_1_singlets, den2d_2_singlets, den5d_1_singlets, den5d_2_singlets, den15d_1_singlets, den15d_2_singlets)
+
+features_merge <- SelectIntegrationFeatures(object.list = ordered_datasets)
+```
+
+
+## Find anchors
+
+```{r, include=FALSE}
+anchors_merge <- FindIntegrationAnchors(object.list = list(ctl_1_singlets, ctl_2_singlets, den2d_1_singlets, den2d_2_singlets, den5d_1_singlets, den5d_2_singlets, den15d_1_singlets, den15d_2_singlets), anchor.features = features_merge)
+```
+
+
+## Combine data
+
+```{r, include=FALSE}
+den_combined <- IntegrateData(anchorset = anchors_merge)
+
+DefaultAssay(den_combined) <- "integrated"
+```
+
+
+
+# 6. Reprocess
+
+## Scale data and run PCA
+```{r, include=FALSE}
+all_genes <- rownames(den_combined)
+den_combined <- ScaleData(den_combined, features = all_genes)
+den_combined <- RunPCA(den_combined, npcs = 50)
+```
+
+```{r}
+ElbowPlot(den_combined, ndims = 50) ### to check dims
+```
+
+
+## Cluster
+
+```{r, include=FALSE}
+den_combined <- den_combined %>%
+  FindNeighbors(dims = 1:40) %>%
+  FindClusters(resolution = 0.1)
+
+Idents(den_combined) <- "seurat_clusters"
+
+umap.method = 'umap-learn'
+metric = 'correlation'
+
+den_combined <- RunUMAP(den_combined, reduction = "pca", dims = 1:40)
+```
+
+
+
+# 7. Annotate cells
+
+```{r, include=FALSE}
+cluster_ids <- levels(den_combined$seurat_clusters)
+```
+
+
+## Order conditions
+
+```{r, include=FALSE}
+den_combined$orig.ident <- factor(den_combined$orig.ident, levels = c("CTL_1", "CTL_2", "DEN2d_1", "DEN2d_2", "DEN5d_1", "DEN5d_2", "DEN15d_1", "DEN15d_2"))
+```
+
+
+## Combine conditions
+
+```{r, include=FALSE}
+DefaultAssay(den_combined) <- "RNA"
+
+Idents(den_combined) <- den_combined$seurat_clusters
+
+den_combined <- JoinLayers(den_combined, what = "all")
+
+
+den_combined$orig.ident <- ifelse(
+  den_combined$orig.ident %in% c("CTL_1", "CTL_2"), "CTL",
+  ifelse(
+    den_combined$orig.ident %in% c("DEN2d_1", "DEN2d_2"), "DEN2d",
+    ifelse(
+      den_combined$orig.ident %in% c("DEN5d_1", "DEN5d_2"), "DEN5d",
+      ifelse(
+        den_combined$orig.ident %in% c("DEN15d_1", "DEN15d_2"), "DEN15d",
+        den_combined$orig.ident))))
+
+
+den_combined$orig.ident <- factor(den_combined$orig.ident, levels = c("CTL", "DEN2d", "DEN5d", "DEN15d"))
+```
+
+
+## Annotate clusters
+
+```{r}
+DefaultAssay(den_combined) <- "RNA"
+Idents(den_combined) <- "seurat_clusters"
+
+DotPlot(object = den_combined, features = c("Pax7", "Myf5", "Acta1", "Cdh5", "Myl9", "Pdgfrb", "Pdgfra", "Tnmd", "Mmrn1", "Cd68", "Csf1r", "S100a9", "Ms4a1", "Nkg7", "Il7r", "Ptn", "Mpz", "")) +
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1, face = "italic")) +
+  scale_color_gradientn(colors = c("red", "white", "blue")) +
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust = 1, face = "italic"))
+```
+
+
+```{r, include=FALSE}
+cluster_labels <- c("FAPs", 
+                 "FAPs", 
+                 "Endothelial cells", 
+                 "Tenocytes",
+                 "Myonuclei",
+                 "MuSCs",
+                 "Immune cells",
+                 "Neural/glial/Schwann cells",
+                 "Endothelial cells",
+                 "vSMCs/pericytes",
+                 "FAPs",
+                 "Platelets")
+
+cluster_to_cell_type <- setNames(cluster_labels, cluster_ids)
+
+den_combined$seurat_clusters <- cluster_labels[den_combined$seurat_clusters]
+
+den_combined$seurat_clusters <- factor(den_combined$seurat_clusters, levels = c("MuSCs", 
+            "Myonuclei", 
+            "Endothelial cells",
+            "vSMCs/pericytes",
+            "FAPs",
+            "Tenocytes",
+            "Platelets",
+            "Immune cells",
+            "Neural/glial/Schwann cells"))
+```
+
+
+
+# 8. Subset MuSCs
+
+```{r, include=FALSE}
+Idents(den_combined) <- "seurat_clusters"
+
+den_MuSCs <- subset(den_combined, idents = "MuSCs")
+```
+
+
+## DEGs per condition
+
+```{r, include=FALSE}
+Idents(den_MuSCs) <- "orig.ident"
+
+DEGs_den_MuSCs <- FindAllMarkers(object = den_MuSCs, group.by = "orig.ident", test.use = "LR", only.pos = TRUE, min.pct = 0.25, logfc.threshold = 0.25)
+```
+
+
+
+# Cell scoring
+
+## Create gene list
+```{r, include=FALSE}
+cachexia_gene_list <- cachexia_gene_list <- read.csv("C:/Users/nwb_l/Documents/r_projects/LLC_timecourse/MuSCs_combined/DEGs_MuSCs_combined_subclusters.csv")
+
+cachexia_gene_list <- cachexia_gene_list[cachexia_gene_list$cluster == "Cachectic" & cachexia_gene_list$p_val_adj < 0.05, ]
+
+cachexia_gene_list <- cachexia_gene_list$gene
+```
+
+
+## AddModuleScore by orig.ident
+
+```{r, include=FALSE}
+cachexia_score <- AddModuleScore_UCell(den_MuSCs, features = list(cachexia_gene_list), name = "cachexia_score")
+
+means_cachexia_score <- cachexia_score@meta.data %>%
+  group_by(orig.ident) %>%
+  summarise(average_cachexia_score = mean(signature_1cachexia_score, na.rm = TRUE))
+```
+
+```{r}
+print(means_cachexia_score)
+```
+
+
+```{r}
+VlnPlot(cachexia_score, features = "signature_1cachexia_score", group.by = "orig.ident") +
+  theme(legend.position = "none", axis.text.x = element_text(angle = 45)) +
+  labs(x = NULL, y = "Cachexia Score", title = NULL) +
+  geom_hline(yintercept = 0, linetype = "solid", color = "black")
+```
