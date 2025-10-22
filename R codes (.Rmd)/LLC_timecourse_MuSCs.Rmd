@@ -1,0 +1,542 @@
+---
+title: "LLC_timecourse_MuSCs"
+author: "Alex Brown"
+date: "2025-06-20"
+output: html_document
+---
+
+
+
+# Load packages
+
+```{r, include=FALSE}
+library(Seurat)
+library(SeuratWrappers)
+library(tidyverse)
+library(Biobase)
+library(BiocGenerics)
+library(ggplot2)
+library(cowplot)
+library(grid)
+library(gridExtra)
+library(RColorBrewer)
+library(ggbeeswarm)
+library(monocle3)
+library(NMF)
+library(circlize)
+library(ComplexHeatmap)
+library(CellChat)
+library(AnnotationDbi)
+library(org.Mm.eg.db)
+library(msigdbr)
+library(clusterProfiler)
+library(UCell)
+```
+
+
+
+# Load data
+
+```{r, include=FALSE}
+load("C:/Users/nwb_l/Documents/r_projects/LLC_timecourse/LLC_timecourse_processed.RData")
+```
+
+### Already subsetted cells "LLC_MuSCs"
+
+
+## Remove unnecessary objects to improve processing
+
+```{r, include=FALSE}
+rm(LLC_B_cells, LLC_Endothelial_cells, LLC_FAPs, LLC_Monocytes_macrophages, LLC_Myonuclei, LLC_Neural_glial_cells, LLC_Neutrophils, LLC_Platelets, LLC_Schwann_cells, LLC_T_NK_cells, LLC_vSMCs, LLC_Pericytes, Sham, two_weeks, two.five_weeks, three.five_weeks, DEGs_LLC_B_cells, DEGs_LLC_Endothelial_cells, DEGs_LLC_FAPs, DEGs_LLC_Monocytes_macrophages, DEGs_LLC_Myonuclei, DEGs_LLC_Neural_glial_cells, DEGs_LLC_Neutrophils, DEGs_LLC_Platelets, DEGs_LLC_Schwann_cells, DEGs_LLC_T_NK_cells, DEGs_LLC_vSMCs, DEGs_LLC_Pericytes, DEGs_LLC_clusters, ordered_datasets, cluster_proportions)
+```
+
+
+## UMAP plot highlighting MuSCs
+
+```{r}
+DimPlot(
+  LLC_combined,
+  reduction = "umap",
+  group.by = "seurat_clusters",
+  cells.highlight = list("MuSCs" = WhichCells(LLC_combined, expression = seurat_clusters == "MuSCs")),
+  sizes.highlight = 1,
+  pt.size = 1,
+  cols.highlight = "#E87D72" 
+) +
+  ggplot2::labs(title = "", x = "UMAP1", y = "UMAP2") +
+  theme(
+    axis.text.x = element_blank(),
+    axis.text.y = element_blank(),
+    axis.ticks = element_blank()) +
+  theme(legend.position = "none")
+```
+
+
+
+# Re-process cells
+
+```{r, include=FALSE}
+LLC_MuSCs <- NormalizeData(LLC_MuSCs) %>%
+  FindVariableFeatures() %>%
+  ScaleData(features = all_genes) %>%
+  RunPCA(npcs = 50)
+```
+
+```{r}
+ElbowPlot(LLC_MuSCs, ndims = 50)
+```
+
+```{r, include=FALSE}
+LLC_MuSCs <- FindNeighbors(LLC_MuSCs, dims = 1:38) %>%
+  FindClusters(resolution = 0.9)
+```
+
+```{r, include=FALSE}
+Idents(LLC_MuSCs) <- "seurat_clusters"
+
+LLC_MuSCs <- RunUMAP(LLC_MuSCs, reduction = "pca", dims = 1:38)
+```
+
+
+
+# Annotate subclusters
+
+```{r, include=FALSE}
+DefaultAssay(LLC_MuSCs) <- "RNA"
+
+Idents(LLC_MuSCs) <- LLC_MuSCs$seurat_clusters
+LLC_MuSCs <- JoinLayers(LLC_MuSCs, what = "all")
+DEGs_LLC_MuSCs_subclusters <- FindAllMarkers(object = LLC_MuSCs, group.by = "seurat_clusters", test.use = "LR", only.pos = TRUE, min.pct = 0.25, logfc.threshold = 0.25)
+```
+
+
+## Specify subclusters
+
+```{r, include=FALSE}
+LLC_MuSCs_cluster_ids <- levels(LLC_MuSCs$seurat_clusters)
+
+LLC_MuSCs_cluster_labels <- c("Activated", "Quiescent", "Cachectic", "Activated", "Proliferating")
+
+LLC_MuSCs_clusters <- LLC_MuSCs@meta.data$seurat_clusters
+
+LLC_MuSCs$seurat_clusters <- LLC_MuSCs_cluster_labels[LLC_MuSCs$seurat_clusters]
+```
+
+
+## Order conditions
+
+```{r, include=FALSE}
+LLC_MuSCs$orig.ident <- factor(LLC_MuSCs$orig.ident, levels = c("Sham", "2_weeks", "2.5_weeks", "3.5_weeks"))
+```
+
+
+## Order subclusters
+
+```{r, include=FALSE}
+LLC_MuSCs$seurat_clusters <- factor(LLC_MuSCs$seurat_clusters, levels = c("Quiescent", "Proliferating", "Activated", "Cachectic"))
+```
+
+
+## Run FindAllMarkers again
+
+```{r, include=FALSE}
+DefaultAssay(LLC_MuSCs) <- "RNA"
+
+Idents(LLC_MuSCs) <- LLC_MuSCs$seurat_clusters
+LLC_MuSCs <- JoinLayers(LLC_MuSCs, what = "all")
+DEGs_LLC_MuSCs_subclusters <- FindAllMarkers(object = LLC_MuSCs, group.by = "seurat_clusters", test.use = "LR", only.pos = TRUE, min.pct = 0.25, logfc.threshold = 0.25)
+```
+
+```{r, include=FALSE}
+write.csv(DEGs_LLC_MuSCs_subclusters, file = "DEGs_LLC_MuSCs_subclusters.csv", row.names = FALSE)
+```
+
+
+## Plot to show DEGs between subclusters
+
+```{r}
+LLC_MuSCs_cluster_ids <- levels(LLC_MuSCs$seurat_clusters)
+Idents(LLC_MuSCs) <- "seurat_clusters"
+
+VlnPlot_Pax7 <- VlnPlot(LLC_MuSCs, features = "Pax7") +
+  theme(legend.position = "none", axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1), plot.title = element_text(face = "italic")) +
+  labs(x = NULL, y = "Expression", title = "Pax7")
+VlnPlot_Myf5 <- VlnPlot(LLC_MuSCs, features = "Myf5") +
+  theme(legend.position = "none", axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1), plot.title = element_text(face = "italic")) +
+  labs(x = NULL, y = "Expression", title = "Myf5")
+VlnPlot_Myod1 <- VlnPlot(LLC_MuSCs, features = "Myod1") +
+  theme(legend.position = "none", axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1), plot.title = element_text(face = "italic")) +
+  labs(x = NULL, y = "Expression", title = "Myod1")
+VlnPlot_S100a6 <- VlnPlot(LLC_MuSCs, features = "S100a6") +
+  theme(legend.position = "none", axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1), plot.title = element_text(face = "italic")) +
+  labs(x = NULL, y = "Expression", title = "S100a6")
+VlnPlot_Cebpb <- VlnPlot(LLC_MuSCs, features = "Cebpb") +
+  theme(legend.position = "none", axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1), plot.title = element_text(face = "italic")) +
+  labs(x = NULL, y = "Expression", title = "Cebpb")
+VlnPlot_Acta1 <- VlnPlot(LLC_MuSCs, features = "Acta1") +
+  theme(legend.position = "none", axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1), plot.title = element_text(face = "italic")) +
+  labs(x = NULL, y = "Expression", title = "Acta1")
+
+grid.arrange(VlnPlot_Pax7, VlnPlot_Myf5, VlnPlot_S100a6, VlnPlot_Myod1, VlnPlot_Cebpb, VlnPlot_Acta1, nrow = 2, ncol = 3)
+```
+
+
+## Top 10 DEGs in cachectic subcluster
+
+```{r}
+LLC_MuSCs_cluster_ids <- levels(LLC_MuSCs$seurat_clusters)
+Idents(LLC_MuSCs) <- "seurat_clusters"
+
+VlnPlot_Socs3 <- VlnPlot(LLC_MuSCs, features = "Socs3", pt.size = 0) +
+  theme(legend.position = "none", axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1), plot.title = element_text(face = "italic")) +
+  labs(x = NULL, y = "Expression", title = "Socs3")
+VlnPlot_Mt1 <- VlnPlot(LLC_MuSCs, features = "Mt1", pt.size = 0) +
+  theme(legend.position = "none", axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1), plot.title = element_text(face = "italic")) +
+  labs(x = NULL, y = "Expression", title = "Mt1")
+VlnPlot_Junb <- VlnPlot(LLC_MuSCs, features = "Junb", pt.size = 0) +
+  theme(legend.position = "none", axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1), plot.title = element_text(face = "italic")) +
+  labs(x = NULL, y = "Expression", title = "Junb")
+VlnPlot_Zfp36 <- VlnPlot(LLC_MuSCs, features = "Zfp36", pt.size = 0) +
+  theme(legend.position = "none", axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1), plot.title = element_text(face = "italic")) +
+  labs(x = NULL, y = "Expression", title = "Zfp36")
+VlnPlot_Ier3 <- VlnPlot(LLC_MuSCs, features = "Ier3", pt.size = 0) +
+  theme(legend.position = "none", axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1), plot.title = element_text(face = "italic")) +
+  labs(x = NULL, y = "Expression", title = "Ier3")
+VlnPlot_Fos <- VlnPlot(LLC_MuSCs, features = "Fos", pt.size = 0) +
+  theme(legend.position = "none", axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1), plot.title = element_text(face = "italic")) +
+  labs(x = NULL, y = "Expression", title = "Fos")
+VlnPlot_Mt2 <- VlnPlot(LLC_MuSCs, features = "Mt2", pt.size = 0) +
+  theme(legend.position = "none", axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1), plot.title = element_text(face = "italic")) +
+  labs(x = NULL, y = "Expression", title = "Mt2")
+VlnPlot_Btg2 <- VlnPlot(LLC_MuSCs, features = "Btg2", pt.size = 0) +
+  theme(legend.position = "none", axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1), plot.title = element_text(face = "italic")) +
+  labs(x = NULL, y = "Expression", title = "Btg2")
+VlnPlot_Cebpb <- VlnPlot(LLC_MuSCs, features = "Cebpb", pt.size = 0) +
+  theme(legend.position = "none", axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1), plot.title = element_text(face = "italic")) +
+  labs(x = NULL, y = "Expression", title = "Cebpb")
+VlnPlot_Cebpd <- VlnPlot(LLC_MuSCs, features = "Cebpd", pt.size = 0) +
+  theme(legend.position = "none", axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1), plot.title = element_text(face = "italic")) +
+  labs(x = NULL, y = "Expression", title = "Cebpd")
+
+grid.arrange(VlnPlot_Socs3, VlnPlot_Mt1, VlnPlot_Junb, VlnPlot_Zfp36, VlnPlot_Ier3, VlnPlot_Fos, VlnPlot_Mt2, VlnPlot_Btg2, VlnPlot_Cebpb, VlnPlot_Cebpd, nrow = 2, ncol = 5)
+```
+
+
+## Plot stacked barplot for subcluster proportions
+
+### Extract the proportions from the MuSCs Seurat object
+```{r, include=FALSE}
+LLC_MuSCs_cluster_proportions <- LLC_MuSCs@meta.data %>%
+  dplyr::select(orig.ident, seurat_clusters) %>%
+  group_by(orig.ident, seurat_clusters) %>%
+  summarize(count = n()) %>%
+  group_by(orig.ident) %>%
+  mutate(percentage = count / sum(count) * 100)
+```
+
+```{r, include=FALSE}
+write.csv(LLC_MuSCs_cluster_proportions, file = "LLC_MuSCs_cluster_proportions.csv", row.names = TRUE)
+```
+
+
+```{r}
+LLC_MuSCs_cluster_proportions$orig.ident <- factor(
+  LLC_MuSCs_cluster_proportions$orig.ident,
+  levels = c("Sham", "2_weeks", "2.5_weeks", "3.5_weeks"),
+  labels = c("Sham", "2 weeks", "2.5 weeks", "3.5 weeks"))
+
+ggplot(LLC_MuSCs_cluster_proportions, aes(x = orig.ident, y = percentage, fill = seurat_clusters)) +
+  geom_bar(stat = "identity", width = 0.75, color = "black") +
+  scale_y_continuous(labels = scales::percent_format(scale = 1), expand = c(0, 0)) +
+  labs(title = "", x = "", y = "Proportion") +
+  theme(legend.position = "right", panel.background = element_blank(), axis.line = element_line(color = "black"), axis.text.x = element_text(angle = 45, hjust = 1)) +
+  guides(fill = guide_legend(title = NULL))
+```
+
+
+## Plot UMAP by subcluster
+
+```{r}
+DimPlot(LLC_MuSCs, reduction = "umap", group.by = "seurat_clusters", repel = TRUE, pt.size = 1) +
+  ggplot2::labs(title = "", x = "UMAP1", y = "UMAP2") +
+  theme(axis.text.x = element_blank(), axis.text.y = element_blank(), axis.ticks = element_blank())
+```
+
+## Plot UMAP by condition
+
+```{r}
+DimPlot(LLC_MuSCs, reduction = "umap", group.by = "orig.ident", repel = TRUE, pt.size = 1) +
+  ggplot2::labs(title = "", x = "UMAP1", y = "UMAP2") +
+  theme(axis.text.x = element_blank(), axis.text.y = element_blank(), axis.ticks = element_blank())
+```
+
+
+## Plot UMAP, conditions highlighted
+
+```{r}
+DimPlot(LLC_MuSCs, reduction = "umap", group.by = "seurat_clusters", cells.highlight = list("Sham" = WhichCells(LLC_combined, expression = orig.ident == "Sham")), sizes.highlight = 1, pt.size = 1, cols.highlight = "#E87D72"
+) + 
+  ggplot2::labs(title = "", x = "UMAP1", y = "UMAP2") + 
+  theme( axis.text.x = element_blank(), axis.text.y = element_blank(), axis.ticks = element_blank()) + 
+  theme(legend.position = "none")
+
+DimPlot(LLC_MuSCs, reduction = "umap", group.by = "seurat_clusters", cells.highlight = list("2_weeks" = WhichCells(LLC_combined, expression = orig.ident == "2_weeks")), sizes.highlight = 1, pt.size = 1, cols.highlight = "#87AD34") +
+  ggplot2::labs(title = "", x = "UMAP1", y = "UMAP2") +
+  theme(axis.text.x = element_blank(), axis.text.y = element_blank(), axis.ticks = element_blank()) +
+  theme(legend.position = "none")
+
+DimPlot(LLC_MuSCs, reduction = "umap", group.by = "seurat_clusters", cells.highlight = list("2.5_weeks" = WhichCells(LLC_combined, expression = orig.ident == "2.5_weeks")), sizes.highlight = 1, pt.size = 1, cols.highlight = "#56BCC2") +
+  ggplot2::labs(title = "", x = "UMAP1", y = "UMAP2") +
+  theme(axis.text.x = element_blank(), axis.text.y = element_blank(), axis.ticks = element_blank()) +
+  theme(legend.position = "none")
+
+DimPlot(LLC_MuSCs, reduction = "umap", group.by = "seurat_clusters", cells.highlight = list("3.5_weeks" = WhichCells(LLC_combined, expression = orig.ident == "3.5_weeks")), sizes.highlight = 1, pt.size = 1, cols.highlight = "#BC7FF8") +
+  ggplot2::labs(title = "", x = "UMAP1", y = "UMAP2") +
+  theme(axis.text.x = element_blank(), axis.text.y = element_blank(), axis.ticks = element_blank()) +
+  theme(legend.position = "none")
+```
+
+
+
+# DEGs
+
+## Between clusters
+
+```{r, include=FALSE}
+Idents(LLC_MuSCs) <- "seurat_clusters"
+
+DEGs_LLC_MuSCs_Quiescent_v_Activated <- FindMarkers(LLC_MuSCs, ident.1 = "Quiescent", ident.2 = "Activated", logfc.threshold = 0, min.pct = 0.10, verbose = FALSE)
+
+DEGs_LLC_MuSCs_Quiescent_v_Cachectic <- FindMarkers(LLC_MuSCs, ident.1 = "Quiescent", ident.2 = "Cachectic", logfc.threshold = 0, min.pct = 0.10, verbose = FALSE)
+
+DEGs_LLC_MuSCs_Activated_v_Quiescent <- FindMarkers(LLC_MuSCs, ident.1 = "Activated", ident.2 = "Quiescent", logfc.threshold = 0, min.pct = 0.10, verbose = FALSE)
+
+DEGs_LLC_MuSCs_Activated_v_Cachectic <- FindMarkers(LLC_MuSCs, ident.1 = "Activated", ident.2 = "Cachectic", logfc.threshold = 0, min.pct = 0.10, verbose = FALSE)
+
+DEGs_LLC_MuSCs_Cachectic_v_Quiescent <- FindMarkers(LLC_MuSCs, ident.1 = "Cachectic", ident.2 = "Quiescent", logfc.threshold = 0, min.pct = 0.10, verbose = FALSE)
+
+DEGs_LLC_MuSCs_Cachectic_v_Activated <- FindMarkers(LLC_MuSCs, ident.1 = "Cachectic", ident.2 = "Activated", logfc.threshold = 0, min.pct = 0.10, verbose = FALSE)
+```
+
+```{r, include=FALSE}
+write.csv(DEGs_LLC_MuSCs_Quiescent_v_Activated, file = "DEGs_LLC_MuSCs_Quiescent_v_Activated.csv", row.names = TRUE)
+
+write.csv(DEGs_LLC_MuSCs_Quiescent_v_Cachectic, file = "DEGs_LLC_MuSCs_Quiescent_v_Cachectic.csv", row.names = TRUE)
+
+write.csv(DEGs_LLC_MuSCs_Activated_v_Quiescent, file = "DEGs_LLC_MuSCs_Activated_v_Quiescent.csv", row.names = TRUE)
+
+write.csv(DEGs_LLC_MuSCs_Activated_v_Cachectic, file = "DEGs_MuSCs_Activated_v_Cachectic.csv", row.names = TRUE)
+
+write.csv(LLC_MuSCs_Cachectic_v_Quiescent_deg, file = "DEGs_LLC_MuSCs_Cachectic_v_Quiescent.csv", row.names = TRUE)
+
+write.csv(DEGs_LLC_MuSCs_Cachectic_v_Activated, file = "DEGs_LLC_MuSCs_Cachectic_v_Activated.csv", row.names = TRUE)
+```
+
+
+## By condition
+
+```{r, include=FALSE}
+Idents(LLC_MuSCs) <- "orig.ident"
+
+DEGs_LLC_MuSCs_2_v_Sham <- FindMarkers(LLC_MuSCs, ident.1 = "2_weeks", ident.2 = "Sham", logfc.threshold = 0, min.pct = 0.10, verbose = FALSE)
+DEGs_LLC_MuSCs_2.5_v_Sham <- FindMarkers(LLC_MuSCs, ident.1 = "2.5_weeks", ident.2 = "Sham", logfc.threshold = 0, min.pct = 0.10, verbose = FALSE)
+DEGs_LLC_MuSCs_3.5_v_Sham <- FindMarkers(LLC_MuSCs, ident.1 = "3.5_weeks", ident.2 = "Sham", logfc.threshold = 0, min.pct = 0.10, verbose = FALSE)
+```
+
+```{r, include=FALSE}
+write.csv(DEGs_LLC_MuSCs_2_v_Sham, file = "DEGs_LLC_MuSCs_2_v_Sham.csv", row.names = TRUE)
+write.csv(DEGs_LLC_MuSCs_2.5_v_Sham, file = "DEGs_LLC_MuSCs_2.5_v_Sham.csv", row.names = TRUE)
+write.csv(DEGs_LLC_MuSCs_3.5_v_Sham, file = "DEGs_LLC_MuSCs_3.5_v_Sham.csv", row.names = TRUE)
+```
+
+
+
+# Pseudotime
+
+## Convert seurat_object to cell_data_set
+
+```{r, include=FALSE}
+Idents(LLC_MuSCs) <- "seurat_clusters"
+
+LLC_MuSCs_cds <- as.cell_data_set(LLC_MuSCs)
+fData(LLC_MuSCs_cds)$gene_short_name <- rownames(fData(LLC_MuSCs_cds))
+```
+
+
+## Assign partitions
+
+```{r, include=FALSE}
+recreate.partition <- c(rep(1, length(LLC_MuSCs_cds@colData@rownames)))
+names(recreate.partition) <- LLC_MuSCs_cds@colData@rownames
+recreate.partition <- as.factor(recreate.partition)
+
+LLC_MuSCs_cds@clusters$UMAP$partitions <- recreate.partition
+```
+
+
+## Assign cluster information
+
+```{r, include=FALSE}
+list_LLC_MuSCs_clusters <- LLC_MuSCs@active.ident
+LLC_MuSCs_cds@clusters$UMAP$clusters <- list_LLC_MuSCs_clusters
+```
+
+
+## Assign UMAP coordinate - cell embedding
+
+```{r, include=FALSE}
+LLC_MuSCs_cds@int_colData@listData$reducedDims$UMAP <- LLC_MuSCs@reductions$umap@cell.embeddings
+```
+
+
+## Order cells in pseudotime
+
+```{r, include=FALSE}
+LLC_MuSCs_cds <- learn_graph(LLC_MuSCs_cds, use_partition = FALSE)
+
+cluster_assignments <- LLC_MuSCs_cds@clusters$UMAP$clusters
+
+root_cells <- names(cluster_assignments[cluster_assignments == "Quiescent"])
+
+LLC_MuSCs_cds <- order_cells(LLC_MuSCs_cds, reduction_method = "UMAP", root_cells = root_cells)
+```
+
+
+## Add pseudotime to metadata
+
+```{r, include=FALSE}
+LLC_MuSCs_cds$monocle3_pseudotime <- pseudotime(LLC_MuSCs_cds)
+```
+
+
+## Create file with pseudotime values
+
+```{r, include=FALSE}
+LLC_MuSCs_pseudotime_data <- as.data.frame(colData(LLC_MuSCs_cds))
+```
+
+```{r, include=FALSE}
+write.csv(LLC_MuSCs_pseudotime_data, file = "LLC_MuSCs_pseudotime_data.csv", row.names = TRUE)
+```
+
+
+## Plot in pseudotime
+
+```{r}
+plot_cells(LLC_MuSCs_cds, color_cells_by = "pseudotime", 
+           label_branch_points = FALSE, 
+           label_roots = FALSE,
+           label_leaves = FALSE,
+           group_label_size = 3,
+           cell_size = 1.5,
+           trajectory_graph_color = "green") +
+  theme(axis.text.x = element_blank(), axis.text.y = element_blank(), axis.ticks = element_blank())
+```
+
+
+## Check pseudotime values by clusters ("check" to see that the early cells are indeed at a lower pseudotime than the later differentiated)
+
+```{r}
+ggplot(LLC_MuSCs_pseudotime_data, aes(monocle3_pseudotime, seurat_clusters, fill = seurat_clusters)) +
+  geom_boxplot(show.legend = FALSE) +
+  labs(x = "Pseudotime", y = NULL) +
+  theme_classic()
+```
+
+
+
+# KEGG analyses for cachectic subcluster
+
+## Get DEGs in cachectic subcluster
+
+```{r, include=FALSE}
+Idents(LLC_MuSCs) <- "seurat_clusters"
+
+DEGs_cachectic_MuSCs_LLC <- FindMarkers(LLC_MuSCs, ident.1 = "Cachectic", ident.2 = c("Quiescent", "Proliferating", "Activated"), logfc.threshold = 0, min.pct = 0.10, verbose = FALSE)
+```
+
+```{r, include=FALSE}
+write.csv(DEGs_cachectic_MuSCs_LLC, file = "DEGs_cachectic_MuSCs_LLC_rel_all.csv")
+```
+
+
+## Subset DEG for p_val_adj < 0.05
+```{r, include=FALSE}
+DEGs_cachectic_MuSCs_LLC <- na.omit(DEGs_cachectic_MuSCs_LLC)
+DEGs_cachectic_MuSCs_LLC <- subset(DEGs_cachectic_MuSCs_LLC, p_val_adj < 0.05)
+```
+
+
+## Take the row names of the specified genes in each condition that have an -2 > avg_log2FC > 0.2
+
+```{r, include=FALSE}
+DEGs_cachectic_MuSCs_LLC_up <- rownames(DEGs_cachectic_MuSCs_LLC[DEGs_cachectic_MuSCs_LLC$avg_log2FC > 0.2,])
+
+DEGs_cachectic_MuSCs_LLC_down <- rownames(DEGs_cachectic_MuSCs_LLC[DEGs_cachectic_MuSCs_LLC$avg_log2FC < -0.2,])
+```
+
+
+## KEGG pathway analysis
+
+```{r, include=FALSE}
+### Convert gene symbols to Entrez IDs
+DEGs_cachectic_MuSCs_LLC_upIDs <- bitr(DEGs_cachectic_MuSCs_LLC_up,
+                  fromType = "SYMBOL",
+                  toType   = "ENTREZID",
+                  OrgDb    = org.Mm.eg.db)
+
+DEGs_cachectic_MuSCs_LLC_upkegg <- enrichKEGG(
+  gene         = DEGs_cachectic_MuSCs_LLC_upIDs$ENTREZID,
+  organism     = "mmu",
+  keyType      = "kegg",
+  pvalueCutoff = 0.05
+)
+
+
+DEGs_cachectic_MuSCs_LLC_downIDs <- bitr(DEGs_cachectic_MuSCs_LLC_down,
+                  fromType = "SYMBOL",
+                  toType   = "ENTREZID",
+                  OrgDb    = org.Mm.eg.db)
+
+DEGs_cachectic_MuSCs_LLC_downkegg <- enrichKEGG(
+  gene         = DEGs_cachectic_MuSCs_LLC_downIDs$ENTREZID,
+  organism     = "mmu",
+  keyType      = "kegg",
+  pvalueCutoff = 0.05
+)
+```
+
+
+## .csv for KEGG pathways
+
+```{r, include=FALSE}
+write.csv(DEGs_cachectic_MuSCs_LLC_upkegg, file = "DEGs_cachectic_MuSCs_LLC_upkegg.csv", row.names = TRUE)
+
+write.csv(DEGs_cachectic_MuSCs_LLC_downkegg, file = "DEGs_cachectic_MuSCs__LLCdownkegg.csv", row.names = TRUE)
+```
+
+
+## Visualize KEGG pathways
+
+### UP Signaling pathways
+
+```{r}
+signaling_pathways_up <- c(1, 4, 7, 9, 10, 22, 24, 27, 37, 47, 50, 52, 54, 56, 59)
+kegg_signaling_up <- DEGs_cachectic_MuSCs_LLC_upkegg[signaling_pathways_up, ]
+
+kegg_signaling_up$Description <- gsub(" - Mus musculus \\(house mouse\\)$", "", kegg_signaling_up$Description)
+
+ggplot(kegg_signaling_up, aes(x = FoldEnrichment, 
+                           y = reorder(Description, FoldEnrichment),
+                           size = Count, 
+                           color = p.adjust)) +
+  geom_point() +
+  scale_color_gradient(low = "blue", high = "red", name = "adj. p-value") +
+  labs(x = "Fold Enrichment", y = NULL, 
+       title = "UP KEGG Cachectic MuSCs") +
+  theme_minimal() +
+  theme(
+    axis.line = element_line(color = "black"),
+    axis.ticks = element_line(color = "black")
+  )
+```

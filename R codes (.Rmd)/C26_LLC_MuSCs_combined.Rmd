@@ -1,0 +1,1243 @@
+---
+title: "C26_LLC_MuSCs"
+author: "Alex Brown"
+date: "2025-07-11"
+output: html_document
+---
+
+
+
+# Load packages
+
+```{r, include=FALSE}
+library(Seurat)
+library(SeuratWrappers)
+library(tidyverse)
+library(Biobase)
+library(BiocGenerics)
+library(ggplot2)
+library(cowplot)
+library(grid)
+library(gridExtra)
+library(RColorBrewer)
+library(ggbeeswarm)
+library(monocle3)
+library(harmony)
+library(AnnotationDbi)
+library(org.Mm.eg.db)
+library(msigdbr)
+library(clusterProfiler)
+library(UCell)
+library(NMF)
+library(circlize)
+library(ComplexHeatmap)
+library(CellChat)
+library(ggvenn)
+```
+
+
+
+# Load C26 data
+
+```{r, include=FALSE}
+load("C:/Users/nwb_l/Documents/r_projects/Pryce_2025_scRNAseq/Pryce_C26_processed.RData")
+```
+
+
+## Remove unnecessary objects to improve processing
+
+```{r, include=FALSE}
+rm(C26_B_cells, DEGs_C26_B_cells, C26_C26, C26_combined, C26_CTL, C26_Dendritic_cells, DEGs_C26_Dendritic_cells, C26_Endothelial_cells, DEGs_C26_Endothelial_cells, C26_FAPs, DEGs_C26_FAPs, C26_Mast_cells, DEGs_C26_Mast_cells, C26_Monocytes_macrophages, DEGs_C26_Monocytes_macrophages, C26_Myonuclei, DEGs_C26_Myonuclei, C26_Neural_glial_cells, DEGs_C26_Neural_glial_cells, C26_Neutrophils, DEGs_C26_Neutrophils, C26_Schwann_cells, DEGs_C26_Schwann_cells, C26_Platelets, DEGs_C26_Platelets, C26_T_NK_cells, DEGs_C26_T_NK_cells, C26_Tenocytes, DEGs_C26_Tenocytes, C26_vSMCs_pericytes, DEGs_C26_vSMCs_pericytes, DEGs_C26_clusters, C26_cluster_proportions, C26_epithelial_removed)
+```
+
+
+
+# Load LLC data
+
+```{r, include=FALSE}
+load("C:/Users/nwb_l/Documents/r_projects/LLC_timecourse/LLC_timecourse_processed.RData")
+```
+
+
+## Remove unnecessary objects to improve processing
+
+```{r, include=FALSE}
+rm(LLC_combined, LLC_B_cells, LLC_Endothelial_cells, LLC_FAPs, LLC_Monocytes_macrophages, LLC_Myonuclei, LLC_Neural_glial_cells, LLC_Neutrophils, LLC_Platelets, LLC_Schwann_cells, LLC_T_NK_cells, LLC_vSMCs, LLC_Pericytes, Sham, two_weeks, two.five_weeks, three.five_weeks, DEGs_LLC_B_cells, DEGs_LLC_Endothelial_cells, DEGs_LLC_FAPs, DEGs_LLC_Monocytes_macrophages, DEGs_LLC_Myonuclei, DEGs_LLC_Neural_glial_cells, DEGs_LLC_Neutrophils, DEGs_LLC_Platelets, DEGs_LLC_Schwann_cells, DEGs_LLC_T_NK_cells, DEGs_LLC_vSMCs, DEGs_LLC_Pericytes, DEGs_LLC_clusters, ordered_datasets, cluster_proportions)
+```
+
+
+## Subset LLC data to only Sham and 3.5-weeks
+
+```{r, include=FALSE}
+LLC_MuSCs <- subset(LLC_MuSCs, subset = orig.ident %in% c("Sham", "3.5_weeks"))
+
+LLC_MuSCs$orig.ident <- droplevels(LLC_MuSCs$orig.ident)
+```
+
+
+## Rename LLC Sham and 3.5_weeks to match C26 annotations
+
+```{r, include=FALSE}
+LLC_MuSCs$orig.ident <- plyr::mapvalues(
+  LLC_MuSCs$orig.ident,
+  from = c("Sham", "3.5_weeks"),
+  to = c("LLC_CTL", "LLC_LLC")
+)
+```
+
+
+
+# Integrate MuSCs data sets using Harmony
+
+## Merge
+```{r, include=FALSE}
+DefaultAssay(C26_MuSCs) <- "RNA"
+DefaultAssay(LLC_MuSCs) <- "RNA"
+
+C26_MuSCs$experiment <- "C26"
+LLC_MuSCs$experiment <- "LLC"
+
+MuSCs_combined <- merge(C26_MuSCs, y = list(LLC_MuSCs),
+                                    add.cell.ids = c("C26", "LLC"))
+
+MuSCs_combined$orig.ident <- factor(
+  MuSCs_combined$orig.ident,
+  levels = c("C26_CTL", "C26_C26", "LLC_CTL", "LLC_LLC")
+)
+```
+
+
+## Pre-process
+```{r, include=FALSE}
+MuSCs_combined <- NormalizeData(MuSCs_combined) %>%
+  FindVariableFeatures() %>%
+  ScaleData() %>%
+  RunPCA(npcs = 50)
+```
+
+```{r}
+ElbowPlot(MuSCs_combined, ndims = 50)
+```
+
+
+## Run harmony
+
+```{r, include=FALSE}
+MuSCs_combined <- RunHarmony(MuSCs_combined, group.by.vars = "experiment")
+
+MuSCs_combined <- FindNeighbors(MuSCs_combined,reduction = "harmony",
+                                dims = 1:22) %>% 
+  FindClusters(resolution = 0.5)
+
+MuSCs_combined <- RunUMAP(MuSCs_combined, reduction = "harmony", dims = 1:22)
+```
+
+### Viualize data integration
+
+```{r}
+DimPlot(MuSCs_combined, reduction = "harmony", group.by = "experiment", repel = TRUE, pt.size = 1) +
+  ggplot2::labs(title = "", x = "harmony1", y = "harmony2") +
+  theme(axis.text.x = element_blank(), axis.text.y = element_blank(), axis.ticks = element_blank())
+
+DimPlot(
+  MuSCs_combined,
+  reduction = "harmony",
+  group.by = "orig.ident",
+  cells.highlight = list("C26" = WhichCells(MuSCs_combined, expression = experiment == "C26")),
+  sizes.highlight = 1,
+  pt.size = 1,
+  cols.highlight = "#E87D72"
+) +
+  ggplot2::labs(title = "", x = "harmony1", y = "harmony2") +
+  theme(
+    axis.text.x = element_blank(),
+    axis.text.y = element_blank(),
+    axis.ticks = element_blank()) +
+  theme(legend.position = "none")
+
+DimPlot(
+  MuSCs_combined,
+  reduction = "harmony",
+  group.by = "orig.ident",
+  cells.highlight = list("LLC" = WhichCells(MuSCs_combined, expression = experiment == "LLC")),
+  sizes.highlight = 1,
+  pt.size = 1,
+  cols.highlight = "#56BCC2"
+) +
+  ggplot2::labs(title = "", x = "harmony1", y = "harmony2") +
+  theme(
+    axis.text.x = element_blank(),
+    axis.text.y = element_blank(),
+    axis.ticks = element_blank()) +
+  theme(legend.position = "none")
+```
+
+
+
+# Annotate clusters 
+
+```{r, include=FALSE}
+DefaultAssay(MuSCs_combined) <- "RNA"
+
+Idents(MuSCs_combined) <- MuSCs_combined$seurat_clusters
+MuSCs_combined <- JoinLayers(MuSCs_combined, what = "all")
+
+DEGs_MuSCs_combined_subclusters <- FindAllMarkers(
+  object = MuSCs_combined, group.by = "seurat_clusters", 
+  test.use = "LR", only.pos = TRUE, min.pct = 0.25, logfc.threshold = 0.25)
+```
+
+
+## Specify subclusters
+
+```{r, include=FALSE}
+MuSCs_combined_cluster_ids <- levels(MuSCs_combined$seurat_clusters)
+
+MuSCs_combined_cluster_labels <- c("Activated", "Quiescent", "Cachectic", "Cachectic", "Vascular")
+
+MuSCs_combined_clusters <- MuSCs_combined@meta.data$seurat_clusters
+
+MuSCs_combined$seurat_clusters <- MuSCs_combined_cluster_labels[MuSCs_combined$seurat_clusters]
+```
+
+
+
+## Order conditions
+
+```{r, include=FALSE}
+MuSCs_combined$orig.ident <- factor(MuSCs_combined$orig.ident, levels = c("C26_CTL", "C26_C26", "LLC_CTL", "LLC_LLC"))
+```
+
+
+## Order subclusters
+
+```{r, include=FALSE}
+MuSCs_combined$seurat_clusters <- factor(MuSCs_combined$seurat_clusters, levels = c("Quiescent", "Activated", "Cachectic", "Vascular"))
+```
+
+
+## Run FindAllMarkers again
+
+```{r, include=FALSE}
+DefaultAssay(MuSCs_combined) <- "RNA"
+
+Idents(MuSCs_combined) <- MuSCs_combined$seurat_clusters
+MuSCs_combined <- JoinLayers(MuSCs_combined, what = "all")
+DEGs_MuSCs_combined_subclusters <- FindAllMarkers(object = MuSCs_combined, group.by = "seurat_clusters", test.use = "LR", only.pos = TRUE, min.pct = 0.25, logfc.threshold = 0.25)
+```
+
+```{r, include=FALSE}
+write.csv(DEGs_MuSCs_combined_subclusters, file = "DEGs_MuSCs_combined_subclusters.csv", row.names = FALSE)
+```
+
+
+## Plot to show DEGs between subclusters
+
+```{r}
+MuSCs_combined_cluster_ids <- levels(MuSCs_combined$seurat_clusters)
+Idents(MuSCs_combined) <- "seurat_clusters"
+
+VlnPlot_Pax7 <- VlnPlot(MuSCs_combined, features = "Pax7") +
+  theme(legend.position = "none", axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1)) +
+  labs(x = NULL, y = "Expression", title = "Pax7")
+
+VlnPlot_Myf5 <- VlnPlot(MuSCs_combined, features = "Myf5") +
+  theme(legend.position = "none", axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1)) +
+  labs(x = NULL, y = "Expression", title = "Myf5")
+
+VlnPlot_Myod1 <- VlnPlot(MuSCs_combined, features = "Myod1") +
+  theme(legend.position = "none", axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1)) +
+  labs(x = NULL, y = "Expression", title = "Myod1")
+
+VlnPlot_Cebpb <- VlnPlot(MuSCs_combined, features = "Cebpb") +
+  theme(legend.position = "none", axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1)) +
+  labs(x = NULL, y = "Expression", title = "Cebpb")
+
+VlnPlot_Cdh5 <- VlnPlot(MuSCs_combined, features = "Cdh5") +
+  theme(legend.position = "none", axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1)) +
+  labs(x = NULL, y = "Expression", title = "Cdh5")
+
+VlnPlot_Acta1 <- VlnPlot(MuSCs_combined, features = "Acta1") +
+  theme(legend.position = "none", axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1)) +
+  labs(x = NULL, y = "Expression", title = "Acta1")
+
+grid.arrange(VlnPlot_Pax7, VlnPlot_Myf5, VlnPlot_Myod1, VlnPlot_Cebpb, VlnPlot_Cdh5, VlnPlot_Acta1, nrow = 2, ncol = 3)
+```
+
+
+## Plot stacked barplot for subcluster proportions
+
+### Extract the proportions from the MuSCs Seurat object
+```{r, include=FALSE}
+MuSCs_combined_cluster_proportions <- MuSCs_combined@meta.data %>%
+  dplyr::select(orig.ident, seurat_clusters) %>%
+  group_by(orig.ident, seurat_clusters) %>%
+  summarize(count = n()) %>%
+  group_by(orig.ident) %>%
+  mutate(percentage = count / sum(count) * 100)
+```
+
+```{r, include=FALSE}
+write.csv(MuSCs_combined_cluster_proportions, file = "MuSCs_combined_cluster_proportions.csv", row.names = TRUE)
+```
+
+
+```{r}
+MuSCs_combined_cluster_proportions$orig.ident <- factor(
+  MuSCs_combined_cluster_proportions$orig.ident,
+  levels = c("C26_CTL", "C26_C26", "LLC_CTL", "LLC_LLC"),
+  labels = c("C26 CTL", "C26 Tumour-bearing", "LLC CTL", "LLC tumour-bearing"))
+
+ggplot(MuSCs_combined_cluster_proportions, aes(x = orig.ident, y = percentage, fill = seurat_clusters)) +
+  geom_bar(stat = "identity", width = 0.75, color = "black") +
+  scale_y_continuous(labels = scales::percent_format(scale = 1), expand = c(0, 0)) +
+  labs(title = "", x = "", y = "Proportion") +
+  theme(legend.position = "right", panel.background = element_blank(), axis.line = element_line(color = "black"), axis.text.x = element_text(angle = 45, hjust = 1)) +
+  guides(fill = guide_legend(title = NULL))
+```
+
+
+## Plot UMAP by subcluster
+
+```{r}
+DimPlot(MuSCs_combined, reduction = "umap", group.by = "seurat_clusters", repel = TRUE, pt.size = 1) +
+  ggplot2::labs(title = "", x = "UMAP1", y = "UMAP2") +
+  theme(axis.text.x = element_blank(), axis.text.y = element_blank(), axis.ticks = element_blank())
+```
+
+## Plot UMAP by condition
+
+```{r}
+DimPlot(MuSCs_combined, reduction = "umap", group.by = "orig.ident", repel = TRUE, pt.size = 1) +
+  ggplot2::labs(title = "", x = "UMAP1", y = "UMAP2") +
+  theme(axis.text.x = element_blank(), axis.text.y = element_blank(), axis.ticks = element_blank())
+```
+
+
+## Plot UMAP, conditions highlighted
+
+```{r}
+DimPlot(
+  MuSCs_combined,
+  reduction = "umap",
+  group.by = "seurat_clusters",
+  cells.highlight = list(
+    "C26_CTL" = WhichCells(MuSCs_combined, expression = orig.ident == "C26_CTL"),
+    "LLC_CTL" = WhichCells(MuSCs_combined, expression = orig.ident == "LLC_CTL")
+  ),
+  sizes.highlight = c(1, 1),
+  pt.size = 1,
+  cols.highlight = c("#56BCC2", "#E87D72")
+) +
+  ggplot2::labs(title = "", x = "UMAP1", y = "UMAP2") +
+  theme(
+    axis.text.x = element_blank(),
+    axis.text.y = element_blank(),
+    axis.ticks = element_blank()
+  ) +
+  theme(legend.position = "none")
+
+DimPlot(
+  MuSCs_combined,
+  reduction = "umap",
+  group.by = "seurat_clusters",
+  cells.highlight = list(
+    "C26_C26" = WhichCells(MuSCs_combined, expression = orig.ident == "C26_C26"),
+    "LLC_LLC" = WhichCells(MuSCs_combined, expression = orig.ident == "LLC_LLC")
+  ),
+  sizes.highlight = c(1, 1),
+  pt.size = 1,
+  cols.highlight = c("#BC7FF8", "#87AD34")  # Assign different highlight colors
+) +
+  ggplot2::labs(title = "", x = "UMAP1", y = "UMAP2") +
+  theme(
+    axis.text.x = element_blank(),
+    axis.text.y = element_blank(),
+    axis.ticks = element_blank()
+  ) +
+  theme(legend.position = "none")
+```
+
+
+
+# Pseudotime
+
+## Convert MuSCs_combined to cell_data_set
+
+```{r, include=FALSE}
+Idents(MuSCs_combined) <- "seurat_clusters"
+
+MuSCs_combined_cds <- as.cell_data_set(MuSCs_combined)
+fData(MuSCs_combined_cds)$gene_short_name <- rownames(fData(MuSCs_combined_cds))
+```
+
+
+## Assign partitions
+
+```{r, include=FALSE}
+recreate.partition <- c(rep(1, length(MuSCs_combined_cds@colData@rownames)))
+names(recreate.partition) <- MuSCs_combined_cds@colData@rownames
+recreate.partition <- as.factor(recreate.partition)
+
+MuSCs_combined_cds@clusters$UMAP$partitions <- recreate.partition
+```
+
+
+## Assign cluster information
+
+```{r, include=FALSE}
+list_MuSCs_combined_clusters <- MuSCs_combined@active.ident
+MuSCs_combined_cds@clusters$UMAP$clusters <- list_MuSCs_combined_clusters
+```
+
+
+## Assign UMAP coordinate - cell embedding
+
+```{r, include=FALSE}
+MuSCs_combined_cds@int_colData@listData$reducedDims$UMAP <- MuSCs_combined@reductions$umap@cell.embeddings
+```
+
+
+## Order cells in pseudotime
+
+```{r, include=FALSE}
+MuSCs_combined_cds <- learn_graph(MuSCs_combined_cds, use_partition = FALSE)
+
+cluster_assignments <- MuSCs_combined_cds@clusters$UMAP$clusters
+
+root_cells <- names(cluster_assignments[cluster_assignments == "Quiescent"])
+
+MuSCs_combined_cds <- order_cells(MuSCs_combined_cds, reduction_method = "UMAP", root_cells = root_cells)
+```
+
+
+## Add pseudotime to metadata
+
+```{r, include=FALSE}
+MuSCs_combined_cds$monocle3_pseudotime <- pseudotime(MuSCs_combined_cds)
+```
+
+
+## Create file with pseudotime values
+
+```{r, include=FALSE}
+MuSCs_combined_pseudotime_data <- as.data.frame(colData(MuSCs_combined_cds))
+```
+
+```{r, include=FALSE}
+write.csv(MuSCs_combined_pseudotime_data, file = "MuSCs_combined_pseudotime_data.csv", row.names = TRUE)
+```
+
+
+## Plot in pseudotime
+
+```{r}
+plot_cells(MuSCs_combined_cds, color_cells_by = "pseudotime", 
+           label_branch_points = FALSE, 
+           label_roots = FALSE,
+           label_leaves = FALSE,
+           group_label_size = 3,
+           cell_size = 1.5,
+           trajectory_graph_color = "green") +
+  theme(axis.text.x = element_blank(), axis.text.y = element_blank(), axis.ticks = element_blank())
+```
+
+
+## Check pseudotime values by clusters ("check" to see that the early cells are indeed at a lower pseudotime than the later differentiated)
+
+```{r}
+ggplot(MuSCs_combined_pseudotime_data, aes(monocle3_pseudotime, seurat_clusters, fill = seurat_clusters)) +
+  geom_boxplot(show.legend = FALSE) +
+  labs(x = "Pseudotime", y = NULL) +
+  theme_classic()
+```
+
+
+
+# Cell scoring
+
+## Create gene list
+```{r, include=FALSE}
+cachexia_gene_list <- cachexia_gene_list <- read.csv("C:/Users/nwb_l/Documents/r_projects/LLC_timecourse/MuSCs_combined/DEGs_MuSCs_combined_subclusters.csv")
+
+cachexia_gene_list <- cachexia_gene_list[cachexia_gene_list$cluster == "Cachectic" & cachexia_gene_list$p_val_adj < 0.05, ]
+
+cachexia_gene_list <- cachexia_gene_list$gene
+```
+
+
+## AddModuleScore by subcluster
+
+```{r, include=FALSE}
+cachexia_score <- AddModuleScore_UCell(MuSCs_combined, features = list(cachexia_gene_list), name = "cachexia_score")
+
+means_cachexia_score <- cachexia_score@meta.data %>%
+  group_by(seurat_clusters) %>%
+  summarise(average_cachexia_score = mean(signature_1cachexia_score, na.rm = TRUE))
+```
+
+```{r}
+print(means_cachexia_score)
+```
+
+
+```{r}
+VlnPlot(cachexia_score, features = "signature_1cachexia_score", group.by = "seurat_clusters") +
+  theme(legend.position = "none", axis.text.x = element_text(angle = 45)) +
+  labs(x = NULL, y = "Cachexia Score", title = NULL) +
+  geom_hline(yintercept = 0, linetype = "solid", color = "black")
+```
+
+```{r}
+df_C26 <- subset(cachexia_score@meta.data, orig.ident %in% c("C26_CTL", "C26_C26"))
+
+### NOTE - This treats cells as separate entities
+wilcox.test(signature_1cachexia_score ~ orig.ident, data = df_C26)
+```
+
+```{r}
+df_LLC <- subset(cachexia_score@meta.data, orig.ident %in% c("LLC_CTL", "LLC_LLC"))
+
+### NOTE - This treats cells as separate entities
+wilcox.test(signature_1cachexia_score ~ orig.ident, data = df_LLC)
+```
+
+
+## AddModuleScore by condition
+
+```{r, include=FALSE}
+means_cachexia_score_condition <- cachexia_score@meta.data %>%
+  group_by(orig.ident) %>%
+  summarise(average_cachexia_score = mean(signature_1cachexia_score, na.rm = TRUE))
+```
+
+```{r}
+print(means_cachexia_score_condition)
+```
+
+
+```{r}
+VlnPlot(cachexia_score, features = "signature_1cachexia_score", group.by = "orig.ident") +
+  theme(legend.position = "none", axis.text.x = element_text(angle = 45)) +
+  labs(x = NULL, y = "Cachexia Score", title = NULL) +
+  geom_hline(yintercept = 0, linetype = "solid", color = "black")
+```
+
+
+## Dimplot for cachexia score
+
+```{r}
+FeaturePlot(
+  cachexia_score, features = "signature_1cachexia_score", reduction = "umap") +
+  labs(color = "Cachexia Score") +
+  theme(plot.title = element_blank())
+```
+
+
+
+# Senescence scoring 
+
+## Create gene list
+```{r, include=FALSE}
+reactome_genesets_mouse <- msigdbr(species = "Mus musculus", category = "C2", subcategory = "CP:REACTOME")
+
+senescence_genes <- reactome_genesets_mouse %>%
+filter(gs_name == "REACTOME_CELLULAR_SENESCENCE")
+senescence_gene_list <- unique(senescence_genes$gene_symbol)
+
+
+
+SC_senescence_module_score <- AddModuleScore_UCell(MuSCs_combined, features = list(senescence_gene_list), name = "senescence_score")
+```
+
+
+## AddModuleScore by subcluster
+
+```{r, include=FALSE}
+means_senescence_score <- SC_senescence_module_score@meta.data %>%
+  group_by(seurat_clusters) %>%
+  summarise(Average_Senescence_Score = mean(signature_1senescence_score, na.rm = TRUE))
+```
+
+```{r}
+print(means_senescence_score)
+```
+
+```{r}
+VlnPlot(SC_senescence_module_score, features = "signature_1senescence_score", group.by = "seurat_clusters") +
+  theme(legend.position = "none", axis.text.x = element_text(angle = 45)) +
+  labs(x = NULL, y = "Senescence Score", title = NULL) +
+  geom_hline(yintercept = 0, linetype = "solid", color = "black")
+```
+
+
+
+# Collagen scoring by subcluster
+
+```{r}
+Idents(MuSCs_combined) <- "seurat_clusters"
+
+### Find Collagen genes in data set
+grep("^Col", rownames(MuSCs_combined), value = TRUE)
+
+collagen_genes <- c("Col9a1", "Col19a1", "Col3a1", "Col5a2", "Col4a4", "Col4a3", "Col6a3", "Col5a1", "Col9a3", "Col20a1", "Col11a1", "Col25a1", "Col24a1", "Col15a1", "Col27a1", "Col9a2", "Col8a2", "Col16a1", "Col26a1", "Col1a2", "Col28a1", "Col4a1", "Col4a2", "Col5a3", "Col12a1", "Col6a6", "Col6a5", "Col6a4", "Col7a1", "Col10a1", "Col13a1", "Col6a2", "Col6a1", "Col18a1", "Col23a1", "Col1a1", "Col4a3bp", "Col14a1", "Col22a1", "Col2a1", "Col8a1", "Col11a2", "Col17a1", "Col4a6", "Col4a5")
+
+### Score cells
+collagen_score <- AddModuleScore_UCell(MuSCs_combined, features = list(collagen_genes), name = "collagen_score")
+
+means_collagen_score <- collagen_score@meta.data %>%
+  group_by(seurat_clusters) %>%
+  summarise(average_collagen_score = mean(signature_1collagen_score, na.rm = TRUE))
+
+print(means_collagen_score)
+
+VlnPlot(collagen_score, features = "signature_1collagen_score", group.by = "seurat_clusters", pt.size = 0) +
+  theme(legend.position = "none", axis.text.x = element_text(angle = 45)) +
+  labs(x = NULL, y = "Collagen Score", title = NULL) +
+  geom_hline(yintercept = 0, linetype = "solid", color = "black")
+
+VlnPlot(MuSCs_combined, features = "Sdc4", pt.size = 0) +
+  theme(legend.position = "none", axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1)) +
+  labs(x = NULL, y = "Expression", title = "Sdc4")
+```
+
+
+
+# Laminin scoring by subcluster
+
+```{r}
+Idents(MuSCs_combined) <- "seurat_clusters"
+
+### Find Collagen genes in data set
+grep("^Lam", rownames(MuSCs_combined), value = TRUE)
+
+laminin_genes <- c("Lamc2", "Lamc1", "Lamb3", "Lamc3", "Lama5", "Lamb2", "Lama2", "Lama4", "Lamb1", "Lama1", "Lama3")
+
+### Score cells
+laminin_score <- AddModuleScore_UCell(MuSCs_combined, features = list(laminin_genes), name = "laminin_score")
+
+means_laminin_score <- laminin_score@meta.data %>%
+  group_by(seurat_clusters) %>%
+  summarise(average_laminin_score = mean(signature_1laminin_score, na.rm = TRUE))
+
+print(means_laminin_score)
+
+VlnPlot(laminin_score, features = "signature_1laminin_score", group.by = "seurat_clusters", pt.size = 0) +
+  theme(legend.position = "none", axis.text.x = element_text(angle = 45)) +
+  labs(x = NULL, y = "Laminin Score", title = NULL) +
+  geom_hline(yintercept = 0, linetype = "solid", color = "black")
+
+VlnPlot(MuSCs_combined, features = "Dag1", pt.size = 0) +
+  theme(legend.position = "none", axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1)) +
+  labs(x = NULL, y = "Expression", title = "Dag1")
+```
+
+
+
+# Cell matrix adhesion scoring 
+
+## Create gene list
+```{r, include=FALSE}
+bp_genesets_mouse <- msigdbr(species = "Mus musculus", category = "C5", subcategory = "GO:BP")
+
+cell_adhesion_genes <- bp_genesets_mouse %>%
+  filter(gs_name == "GOBP_CELL_MATRIX_ADHESION")
+cell_adhesion_gene_list <- unique(cell_adhesion_genes$gene_symbol)
+
+
+
+cell_adhesion_module_score <- AddModuleScore_UCell(MuSCs_combined, features = list(cell_adhesion_gene_list), name = "cell_adhesion_score")
+```
+
+
+## AddModuleScore by subcluster
+
+```{r, include=FALSE}
+means_cell_adhesion_score <- cell_adhesion_module_score@meta.data %>%
+  group_by(seurat_clusters) %>%
+  summarise(Average_Cell_Adhesion_Score = mean(signature_1cell_adhesion_score, na.rm = TRUE))
+```
+
+```{r}
+print(means_cell_adhesion_score)
+```
+
+```{r}
+VlnPlot(cell_adhesion_module_score, features = "signature_1cell_adhesion_score", group.by = "seurat_clusters", pt.size = 0) +
+  theme(legend.position = "none", axis.text.x = element_text(angle = 45)) +
+  labs(x = NULL, y = "Cell adhesion to matrix Score", title = NULL) +
+  geom_hline(yintercept = 0, linetype = "solid", color = "black")
+```
+
+
+
+# Compare C26 and LLC cachectic subclusters
+
+## Find common upregulated genes in cachectic subclusters
+```{r, include = FALSE}
+C26_cachectic_genes <- read.csv("C:/Users/nwb_l/Documents/r_projects/Pryce_2025_scRNAseq/C26_MuSCs/DEGs_C26_MuSCs_subclusters.csv")
+
+C26_cachectic_genes <- C26_cachectic_genes %>%
+  filter(cluster == "Cachectic", p_val_adj < 0.05) %>%
+  select(gene)
+
+C26_cachectic_genes <- C26_cachectic_genes$gene
+
+
+LLC_cachectic_genes <- read.csv("C:/Users/nwb_l/Documents/r_projects/LLC_timecourse/MuSCs/DEGs_LLC_MuSCs_subclusters.csv")
+
+LLC_cachectic_genes <- LLC_cachectic_genes %>%
+  filter(cluster == "Cachectic", p_val_adj < 0.05) %>%
+  select(gene)
+
+LLC_cachectic_genes <- LLC_cachectic_genes$gene
+
+
+common_cachectic_genes <- intersect(C26_cachectic_genes, LLC_cachectic_genes)
+common_cachectic_genes <- common_cachectic_genes[!grepl("^NA\\.", common_cachectic_genes)]
+
+write.csv(common_cachectic_genes, file = "common_cachectic_genes.csv", row.names = FALSE)
+```
+
+
+## Venn diagram
+
+```{r}
+venn_data_cachectic <- list(
+  C26 = C26_cachectic_genes,
+  LLC = LLC_cachectic_genes
+)
+
+ggvenn(venn_data_cachectic, 
+       fill_color = c("green", "purple", "blue"),
+       stroke_color = "black",
+       text_size = 5,
+       show_percentage = FALSE) +
+  ggtitle("Common Genes Cachectic Subcluster") +
+  theme(plot.title = element_text(hjust = 0.5,
+                                  size = 16,
+                                  face = "bold"))
+```
+
+
+## Plot to show common genes between conditions
+
+```{r}
+common_cachectic_genes <- c(
+  "Mt1", "Mt2", "Sdc4", "Fth1", "Errfi1", "Lmna", "Eif1", "Pnrc1",
+  "Nfkbia", "Glis3", "Samd4", "Cebpb", "Runx1", "Arid5b", "Ifitm3", "Tgif1",
+  "Cfh", "Osmr", "Hbb-bs", "Ugcg", "Sat1", "Ctsl", "Pim1", "Sbno2",
+  "Trib1", "Tmem176b", "Slc39a14"
+)
+
+Idents(MuSCs_combined) <- "orig.ident"
+
+vln_plots <- lapply(common_cachectic_genes, function(gene) {
+  VlnPlot(MuSCs_combined, features = gene, pt.size = 0) +
+    theme(
+      legend.position = "none",
+      axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1)
+    ) +
+    labs(x = NULL, y = "Expression", title = gene)
+})
+
+do.call(grid.arrange, c(vln_plots, ncol = 4))
+```
+
+
+
+# GO terms and KEGG analyses for cachectic subcluster
+
+## Get DEGs in cachectic subcluster
+
+```{r, include=FALSE}
+Idents(MuSCs_combined) <- "seurat_clusters"
+
+DEGs_cachectic_MuSCs <- FindMarkers(MuSCs_combined, ident.1 = "Cachectic", ident.2 = c("Quiescent", "Activated", "Vascular"), logfc.threshold = 0, min.pct = 0.10, verbose = FALSE)
+```
+
+```{r, include=FALSE}
+write.csv(DEGs_cachectic_MuSCs, file = "DEGs_cachectic_MuSCs_rel_all.csv")
+```
+
+
+## Subset DEG for p_val_adj < 0.05
+```{r, include=FALSE}
+DEGs_cachectic_MuSCs <- na.omit(DEGs_cachectic_MuSCs)
+DEGs_cachectic_MuSCs <- subset(DEGs_cachectic_MuSCs, p_val_adj < 0.05)
+```
+
+
+## Take the row names of the specified genes in each condition that have an -2 > avg_log2FC > 0.2
+
+```{r, include=FALSE}
+DEGs_cachectic_MuSCs_up <- rownames(DEGs_cachectic_MuSCs[DEGs_cachectic_MuSCs$avg_log2FC > 0.2,])
+
+DEGs_cachectic_MuSCs_down <- rownames(DEGs_cachectic_MuSCs[DEGs_cachectic_MuSCs$avg_log2FC < -0.2,])
+```
+
+
+## Run GO analysis
+
+```{r, include=FALSE}
+DEGs_cachectic_MuSCs_upgo <- enrichGO(gene = DEGs_cachectic_MuSCs_up, OrgDb = "org.Mm.eg.db", keyType = "SYMBOL", ont = "BP")
+DEGs_cachectic_MuSCs_downgo <- enrichGO(gene = DEGs_cachectic_MuSCs_down, OrgDb = "org.Mm.eg.db", keyType = "SYMBOL", ont = "BP")
+```
+
+
+## .csv for GO terms
+
+```{r, include=FALSE}
+write.csv(DEGs_cachectic_MuSCs_upgo, file = "DEGs_cachectic_MuSCs_upgo.csv", row.names = TRUE)
+write.csv(DEGs_cachectic_MuSCs_downgo, file = "DEGs_cachectic_MuSCs_downgo.csv", row.names = TRUE)
+```
+
+
+## KEGG pathway analysis
+
+```{r, include=FALSE}
+### Convert gene symbols to Entrez IDs
+DEGs_cachectic_MuSCs_upIDs <- bitr(DEGs_cachectic_MuSCs_up,
+                  fromType = "SYMBOL",
+                  toType   = "ENTREZID",
+                  OrgDb    = org.Mm.eg.db)
+
+DEGs_cachectic_MuSCs_upkegg <- enrichKEGG(
+  gene         = DEGs_cachectic_MuSCs_upIDs$ENTREZID,
+  organism     = "mmu",
+  keyType      = "kegg",
+  pvalueCutoff = 0.05
+)
+
+
+DEGs_cachectic_MuSCs_downIDs <- bitr(DEGs_cachectic_MuSCs_down,
+                  fromType = "SYMBOL",
+                  toType   = "ENTREZID",
+                  OrgDb    = org.Mm.eg.db)
+
+DEGs_cachectic_MuSCs_downkegg <- enrichKEGG(
+  gene         = DEGs_cachectic_MuSCs_downIDs$ENTREZID,
+  organism     = "mmu",
+  keyType      = "kegg",
+  pvalueCutoff = 0.05
+)
+```
+
+
+## .csv for KEGG pathways
+
+```{r, include=FALSE}
+write.csv(DEGs_cachectic_MuSCs_upkegg, file = "DEGs_cachectic_MuSCs_upkegg.csv", row.names = TRUE)
+
+write.csv(DEGs_cachectic_MuSCs_downkegg, file = "DEGs_cachectic_MuSCs_downkegg.csv", row.names = TRUE)
+```
+
+
+## Visualize KEGG pathways
+
+### UP Signaling pathways
+
+```{r}
+signaling_pathways_up <- c(3, 7, 8, 16, 17, 20, 37, 44, 55)
+kegg_signaling_up <- DEGs_cachectic_MuSCs_upkegg[signaling_pathways_up, ]
+
+kegg_signaling_up$Description <- gsub(" - Mus musculus \\(house mouse\\)$", "", kegg_signaling_up$Description)
+
+ggplot(kegg_signaling_up, aes(x = FoldEnrichment, 
+                           y = reorder(Description, FoldEnrichment),
+                           size = Count, 
+                           color = p.adjust)) +
+  geom_point() +
+  scale_color_gradient(low = "blue", high = "red", name = "adj. p-value") +
+  labs(x = "Fold Enrichment", y = NULL, 
+       title = "UP KEGG Cachectic MuSCs") +
+  theme_minimal() +
+  theme(
+    axis.line = element_line(color = "black"),
+    axis.ticks = element_line(color = "black")
+  )
+```
+
+### Main drivers of UP Signaling pathways
+
+#### TNF
+
+```{r, include=FALSE}
+TNF_genes <- DEGs_cachectic_MuSCs_upkegg %>%
+  filter(Description == "TNF signaling pathway - Mus musculus (house mouse)")
+
+# Extract Entrez IDs and map to symbols
+TNF_gene_symbols <- bitr(
+  unlist(strsplit(TNF_genes$geneID, "/")),
+  fromType = "ENTREZID",
+  toType = "SYMBOL",
+  OrgDb = org.Mm.eg.db
+)$SYMBOL
+
+# Filter DEGs by these symbols
+TNF_DEGs <- DEGs_cachectic_MuSCs[TNF_gene_symbols, ]
+
+# Add a score column
+TNF_DEGs <- TNF_DEGs %>%
+  mutate(Importance = abs(avg_log2FC) * -log10(p_val_adj))
+
+TNF_DEGs <- TNF_DEGs[order(-TNF_DEGs$Importance), ]
+```
+
+#### IL-17
+
+```{r, include=FALSE}
+IL17_genes <- DEGs_cachectic_MuSCs_upkegg %>%
+  filter(Description == "IL-17 signaling pathway - Mus musculus (house mouse)")
+
+# Extract Entrez IDs and map to symbols
+IL17_gene_symbols <- bitr(
+  unlist(strsplit(IL17_genes$geneID, "/")),
+  fromType = "ENTREZID",
+  toType = "SYMBOL",
+  OrgDb = org.Mm.eg.db
+)$SYMBOL
+
+# Filter DEGs by these symbols
+IL17_DEGs <- DEGs_cachectic_MuSCs[IL17_gene_symbols, ]
+
+# Add a score column
+IL17_DEGs <- IL17_DEGs %>%
+  mutate(Importance = abs(avg_log2FC) * -log10(p_val_adj))
+
+IL17_DEGs <- IL17_DEGs[order(-IL17_DEGs$Importance), ]
+```
+
+#### MAPK 
+
+```{r, include=FALSE}
+MAPK_genes <- DEGs_cachectic_MuSCs_upkegg %>%
+  filter(Description == "MAPK signaling pathway - Mus musculus (house mouse)")
+
+MAPK_gene_symbols <- bitr(
+  unlist(strsplit(MAPK_genes$geneID, "/")),
+  fromType = "ENTREZID",
+  toType = "SYMBOL",
+  OrgDb = org.Mm.eg.db
+)$SYMBOL
+
+MAPK_DEGs <- DEGs_cachectic_MuSCs[MAPK_gene_symbols, ] %>%
+  mutate(Importance = abs(avg_log2FC) * -log10(p_val_adj)) %>%
+  arrange(desc(Importance))
+```
+
+#### FoxO
+
+```{r, include=FALSE}
+FoxO_genes <- DEGs_cachectic_MuSCs_upkegg %>%
+  filter(Description == "FoxO signaling pathway - Mus musculus (house mouse)")
+
+FoxO_gene_symbols <- bitr(
+  unlist(strsplit(FoxO_genes$geneID, "/")),
+  fromType = "ENTREZID",
+  toType = "SYMBOL",
+  OrgDb = org.Mm.eg.db
+)$SYMBOL
+
+FoxO_DEGs <- DEGs_cachectic_MuSCs[FoxO_gene_symbols, ] %>%
+  mutate(Importance = abs(avg_log2FC) * -log10(p_val_adj)) %>%
+  arrange(desc(Importance))
+```
+
+#### NOD-like receptor
+
+```{r, include=FALSE}
+NOD_genes <- DEGs_cachectic_MuSCs_upkegg %>%
+  filter(Description == "NOD-like receptor signaling pathway - Mus musculus (house mouse)")
+
+NOD_gene_symbols <- bitr(
+  unlist(strsplit(NOD_genes$geneID, "/")),
+  fromType = "ENTREZID",
+  toType = "SYMBOL",
+  OrgDb = org.Mm.eg.db
+)$SYMBOL
+
+NOD_DEGs <- DEGs_cachectic_MuSCs[NOD_gene_symbols, ] %>%
+  mutate(Importance = abs(avg_log2FC) * -log10(p_val_adj)) %>%
+  arrange(desc(Importance))
+```
+
+#### NF-kB
+
+```{r, include=FALSE}
+NFkB_genes <- DEGs_cachectic_MuSCs_upkegg %>%
+  filter(Description == "NF-kappa B signaling pathway - Mus musculus (house mouse)")
+
+NFkB_gene_symbols <- bitr(
+  unlist(strsplit(NFkB_genes$geneID, "/")),
+  fromType = "ENTREZID",
+  toType = "SYMBOL",
+  OrgDb = org.Mm.eg.db
+)$SYMBOL
+
+NFkB_DEGs <- DEGs_cachectic_MuSCs[NFkB_gene_symbols, ] %>%
+  mutate(Importance = abs(avg_log2FC) * -log10(p_val_adj)) %>%
+  arrange(desc(Importance))
+```
+
+#### p53
+
+```{r, include=FALSE}
+p53_genes <- DEGs_cachectic_MuSCs_upkegg %>%
+  filter(Description == "p53 signaling pathway - Mus musculus (house mouse)")
+
+p53_gene_symbols <- bitr(
+  unlist(strsplit(p53_genes$geneID, "/")),
+  fromType = "ENTREZID",
+  toType = "SYMBOL",
+  OrgDb = org.Mm.eg.db
+)$SYMBOL
+
+p53_DEGs <- DEGs_cachectic_MuSCs[p53_gene_symbols, ] %>%
+  mutate(Importance = abs(avg_log2FC) * -log10(p_val_adj)) %>%
+  arrange(desc(Importance))
+```
+
+#### JAK-STAT
+
+```{r, include=FALSE}
+JAKSTAT_genes <- DEGs_cachectic_MuSCs_upkegg %>%
+  filter(Description == "JAK-STAT signaling pathway - Mus musculus (house mouse)")
+
+JAKSTAT_gene_symbols <- bitr(
+  unlist(strsplit(JAKSTAT_genes$geneID, "/")),
+  fromType = "ENTREZID",
+  toType = "SYMBOL",
+  OrgDb = org.Mm.eg.db
+)$SYMBOL
+
+JAKSTAT_DEGs <- DEGs_cachectic_MuSCs[JAKSTAT_gene_symbols, ] %>%
+  mutate(Importance = abs(avg_log2FC) * -log10(p_val_adj)) %>%
+  arrange(desc(Importance))
+```
+
+#### Adipocytokine
+
+```{r, include=FALSE}
+Adipo_genes <- DEGs_cachectic_MuSCs_upkegg %>%
+  filter(Description == "Adipocytokine signaling pathway - Mus musculus (house mouse)")
+
+Adipo_gene_symbols <- bitr(
+  unlist(strsplit(Adipo_genes$geneID, "/")),
+  fromType = "ENTREZID",
+  toType = "SYMBOL",
+  OrgDb = org.Mm.eg.db
+)$SYMBOL
+
+Adipo_DEGs <- DEGs_cachectic_MuSCs[Adipo_gene_symbols, ] %>%
+  mutate(Importance = abs(avg_log2FC) * -log10(p_val_adj)) %>%
+  arrange(desc(Importance))
+```
+
+#### PLOT IMPORTANCE
+
+```{r}
+# For each pathway, add Gene column before combining
+TNF_DEGs <- TNF_DEGs %>% mutate(Gene = rownames(TNF_DEGs), Pathway = "TNF")
+IL17_DEGs <- IL17_DEGs %>% mutate(Gene = rownames(IL17_DEGs), Pathway = "IL-17")
+MAPK_DEGs <- MAPK_DEGs %>% mutate(Gene = rownames(MAPK_DEGs), Pathway = "MAPK")
+FoxO_DEGs <- FoxO_DEGs %>% mutate(Gene = rownames(FoxO_DEGs), Pathway = "FoxO")
+NOD_DEGs <- NOD_DEGs %>% mutate(Gene = rownames(NOD_DEGs), Pathway = "NOD-like receptor")
+NFkB_DEGs <- NFkB_DEGs %>% mutate(Gene = rownames(NFkB_DEGs), Pathway = "NF-kappa B")
+p53_DEGs <- p53_DEGs %>% mutate(Gene = rownames(p53_DEGs), Pathway = "p53")
+JAKSTAT_DEGs <- JAKSTAT_DEGs %>% mutate(Gene = rownames(JAKSTAT_DEGs), Pathway = "JAK-STAT")
+Adipo_DEGs <- Adipo_DEGs %>% mutate(Gene = rownames(Adipo_DEGs), Pathway = "Adipocytokine")
+
+# Combine all pathways
+all_pathways_df <- bind_rows(
+  TNF_DEGs, IL17_DEGs, MAPK_DEGs, FoxO_DEGs,
+  NOD_DEGs, NFkB_DEGs, p53_DEGs, JAKSTAT_DEGs, Adipo_DEGs
+)
+
+# Make Pathway a factor to control order
+all_pathways_df$Pathway <- factor(all_pathways_df$Pathway,
+                                  levels = rev(c("IL-17", "TNF", "p53", "NF-kappa B", "FoxO", "Adipocytokine", "NOD-like receptor", "MAPK", "JAK-STAT")))
+
+# Plot
+ggplot(all_pathways_df, aes(x = Importance, y = Pathway)) +
+  geom_point(aes(size = abs(avg_log2FC), color = -log10(p_val_adj))) +
+  scale_color_gradient(low = "red", high = "blue") +
+  scale_size_continuous(range = c(3, 8)) +
+  theme_bw() +
+  labs(
+    x = "Importance",
+    y = "Pathway",
+    size = "|avg_log2FC|",
+    color = "-log10(adj p)"
+  ) +
+  theme(axis.text.y = element_text(size = 10),
+        axis.text.x = element_text(size = 10))
+```
+
+#### Violin plots of top gene drivers
+
+```{r}
+Idents(MuSCs_combined) <- "seurat_clusters"
+
+VlnPlot(MuSCs_combined, features = "Cebpb", pt.size = 0) +
+  theme(legend.position = "none", axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1)) +
+  labs(x = NULL, y = "Expression", title = "Cebpb")
+
+VlnPlot(MuSCs_combined, features = "Nfkbia", pt.size = 0) +
+  theme(legend.position = "none", axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1)) +
+  labs(x = NULL, y = "Expression", title = "Nfkbia")
+
+VlnPlot(MuSCs_combined, features = "Gadd45b", pt.size = 0) +
+  theme(legend.position = "none", axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1)) +
+  labs(x = NULL, y = "Expression", title = "Gadd45b")
+
+VlnPlot(MuSCs_combined, features = "Stat3", pt.size = 0) +
+  theme(legend.position = "none", axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1)) +
+  labs(x = NULL, y = "Expression", title = "Stat3")
+
+VlnPlot(MuSCs_combined, features = "Pim1", pt.size = 0) +
+  theme(legend.position = "none", axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1)) +
+  labs(x = NULL, y = "Expression", title = "Pim1")
+```
+
+
+
+### DOWN Signaling pathways
+
+```{r}
+signaling_pathways_down <- c(16, 20, 31, 41, 45, 48, 49, 52, 53, 64, 68, 80, 81, 84, 85, 86)
+kegg_signaling_down <- DEGs_cachectic_MuSCs_downkegg[signaling_pathways_down, ]
+
+kegg_signaling_down$Description <- gsub(" - Mus musculus \\(house mouse\\)$", "", kegg_signaling_down$Description)
+
+ggplot(kegg_signaling_down, aes(x = FoldEnrichment, 
+                           y = reorder(Description, FoldEnrichment),
+                           size = Count, 
+                           color = p.adjust)) +
+  geom_point() +
+  scale_color_gradient(low = "blue", high = "red", name = "adj. p-value") +
+  labs(x = "Fold Enrichment", y = NULL, 
+       title = "DOWN KEGG Cachectic MuSCs") +
+  theme_minimal() +
+  theme(
+    axis.line = element_line(color = "black"),
+    axis.ticks = element_line(color = "black")
+  )
+```
+
+### Down KEGG ECM-related
+
+```{r}
+ecm_signaling_down <- c(12, 22, 59, 87)
+kegg_ecm_down <- DEGs_cachectic_MuSCs_downkegg[ecm_signaling_down, ]
+
+kegg_signaling_down$Description <- gsub(" - Mus musculus \\(house mouse\\)$", "", kegg_ecm_down$Description)
+
+ggplot(kegg_ecm_down, aes(x = FoldEnrichment, 
+                           y = reorder(Description, FoldEnrichment),
+                           size = Count, 
+                           color = p.adjust)) +
+  geom_point() +
+  scale_color_gradient(low = "blue", high = "red", name = "adj. p-value") +
+  labs(x = "Fold Enrichment", y = NULL, 
+       title = "DOWN KEGG Cachectic MuSCs") +
+  theme_minimal() +
+  theme(
+    axis.line = element_line(color = "black"),
+    axis.ticks = element_line(color = "black")
+  )
+```
+
+### Down GO cell adhesion to ECM
+
+```{r}
+adhesion_down <- c(3, 30, 116, 347, 552, 1239)
+### NOTE - can add in 28, 165, 608, 645, 792, 799, 930, 1493 if need be
+go_adhesion_down <- DEGs_cachectic_MuSCs_downgo[adhesion_down, ]
+
+go_adhesion_down$Description <- gsub(" - Mus musculus \\(house mouse\\)$", "", go_adhesion_down$Description)
+
+ggplot(go_adhesion_down, aes(x = FoldEnrichment, 
+                           y = reorder(Description, FoldEnrichment),
+                           size = Count, 
+                           color = p.adjust)) +
+  geom_point() +
+  scale_color_gradient(low = "blue", high = "red", name = "adj. p-value") +
+  labs(x = "Fold Enrichment", y = NULL, 
+       title = "DOWN GO Cachectic MuSCs") +
+  theme_minimal() +
+  theme(
+    axis.line = element_line(color = "black"),
+    axis.ticks = element_line(color = "black")
+  )
+```
+
+### Down GO ECM remodeling
+
+```{r}
+ecm_down <- c(8, 10, 125, 869, 1010)
+### NOTE - can add in 75, 380, 624, 1108, 1291, 1149 if need be
+go_ecm_down <- DEGs_cachectic_MuSCs_downgo[ecm_down, ]
+
+go_ecm_down$Description <- gsub(" - Mus musculus \\(house mouse\\)$", "", go_ecm_down$Description)
+
+ggplot(go_ecm_down, aes(x = FoldEnrichment, 
+                           y = reorder(Description, FoldEnrichment),
+                           size = Count, 
+                           color = p.adjust)) +
+  geom_point() +
+  scale_color_gradient(low = "blue", high = "red", name = "adj. p-value") +
+  labs(x = "Fold Enrichment", y = NULL, 
+       title = "DOWN GO Cachectic MuSCs") +
+  theme_minimal() +
+  theme(
+    axis.line = element_line(color = "black"),
+    axis.ticks = element_line(color = "black")
+  )
+```
+
+### Cancer related
+
+```{r}
+cancer_pathways <- c(5, 7, 8, 12, 31, 33)
+kegg_cancer <- DEGs_cachectic_MuSCs_upkegg[cancer_pathways, ]
+
+kegg_cancer$Description <- gsub(" - Mus musculus \\(house mouse\\)$", "", kegg_cancer$Description)
+
+ggplot(kegg_cancer, aes(x = FoldEnrichment, 
+                           y = reorder(Description, FoldEnrichment),
+                           size = Count, 
+                           color = p.adjust)) +
+  geom_point() +
+  scale_color_gradient(low = "blue", high = "red", name = "adj. p-value") +
+  labs(x = "Fold Enrichment", y = NULL, 
+       title = "KEGG Cachectic MuSCs") +
+  theme_minimal() +
+  theme(
+    axis.line = element_line(color = "black"),
+    axis.ticks = element_line(color = "black")
+  )
+```
+
+### Senescence
+
+```{r}
+senescence_pathway <- c(22)
+kegg_senescence <- DEGs_cachectic_MuSCs_upkegg[senescence_pathway, ]
+
+kegg_senescence$Description <- gsub(" - Mus musculus \\(house mouse\\)$", "", kegg_senescence$Description)
+
+ggplot(kegg_senescence, aes(x = FoldEnrichment, 
+                           y = reorder(Description, FoldEnrichment),
+                           size = Count, 
+                           color = p.adjust)) +
+  geom_point() +
+  scale_color_gradient(low = "blue", high = "red", name = "adj. p-value") +
+  labs(x = "Fold Enrichment", y = NULL, 
+       title = "KEGG Senescence MuSCs") +
+  theme_minimal() +
+  theme(
+    axis.line = element_line(color = "black"),
+    axis.ticks = element_line(color = "black")
+  )
+```

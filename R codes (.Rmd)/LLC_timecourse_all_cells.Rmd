@@ -1,0 +1,933 @@
+---
+title: "LLC_timecourse_all_cells"
+author: "Alex Brown"
+date: "2025-07-15"
+output: html_document
+---
+
+
+
+# Load packages
+
+```{r setup, include=FALSE}
+library(Seurat)
+library(SeuratWrappers)
+library(tidyverse)
+library(Biobase)
+library(BiocGenerics)
+library(ggplot2)
+library(cowplot)
+library(grid)
+library(gridExtra)
+library(RColorBrewer)
+library(ggbeeswarm)
+library(pheatmap)
+library(viridis)
+library(monocle3)
+library(EnhancedVolcano)
+library(presto)
+library(clusterProfiler)
+library(AnnotationDbi)
+library(org.Mm.eg.db)
+# NOTE that the org.Mm.eg.db is for mice, org.Hs.eg.db is for humans
+```
+
+
+
+# Read in the data
+
+```{r, include=FALSE}
+load("C:/Users/nwb_l/Documents/r_projects/LLC_timecourse/LLC_timecourse_processed.RData")
+```
+
+
+
+# DE genes per condition all clusters
+
+```{r, include=FALSE}
+Idents(LLC_combined) <- "orig.ident"
+
+DEGs_2vSham <- FindMarkers(LLC_combined, ident.1 = "2_weeks", ident.2 = "Sham", logfc.threshold = 0, min.pct = 0.10, verbose = FALSE)
+DEGs_2.5vSham <- FindMarkers(LLC_combined, ident.1 = "2.5_weeks", ident.2 = "Sham", logfc.threshold = 0, min.pct = 0.10, verbose = FALSE)
+DEGs_3.5vSham <- FindMarkers(LLC_combined, ident.1 = "3.5_weeks", ident.2 = "Sham", logfc.threshold = 0, min.pct = 0.10, verbose = FALSE)
+
+DEGs_2vSham <- DEGs_2vSham %>% 
+  mutate(log10_p_val_adj = -log10(p_val_adj))
+DEGs_2.5vSham <- DEGs_2.5vSham %>% 
+  mutate(log10_p_val_adj = -log10(p_val_adj))
+DEGs_3.5vSham <- DEGs_3.5vSham %>% 
+  mutate(log10_p_val_adj = -log10(p_val_adj))
+```
+
+```{r, include=FALSE}
+write.csv(DEGs_2vSham, file = "DEGs_2vSham.csv", row.names = TRUE)
+write.csv(DEGs_2.5vSham, file = "DEGs_2.5vSham.csv", row.names = TRUE)
+write.csv(DEGs_3.5vSham, file = "DEGs_3.5vSham.csv", row.names = TRUE)
+```
+
+
+
+# Volcano plots for DE genes per condition all clusters
+
+```{r}
+keyvals <- ifelse(DEGs_2vSham$avg_log2FC > 0 & DEGs_2vSham$p_val_adj < 0.05, 
+                  "blue", 
+           ifelse(DEGs_2vSham$avg_log2FC < 0 & DEGs_2vSham$p_val_adj < 0.05, 
+                  "red", 
+                  "grey"))
+
+names(keyvals) <- rownames(DEGs_2vSham)
+
+EnhancedVolcano(DEGs_2vSham,
+  lab = rownames(DEGs_2vSham),
+  x = "avg_log2FC",
+  y = "p_val_adj",
+  title = "2 weeks vs. Sham",
+  pCutoff = 0.05,
+  FCcutoff = 0.2,
+  colCustom = keyvals
+) +
+  theme(
+    panel.grid.major = element_blank(),
+    panel.grid.minor = element_blank(),
+    panel.background = element_blank(),
+    plot.subtitle = element_blank(),
+    plot.caption = element_blank(),
+    legend.position = "none",
+    plot.title = element_text(hjust = 0.5)
+  ) +
+  xlim(-5, 5)
+
+
+
+keyvals <- ifelse(DEGs_2.5vSham$avg_log2FC > 0 & DEGs_2.5vSham$p_val_adj < 0.05, 
+                  "blue", 
+           ifelse(DEGs_2.5vSham$avg_log2FC < 0 & DEGs_2.5vSham$p_val_adj < 0.05, 
+                  "red", 
+                  "grey"))
+
+names(keyvals) <- rownames(DEGs_2.5vSham)
+
+EnhancedVolcano(DEGs_2.5vSham,
+  lab = rownames(DEGs_2.5vSham),
+  x = "avg_log2FC",
+  y = "p_val_adj",
+  title = "2.5 weeks vs. Sham",
+  pCutoff = 0.05,
+  FCcutoff = 0.2,
+  colAlpha = 1,
+  colCustom = keyvals
+) +
+  theme(
+    panel.grid.major = element_blank(),
+    panel.grid.minor = element_blank(),
+    panel.background = element_blank(),
+    plot.subtitle = element_blank(),
+    plot.caption = element_blank(),
+    legend.position = "none",
+    plot.title = element_text(hjust = 0.5)
+  ) +
+  xlim(-5, 5)
+
+
+keyvals <- ifelse(DEGs_3.5vSham$avg_log2FC > 0 & DEGs_3.5vSham$p_val_adj < 0.05, 
+                  "blue", 
+           ifelse(DEGs_3.5vSham$avg_log2FC < 0 & DEGs_3.5vSham$p_val_adj < 0.05, 
+                  "red", 
+                  "grey"))
+
+names(keyvals) <- rownames(DEGs_3.5vSham)
+
+EnhancedVolcano(DEGs_3.5vSham,
+  lab = rownames(DEGs_3.5vSham),
+  x = "avg_log2FC",
+  y = "p_val_adj",
+  title = "3.5 weeks vs. Sham",
+  pCutoff = 0.05,
+  FCcutoff = 0.2,
+  colAlpha = 1,
+  colCustom = keyvals
+) +
+  theme(
+    panel.grid.major = element_blank(),
+    panel.grid.minor = element_blank(),
+    panel.background = element_blank(),
+    plot.subtitle = element_blank(),
+    plot.caption = element_blank(),
+    legend.position = "none",
+    plot.title = element_text(hjust = 0.5)
+  ) +
+  xlim(-5, 5)
+```
+
+
+
+# GO analyses
+
+## Subset DEG for p_val_adj < 0.05
+```{r, include=FALSE}
+DEGs_2vSham_sig <- na.omit(DEGs_2vSham)
+DEGs_2vSham_sig <- subset(DEGs_2vSham, p_val_adj < 0.05)
+
+DEGs_2.5vSham_sig <- na.omit(DEGs_2.5vSham)
+DEGs_2.5vSham_sig <- subset(DEGs_2.5vSham, p_val_adj < 0.05)
+
+DEGs_3.5vSham_sig <- na.omit(DEGs_3.5vSham)
+DEGs_3.5vSham_sig <- subset(DEGs_3.5vSham, p_val_adj < 0.05)
+```
+
+
+## Take the row names of the specified genes in each condition that have an -2 > avg_log2FC > 0.2
+
+```{r, include=FALSE}
+DEGs_2vSham_sig_upgenes <- rownames(DEGs_2vSham_sig[DEGs_2vSham_sig$avg_log2FC > 0.2,])
+
+DEGs_2.5vSham_sig_upgenes <- rownames(DEGs_2.5vSham_sig[DEGs_2.5vSham_sig$avg_log2FC > 0.2,])
+
+DEGs_3.5vSham_sig_upgenes <- rownames(DEGs_3.5vSham_sig[DEGs_3.5vSham_sig$avg_log2FC > 0.2,])
+
+DEGs_2vSham_sig_downgenes <- rownames(DEGs_2vSham_sig[DEGs_2vSham_sig$avg_log2FC < -0.2,])
+
+DEGs_2.5vSham_sig_downgenes <- rownames(DEGs_2.5vSham_sig[DEGs_2.5vSham_sig$avg_log2FC < -0.2,])
+
+DEGs_3.5vSham_sig_downgenes <- rownames(DEGs_3.5vSham_sig[DEGs_3.5vSham_sig$avg_log2FC < -0.2,])
+```
+
+
+## Run GO analysis
+
+```{r, include=FALSE}
+DEGs_2vSham_upgo <- enrichGO(gene = DEGs_2vSham_sig_upgenes, OrgDb = "org.Mm.eg.db", keyType = "SYMBOL", ont = "BP")
+DEGs_2vSham_downgo <- enrichGO(gene = DEGs_2vSham_sig_downgenes, OrgDb = "org.Mm.eg.db", keyType = "SYMBOL", ont = "BP")
+
+DEGs_2.5vSham_upgo <- enrichGO(gene = DEGs_2.5vSham_sig_upgenes, OrgDb = "org.Mm.eg.db", keyType = "SYMBOL", ont = "BP")
+DEGs_2.5vSham_downgo <- enrichGO(gene = DEGs_2.5vSham_sig_downgenes, OrgDb = "org.Mm.eg.db", keyType = "SYMBOL", ont = "BP")
+
+DEGs_3.5vSham_upgo <- enrichGO(gene = DEGs_3.5vSham_sig_upgenes, OrgDb = "org.Mm.eg.db", keyType = "SYMBOL", ont = "BP")
+DEGs_3.5vSham_downgo <- enrichGO(gene = DEGs_3.5vSham_sig_downgenes, OrgDb = "org.Mm.eg.db", keyType = "SYMBOL", ont = "BP")
+```
+
+
+## .csv for GO terms
+
+```{r, include=FALSE}
+write.csv(DEGs_2vSham_upgo, file = "DEGs_2vSham_upgo.csv", row.names = TRUE)
+write.csv(DEGs_2vSham_downgo, file = "DEGs_2vSham_downgo.csv", row.names = TRUE)
+write.csv(DEGs_2.5vSham_upgo, file = "DEGs_2.5vSham_upgo.csv", row.names = TRUE)
+write.csv(DEGs_2.5vSham_downgo, file = "DEGs_2.5vSham_downgo.csv", row.names = TRUE)
+write.csv(DEGs_3.5vSham_upgo, file = "DEGs_3.5vSham_upgo.csv", row.names = TRUE)
+write.csv(DEGs_3.5vSham_downgo, file = "DEGs_3.5vSham_downgo.csv", row.names = TRUE)
+
+```
+
+
+## Plot the top 10 GO terms
+
+```{r}
+ggplot(data = DEGs_2vSham_upgo[1:10, ], 
+       aes(x = Count, y = reorder(Description, Count), fill = p.adjust)) +
+  geom_col() +
+  labs(title = "UP 2 weeks", y = "") +
+  theme(panel.background = element_blank(),
+        plot.background = element_rect(fill = "transparent", color = NA),
+        axis.line = element_line(color = "black")) +
+  scale_fill_gradient(low = "#4575B4", high = "#91BFDB")
+
+ggplot(data = DEGs_2vSham_downgo[1:10, ], 
+       aes(x = Count, y = reorder(Description, Count), fill = p.adjust)) +
+  geom_col() +
+  labs(title = "DOWN 2 weeks", y = "") +
+  theme(panel.background = element_blank(),
+        plot.background = element_rect(fill = "transparent", color = NA),
+        axis.line = element_line(color = "black")) +
+  scale_fill_gradient(low = "#D73027", high = "#FEE090")
+
+
+
+ggplot(data = DEGs_2.5vSham_upgo[1:10, ], 
+       aes(x = Count, y = reorder(Description, Count), fill = p.adjust)) +
+  geom_col() +
+  labs(title = "UP 2.5 weeks", y = "") +
+  theme(panel.background = element_blank(),
+        plot.background = element_rect(fill = "transparent", color = NA),
+        axis.line = element_line(color = "black")) +
+  scale_fill_gradient(low = "#4575B4", high = "#91BFDB")
+
+ggplot(data = DEGs_2.5vSham_downgo[1:10, ], 
+       aes(x = Count, y = reorder(Description, Count), fill = p.adjust)) +
+  geom_col() +
+  labs(title = "DOWN 2.5 weeks", y = "") +
+  theme(panel.background = element_blank(),
+        plot.background = element_rect(fill = "transparent", color = NA),
+        axis.line = element_line(color = "black")) +
+  scale_fill_gradient(low = "#D73027", high = "#FEE090")
+
+
+
+ggplot(data = DEGs_3.5vSham_upgo[1:10, ], 
+       aes(x = Count, y = reorder(Description, Count), fill = p.adjust)) +
+  geom_col() +
+  labs(title = "UP 3.5 weeks", y = "") +
+  theme(panel.background = element_blank(),
+        plot.background = element_rect(fill = "transparent", color = NA),
+        axis.line = element_line(color = "black")) +
+  scale_fill_gradient(low = "#4575B4", high = "#91BFDB")
+
+ggplot(data = DEGs_3.5vSham_downgo[1:10, ], 
+       aes(x = Count, y = reorder(Description, Count), fill = p.adjust)) +
+  geom_col() +
+  labs(title = "DOWN 3.5 weeks", y = "") +
+  theme(panel.background = element_blank(),
+        plot.background = element_rect(fill = "transparent", color = NA),
+        axis.line = element_line(color = "black")) +
+  scale_fill_gradient(low = "#D73027", high = "#FEE090")
+```
+
+
+
+# Find conserved DEGs
+
+```{r, include=FALSE}
+DEGs_MuSCs_3.5vSham <- FindMarkers(LLC_MuSCs, ident.1 = "3.5_weeks", ident.2 = "Sham", logfc.threshold = 0, min.pct = 0.10, verbose = FALSE)
+
+DEGs_Myonuclei_3.5vSham <- FindMarkers(LLC_Myonuclei, ident.1 = "3.5_weeks", ident.2 = "Sham", logfc.threshold = 0, min.pct = 0.10, verbose = FALSE)
+
+DEGs_Endothelial_cells_3.5vSham <- FindMarkers(LLC_Endothelial_cells, ident.1 = "3.5_weeks", ident.2 = "Sham", logfc.threshold = 0, min.pct = 0.10, verbose = FALSE)
+
+DEGs_vSMCs_3.5vSham <- FindMarkers(LLC_vSMCs, ident.1 = "3.5_weeks", ident.2 = "Sham", logfc.threshold = 0, min.pct = 0.10, verbose = FALSE)
+
+DEGs_Pericytes_3.5vSham <- FindMarkers(LLC_Pericytes, ident.1 = "3.5_weeks", ident.2 = "Sham", logfc.threshold = 0, min.pct = 0.10, verbose = FALSE)
+
+DEGs_FAPs_3.5vSham <- FindMarkers(LLC_FAPs, ident.1 = "3.5_weeks", ident.2 = "Sham", logfc.threshold = 0, min.pct = 0.10, verbose = FALSE)
+
+DEGs_Platelets_3.5vSham <- FindMarkers(LLC_Platelets, ident.1 = "3.5_weeks", ident.2 = "Sham", logfc.threshold = 0, min.pct = 0.10, verbose = FALSE)
+
+DEGs_Monocytes_macrophages_3.5vSham <- FindMarkers(LLC_Monocytes_macrophages, ident.1 = "3.5_weeks", ident.2 = "Sham", logfc.threshold = 0, min.pct = 0.10, verbose = FALSE)
+
+DEGs_Neutrophils_3.5vSham <- FindMarkers(LLC_Neutrophils, ident.1 = "3.5_weeks", ident.2 = "Sham", logfc.threshold = 0, min.pct = 0.10, verbose = FALSE)
+
+DEGs_B_cells_3.5vSham <- FindMarkers(LLC_B_cells, ident.1 = "3.5_weeks", ident.2 = "Sham", logfc.threshold = 0, min.pct = 0.10, verbose = FALSE)
+
+DEGs_T_cells_NK_cells_3.5vSham <- FindMarkers(LLC_T_NK_cells, ident.1 = "3.5_weeks", ident.2 = "Sham", logfc.threshold = 0, min.pct = 0.10, verbose = FALSE)
+
+DEGs_Neural_glial_cells_3.5vSham <- FindMarkers(LLC_Neural_glial_cells, ident.1 = "3.5_weeks", ident.2 = "Sham", logfc.threshold = 0, min.pct = 0.10, verbose = FALSE)
+
+DEGs_Schwann_cells_3.5vSham <- FindMarkers(LLC_Schwann_cells, ident.1 = "3.5_weeks", ident.2 = "Sham", logfc.threshold = 0, min.pct = 0.10, verbose = FALSE)
+```
+
+
+## Subset for log2FC > 0.2 and pval_adj < 0.05
+
+```{r, include=FALSE}
+DEGs_MuSCs_3.5vSham_up <- DEGs_MuSCs_3.5vSham[
+  DEGs_MuSCs_3.5vSham$avg_log2FC > 0.2 & DEGs_MuSCs_3.5vSham$p_val_adj < 0.05, ]
+
+DEGs_Myonuclei_3.5vSham_up <- DEGs_Myonuclei_3.5vSham[
+  DEGs_Myonuclei_3.5vSham$avg_log2FC > 0.2 & DEGs_Myonuclei_3.5vSham$p_val_adj < 0.05, ]
+
+DEGs_Endothelial_cells_3.5vSham_up <- DEGs_Endothelial_cells_3.5vSham[
+  DEGs_Endothelial_cells_3.5vSham$avg_log2FC > 0.2 & DEGs_Endothelial_cells_3.5vSham$p_val_adj < 0.05, ]
+
+DEGs_vSMCs_3.5vSham_up <- DEGs_vSMCs_3.5vSham[
+  DEGs_vSMCs_3.5vSham$avg_log2FC > 0.2 & DEGs_vSMCs_3.5vSham$p_val_adj < 0.05, ]
+
+DEGs_Pericytes_3.5vSham_up <- DEGs_Pericytes_3.5vSham[
+  DEGs_Pericytes_3.5vSham$avg_log2FC > 0.2 & DEGs_Pericytes_3.5vSham$p_val_adj < 0.05, ]
+
+DEGs_FAPs_3.5vSham_up <- DEGs_FAPs_3.5vSham[
+  DEGs_FAPs_3.5vSham$avg_log2FC > 0.2 & DEGs_FAPs_3.5vSham$p_val_adj < 0.05, ]
+
+DEGs_Platelets_3.5vSham_up <- DEGs_Platelets_3.5vSham[
+  DEGs_Platelets_3.5vSham$avg_log2FC > 0.2 & DEGs_Platelets_3.5vSham$p_val_adj < 0.05, ]
+
+DEGs_Monocytes_macrophages_3.5vSham_up <- DEGs_Monocytes_macrophages_3.5vSham[
+  DEGs_Monocytes_macrophages_3.5vSham$avg_log2FC > 0.2 & DEGs_Monocytes_macrophages_3.5vSham$p_val_adj < 0.05, ]
+
+DEGs_Neutrophils_3.5vSham_up <- DEGs_Neutrophils_3.5vSham[
+  DEGs_Neutrophils_3.5vSham$avg_log2FC > 0.2 & DEGs_Neutrophils_3.5vSham$p_val_adj < 0.05, ]
+
+DEGs_B_cells_3.5vSham_up <- DEGs_B_cells_3.5vSham[
+  DEGs_B_cells_3.5vSham$avg_log2FC > 0.2 & DEGs_B_cells_3.5vSham$p_val_adj < 0.05, ]
+
+DEGs_T_cells_NK_cells_3.5vSham_up <- DEGs_T_cells_NK_cells_3.5vSham[
+  DEGs_T_cells_NK_cells_3.5vSham$avg_log2FC > 0.2 & DEGs_T_cells_NK_cells_3.5vSham$p_val_adj < 0.05, ]
+
+DEGs_Neural_glial_cells_3.5vSham_up <- DEGs_Neural_glial_cells_3.5vSham[
+  DEGs_Neural_glial_cells_3.5vSham$avg_log2FC > 0.2 & DEGs_Neural_glial_cells_3.5vSham$p_val_adj < 0.05, ]
+
+DEGs_Schwann_cells_3.5vSham_up <- DEGs_Schwann_cells_3.5vSham[
+  DEGs_Schwann_cells_3.5vSham$avg_log2FC > 0.2 & DEGs_Schwann_cells_3.5vSham$p_val_adj < 0.05, ]
+```
+
+
+## List of common upregulated genes across all cell types
+
+```{r}
+common_muscle_up_genes <- Reduce(intersect, list(
+  rownames(DEGs_MuSCs_3.5vSham_up),
+  rownames(DEGs_Myonuclei_3.5vSham_up),
+  rownames(DEGs_Endothelial_cells_3.5vSham_up),
+  rownames(DEGs_vSMCs_3.5vSham_up),
+  rownames(DEGs_Pericytes_3.5vSham_up),
+  rownames(DEGs_FAPs_3.5vSham_up)
+))
+
+print(common_muscle_up_genes)
+```
+
+```{r}
+common_immune_up_genes <- Reduce(intersect, list(
+  rownames(DEGs_Platelets_3.5vSham_up),
+  rownames(DEGs_Monocytes_macrophages_3.5vSham_up),
+  rownames(DEGs_Neutrophils_3.5vSham_up),
+  rownames(DEGs_B_cells_3.5vSham_up),
+  rownames(DEGs_T_cells_NK_cells_3.5vSham_up)
+))
+
+print(common_immune_up_genes)
+```
+
+```{r}
+common_neural_up_genes <- Reduce(intersect, list(
+  rownames(DEGs_Neural_glial_cells_3.5vSham_up),
+  rownames(DEGs_Schwann_cells_3.5vSham_up)
+))
+
+print(common_neural_up_genes)
+```
+
+
+## Violin plots of DEGs by condition
+
+```{r}
+Idents(LLC_combined) <- "orig.ident"
+
+VlnPlot(LLC_combined, features = "Cebpd", pt.size = 0) +
+  theme(
+    legend.position = "none",
+    axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1),
+    plot.title = element_text(face = "italic")
+  ) +
+  labs(x = NULL, y = "Expression", title = "Cebpd") +
+   scale_x_discrete(labels = c("Sham", "2 weeks", "2.5 weeks", "3.5 weeks"))
+
+VlnPlot(LLC_combined, features = "S100a8", pt.size = 0) +
+  theme(
+    legend.position = "none",
+    axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1),
+    plot.title = element_text(face = "italic")
+  ) +
+  labs(x = NULL, y = "Expression", title = "S100a8") +
+   scale_x_discrete(labels = c("Sham", "2 weeks", "2.5 weeks", "3.5 weeks"))
+
+VlnPlot(LLC_combined, features = "S100a9", pt.size = 0) +
+  theme(
+    legend.position = "none",
+    axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1),
+    plot.title = element_text(face = "italic")
+  ) +
+  labs(x = NULL, y = "Expression", title = "S100a9") +
+   scale_x_discrete(labels = c("Sham", "2 weeks", "2.5 weeks", "3.5 weeks"))
+
+VlnPlot(LLC_combined, features = "Wfdc17", pt.size = 0) +
+  theme(
+    legend.position = "none",
+    axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1),
+    plot.title = element_text(face = "italic")
+  ) +
+  labs(x = NULL, y = "Expression", title = "Wfdc17") +
+   scale_x_discrete(labels = c("Sham", "2 weeks", "2.5 weeks", "3.5 weeks"))
+```
+
+
+## FeaturePlots
+
+```{r}
+FeaturePlot(LLC_combined, features = "Cebpd", reduction = "umap") +
+  labs(title = expression(italic("Cebpd")), color = "Expression")
+
+FeaturePlot(LLC_combined, features = "S100a8", reduction = "umap") +
+  labs(title = expression(italic("S100a8")), color = "Expression")
+
+FeaturePlot(LLC_combined, features = "S100a9", reduction = "umap") +
+  labs(title = expression(italic("S100a9")), color = "Expression")
+
+FeaturePlot(LLC_combined, features = "Wfdc17", reduction = "umap") +
+  labs(title = expression(italic("Wfdc17")), color = "Expression")
+```
+
+
+## Violin plots by cluster
+
+```{r}
+Idents(LLC_combined) <- "seurat_clusters"
+
+VlnPlot(LLC_combined, features = "Cebpd", pt.size = 0) +
+  theme(
+    legend.position = "none",
+    axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1),
+    plot.title = element_text(face = "italic")
+  ) +
+  labs(x = NULL, y = "Expression", title = "Cebpd")
+
+VlnPlot(LLC_combined, features = "S100a8", pt.size = 0) +
+  theme(
+    legend.position = "none",
+    axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1),
+    plot.title = element_text(face = "italic")
+  ) +
+  labs(x = NULL, y = "Expression", title = "S100a8")
+
+VlnPlot(LLC_combined, features = "S100a9", pt.size = 0) +
+  theme(
+    legend.position = "none",
+    axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1),
+    plot.title = element_text(face = "italic")
+  ) +
+  labs(x = NULL, y = "Expression", title = "S100a9")
+
+VlnPlot(LLC_combined, features = "Wfdc17", pt.size = 0) +
+  theme(
+    legend.position = "none",
+    axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1),
+    plot.title = element_text(face = "italic")
+  ) +
+  labs(x = NULL, y = "Expression", title = "Wfdc17")
+```
+
+
+## Violin plots for DEGs by condition for each cluster
+
+```{r}
+Idents(LLC_combined) <- "orig.ident"
+
+MuSCs_Cebpd <- VlnPlot(LLC_MuSCs, features = "Cebpd", pt.size = 0) +
+  theme(
+    legend.position = "none",
+    axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1)
+  ) +
+  labs(x = NULL, y = "Expression", title = "MuSCs") +
+  scale_x_discrete(labels = c("Sham", "2 weeks", "2.5 weeks", "3.5 weeks"))
+
+Myonuclei_Cebpd <- VlnPlot(LLC_Myonuclei, features = "Cebpd", pt.size = 0) +
+  theme(
+    legend.position = "none",
+    axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1)
+  ) +
+  labs(x = NULL, y = "Expression", title = "Myonuclei") +
+  scale_x_discrete(labels = c("Sham", "2 weeks", "2.5 weeks", "3.5 weeks"))
+
+Endothelial_cells_Cebpd <- VlnPlot(LLC_Endothelial_cells, features = "Cebpd", pt.size = 0) +
+  theme(
+    legend.position = "none",
+    axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1)
+  ) +
+  labs(x = NULL, y = "Expression", title = "Endothelial cells") +
+  scale_x_discrete(labels = c("Sham", "2 weeks", "2.5 weeks", "3.5 weeks"))
+
+vSMCs_Cebpd <- VlnPlot(LLC_vSMCs, features = "Cebpd", pt.size = 0) +
+  theme(
+    legend.position = "none",
+    axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1)
+  ) +
+  labs(x = NULL, y = "Expression", title = "vSMCs") +
+  scale_x_discrete(labels = c("Sham", "2 weeks", "2.5 weeks", "3.5 weeks"))
+
+Pericytes_Cebpd <- VlnPlot(LLC_Pericytes, features = "Cebpd", pt.size = 0) +
+  theme(
+    legend.position = "none",
+    axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1)
+  ) +
+  labs(x = NULL, y = "Expression", title = "Pericytes") +
+  scale_x_discrete(labels = c("Sham", "2 weeks", "2.5 weeks", "3.5 weeks"))
+
+FAPs_Cebpd <- VlnPlot(LLC_FAPs, features = "Cebpd", pt.size = 0) +
+  theme(
+    legend.position = "none",
+    axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1)
+  ) +
+  labs(x = NULL, y = "Expression", title = "FAPs") +
+  scale_x_discrete(labels = c("Sham", "2 weeks", "2.5 weeks", "3.5 weeks"))
+
+Platelets_Cebpd <- VlnPlot(LLC_Platelets, features = "Cebpd", pt.size = 0) +
+  theme(
+    legend.position = "none",
+    axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1)
+  ) +
+  labs(x = NULL, y = "Expression", title = "Platelets") +
+  scale_x_discrete(labels = c("Sham", "2 weeks", "2.5 weeks", "3.5 weeks"))
+
+Monocytes_macrophages_Cebpd <- VlnPlot(LLC_Monocytes_macrophages, features = "Cebpd", pt.size = 0) +
+  theme(
+    legend.position = "none",
+    axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1)
+  ) +
+  labs(x = NULL, y = "Expression", title = "Monocytes/macrophages") +
+  scale_x_discrete(labels = c("Sham", "2 weeks", "2.5 weeks", "3.5 weeks"))
+
+Neutrophils_Cebpd <- VlnPlot(LLC_Neutrophils, features = "Cebpd", pt.size = 0) +
+  theme(
+    legend.position = "none",
+    axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1)
+  ) +
+  labs(x = NULL, y = "Expression", title = "Neutrophils") +
+  scale_x_discrete(labels = c("Sham", "2 weeks", "2.5 weeks", "3.5 weeks"))
+
+B_cells_Cebpd <- VlnPlot(LLC_B_cells, features = "Cebpd", pt.size = 0) +
+  theme(
+    legend.position = "none",
+    axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1)
+  ) +
+  labs(x = NULL, y = "Expression", title = "B cells") +
+  scale_x_discrete(labels = c("Sham", "2 weeks", "2.5 weeks", "3.5 weeks"))
+
+T_NK_cells_Cebpd <- VlnPlot(LLC_T_NK_cells, features = "Cebpd", pt.size = 0) +
+  theme(
+    legend.position = "none",
+    axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1)
+  ) +
+  labs(x = NULL, y = "Expression", title = "T cells/NK cells") +
+  scale_x_discrete(labels = c("Sham", "2 weeks", "2.5 weeks", "3.5 weeks"))
+
+Neural_glial_cells_Cebpd <- VlnPlot(LLC_Neural_glial_cells, features = "Cebpd", pt.size = 0) +
+  theme(
+    legend.position = "none",
+    axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1)
+  ) +
+  labs(x = NULL, y = "Expression", title = "Neural/glial cells") +
+  scale_x_discrete(labels = c("Sham", "2 weeks", "2.5 weeks", "3.5 weeks"))
+
+Schwann_cells_Cebpd <- VlnPlot(LLC_Schwann_cells, features = "Cebpd", pt.size = 0) +
+  theme(
+    legend.position = "none",
+    axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1)
+  ) +
+  labs(x = NULL, y = "Expression", title = "Schwann cells") +
+  scale_x_discrete(labels = c("Sham", "2 weeks", "2.5 weeks", "3.5 weeks"))
+
+grid.arrange(MuSCs_Cebpd, Myonuclei_Cebpd, Endothelial_cells_Cebpd, vSMCs_Cebpd, Pericytes_Cebpd, FAPs_Cebpd, Platelets_Cebpd, Monocytes_macrophages_Cebpd, Neutrophils_Cebpd, B_cells_Cebpd, T_NK_cells_Cebpd, Neural_glial_cells_Cebpd, Schwann_cells_Cebpd, nrow = 3)
+```
+
+```{r}
+MuSCs_S100a8 <- VlnPlot(LLC_MuSCs, features = "S100a8", pt.size = 0) +
+  theme(
+    legend.position = "none",
+    axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1)
+  ) +
+  labs(x = NULL, y = "Expression", title = "MuSCs") +
+  scale_x_discrete(labels = c("Sham", "2 weeks", "2.5 weeks", "3.5 weeks"))
+
+Myonuclei_S100a8 <- VlnPlot(LLC_Myonuclei, features = "S100a8", pt.size = 0) +
+  theme(
+    legend.position = "none",
+    axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1)
+  ) +
+  labs(x = NULL, y = "Expression", title = "Myonuclei") +
+  scale_x_discrete(labels = c("Sham", "2 weeks", "2.5 weeks", "3.5 weeks"))
+
+Endothelial_cells_S100a8 <- VlnPlot(LLC_Endothelial_cells, features = "S100a8", pt.size = 0) +
+  theme(
+    legend.position = "none",
+    axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1)
+  ) +
+  labs(x = NULL, y = "Expression", title = "Endothelial cells") +
+  scale_x_discrete(labels = c("Sham", "2 weeks", "2.5 weeks", "3.5 weeks"))
+
+vSMCs_S100a8 <- VlnPlot(LLC_vSMCs, features = "S100a8", pt.size = 0) +
+  theme(
+    legend.position = "none",
+    axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1)
+  ) +
+  labs(x = NULL, y = "Expression", title = "vSMCs") +
+  scale_x_discrete(labels = c("Sham", "2 weeks", "2.5 weeks", "3.5 weeks"))
+
+Pericytes_S100a8 <- VlnPlot(LLC_Pericytes, features = "S100a8", pt.size = 0) +
+  theme(
+    legend.position = "none",
+    axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1)
+  ) +
+  labs(x = NULL, y = "Expression", title = "Pericytes") +
+  scale_x_discrete(labels = c("Sham", "2 weeks", "2.5 weeks", "3.5 weeks"))
+
+FAPs_S100a8 <- VlnPlot(LLC_FAPs, features = "S100a8", pt.size = 0) +
+  theme(
+    legend.position = "none",
+    axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1)
+  ) +
+  labs(x = NULL, y = "Expression", title = "FAPs") +
+  scale_x_discrete(labels = c("Sham", "2 weeks", "2.5 weeks", "3.5 weeks"))
+
+Platelets_S100a8 <- VlnPlot(LLC_Platelets, features = "S100a8", pt.size = 0) +
+  theme(
+    legend.position = "none",
+    axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1)
+  ) +
+  labs(x = NULL, y = "Expression", title = "Platelets") +
+  scale_x_discrete(labels = c("Sham", "2 weeks", "2.5 weeks", "3.5 weeks"))
+
+Monocytes_macrophages_S100a8 <- VlnPlot(LLC_Monocytes_macrophages, features = "S100a8", pt.size = 0) +
+  theme(
+    legend.position = "none",
+    axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1)
+  ) +
+  labs(x = NULL, y = "Expression", title = "Monocytes/macrophages") +
+  scale_x_discrete(labels = c("Sham", "2 weeks", "2.5 weeks", "3.5 weeks"))
+
+Neutrophils_S100a8 <- VlnPlot(LLC_Neutrophils, features = "S100a8", pt.size = 0) +
+  theme(
+    legend.position = "none",
+    axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1)
+  ) +
+  labs(x = NULL, y = "Expression", title = "Neutrophils") +
+  scale_x_discrete(labels = c("Sham", "2 weeks", "2.5 weeks", "3.5 weeks"))
+
+B_cells_S100a8 <- VlnPlot(LLC_B_cells, features = "S100a8", pt.size = 0) +
+  theme(
+    legend.position = "none",
+    axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1)
+  ) +
+  labs(x = NULL, y = "Expression", title = "B cells") +
+  scale_x_discrete(labels = c("Sham", "2 weeks", "2.5 weeks", "3.5 weeks"))
+
+T_NK_cells_S100a8 <- VlnPlot(LLC_T_NK_cells, features = "S100a8", pt.size = 0) +
+  theme(
+    legend.position = "none",
+    axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1)
+  ) +
+  labs(x = NULL, y = "Expression", title = "T cells/NK cells") +
+  scale_x_discrete(labels = c("Sham", "2 weeks", "2.5 weeks", "3.5 weeks"))
+
+Neural_glial_cells_S100a8 <- VlnPlot(LLC_Neural_glial_cells, features = "S100a8", pt.size = 0) +
+  theme(
+    legend.position = "none",
+    axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1)
+  ) +
+  labs(x = NULL, y = "Expression", title = "Neural/glial cells") +
+  scale_x_discrete(labels = c("Sham", "2 weeks", "2.5 weeks", "3.5 weeks"))
+
+Schwann_cells_S100a8 <- VlnPlot(LLC_Schwann_cells, features = "S100a8", pt.size = 0) +
+  theme(
+    legend.position = "none",
+    axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1)
+  ) +
+  labs(x = NULL, y = "Expression", title = "Schwann cells") +
+  scale_x_discrete(labels = c("Sham", "2 weeks", "2.5 weeks", "3.5 weeks"))
+
+grid.arrange(MuSCs_S100a8, Myonuclei_S100a8, Endothelial_cells_S100a8, vSMCs_S100a8, Pericytes_S100a8, FAPs_S100a8, Platelets_S100a8, Monocytes_macrophages_S100a8, Neutrophils_S100a8, B_cells_S100a8, T_NK_cells_S100a8, Neural_glial_cells_S100a8, Schwann_cells_S100a8, nrow = 3)
+```
+
+```{r}
+MuSCs_S100a9 <- VlnPlot(LLC_MuSCs, features = "S100a9", pt.size = 0) +
+  theme(
+    legend.position = "none",
+    axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1)
+  ) +
+  labs(x = NULL, y = "Expression", title = "MuSCs") +
+  scale_x_discrete(labels = c("Sham", "2 weeks", "2.5 weeks", "3.5 weeks"))
+
+Myonuclei_S100a9 <- VlnPlot(LLC_Myonuclei, features = "S100a9", pt.size = 0) +
+  theme(
+    legend.position = "none",
+    axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1)
+  ) +
+  labs(x = NULL, y = "Expression", title = "Myonuclei") +
+  scale_x_discrete(labels = c("Sham", "2 weeks", "2.5 weeks", "3.5 weeks"))
+
+Endothelial_cells_S100a9 <- VlnPlot(LLC_Endothelial_cells, features = "S100a9", pt.size = 0) +
+  theme(
+    legend.position = "none",
+    axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1)
+  ) +
+  labs(x = NULL, y = "Expression", title = "Endothelial cells") +
+  scale_x_discrete(labels = c("Sham", "2 weeks", "2.5 weeks", "3.5 weeks"))
+
+vSMCs_S100a9 <- VlnPlot(LLC_vSMCs, features = "S100a9", pt.size = 0) +
+  theme(
+    legend.position = "none",
+    axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1)
+  ) +
+  labs(x = NULL, y = "Expression", title = "vSMCs") +
+  scale_x_discrete(labels = c("Sham", "2 weeks", "2.5 weeks", "3.5 weeks"))
+
+Pericytes_S100a9 <- VlnPlot(LLC_Pericytes, features = "S100a9", pt.size = 0) +
+  theme(
+    legend.position = "none",
+    axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1)
+  ) +
+  labs(x = NULL, y = "Expression", title = "Pericytes") +
+  scale_x_discrete(labels = c("Sham", "2 weeks", "2.5 weeks", "3.5 weeks"))
+
+FAPs_S100a9 <- VlnPlot(LLC_FAPs, features = "S100a9", pt.size = 0) +
+  theme(
+    legend.position = "none",
+    axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1)
+  ) +
+  labs(x = NULL, y = "Expression", title = "FAPs") +
+  scale_x_discrete(labels = c("Sham", "2 weeks", "2.5 weeks", "3.5 weeks"))
+
+Platelets_S100a9 <- VlnPlot(LLC_Platelets, features = "S100a9", pt.size = 0) +
+  theme(
+    legend.position = "none",
+    axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1)
+  ) +
+  labs(x = NULL, y = "Expression", title = "Platelets") +
+  scale_x_discrete(labels = c("Sham", "2 weeks", "2.5 weeks", "3.5 weeks"))
+
+Monocytes_macrophages_S100a9 <- VlnPlot(LLC_Monocytes_macrophages, features = "S100a9", pt.size = 0) +
+  theme(
+    legend.position = "none",
+    axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1)
+  ) +
+  labs(x = NULL, y = "Expression", title = "Monocytes/macrophages") +
+  scale_x_discrete(labels = c("Sham", "2 weeks", "2.5 weeks", "3.5 weeks"))
+
+Neutrophils_S100a9 <- VlnPlot(LLC_Neutrophils, features = "S100a9", pt.size = 0) +
+  theme(
+    legend.position = "none",
+    axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1)
+  ) +
+  labs(x = NULL, y = "Expression", title = "Neutrophils") +
+  scale_x_discrete(labels = c("Sham", "2 weeks", "2.5 weeks", "3.5 weeks"))
+
+B_cells_S100a9 <- VlnPlot(LLC_B_cells, features = "S100a9", pt.size = 0) +
+  theme(
+    legend.position = "none",
+    axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1)
+  ) +
+  labs(x = NULL, y = "Expression", title = "B cells") +
+  scale_x_discrete(labels = c("Sham", "2 weeks", "2.5 weeks", "3.5 weeks"))
+
+T_NK_cells_S100a9 <- VlnPlot(LLC_T_NK_cells, features = "S100a9", pt.size = 0) +
+  theme(
+    legend.position = "none",
+    axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1)
+  ) +
+  labs(x = NULL, y = "Expression", title = "T cells/NK cells") +
+  scale_x_discrete(labels = c("Sham", "2 weeks", "2.5 weeks", "3.5 weeks"))
+
+Neural_glial_cells_S100a9 <- VlnPlot(LLC_Neural_glial_cells, features = "S100a9", pt.size = 0) +
+  theme(
+    legend.position = "none",
+    axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1)
+  ) +
+  labs(x = NULL, y = "Expression", title = "Neural/glial cells") +
+  scale_x_discrete(labels = c("Sham", "2 weeks", "2.5 weeks", "3.5 weeks"))
+
+Schwann_cells_S100a9 <- VlnPlot(LLC_Schwann_cells, features = "S100a9", pt.size = 0) +
+  theme(
+    legend.position = "none",
+    axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1)
+  ) +
+  labs(x = NULL, y = "Expression", title = "Schwann cells") +
+  scale_x_discrete(labels = c("Sham", "2 weeks", "2.5 weeks", "3.5 weeks"))
+
+grid.arrange(MuSCs_S100a9, Myonuclei_S100a9, Endothelial_cells_S100a9, vSMCs_S100a9, Pericytes_S100a9, FAPs_S100a9, Platelets_S100a9, Monocytes_macrophages_S100a9, Neutrophils_S100a9, B_cells_S100a9, T_NK_cells_S100a9, Neural_glial_cells_S100a9, Schwann_cells_S100a9, nrow = 3)
+```
+
+```{r}
+MuSCs_Wfdc17 <- VlnPlot(LLC_MuSCs, features = "Wfdc17", pt.size = 0) +
+  theme(
+    legend.position = "none",
+    axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1)
+  ) +
+  labs(x = NULL, y = "Expression", title = "MuSCs") +
+  scale_x_discrete(labels = c("Sham", "2 weeks", "2.5 weeks", "3.5 weeks"))
+
+Myonuclei_Wfdc17 <- VlnPlot(LLC_Myonuclei, features = "Wfdc17", pt.size = 0) +
+  theme(
+    legend.position = "none",
+    axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1)
+  ) +
+  labs(x = NULL, y = "Expression", title = "Myonuclei") +
+  scale_x_discrete(labels = c("Sham", "2 weeks", "2.5 weeks", "3.5 weeks"))
+
+Endothelial_cells_Wfdc17 <- VlnPlot(LLC_Endothelial_cells, features = "Wfdc17", pt.size = 0) +
+  theme(
+    legend.position = "none",
+    axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1)
+  ) +
+  labs(x = NULL, y = "Expression", title = "Endothelial cells") +
+  scale_x_discrete(labels = c("Sham", "2 weeks", "2.5 weeks", "3.5 weeks"))
+
+vSMCs_Wfdc17 <- VlnPlot(LLC_vSMCs, features = "Wfdc17", pt.size = 0) +
+  theme(
+    legend.position = "none",
+    axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1)
+  ) +
+  labs(x = NULL, y = "Expression", title = "vSMCs") +
+  scale_x_discrete(labels = c("Sham", "2 weeks", "2.5 weeks", "3.5 weeks"))
+
+Pericytes_Wfdc17 <- VlnPlot(LLC_Pericytes, features = "Wfdc17", pt.size = 0) +
+  theme(
+    legend.position = "none",
+    axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1)
+  ) +
+  labs(x = NULL, y = "Expression", title = "Pericytes") +
+  scale_x_discrete(labels = c("Sham", "2 weeks", "2.5 weeks", "3.5 weeks"))
+
+FAPs_Wfdc17 <- VlnPlot(LLC_FAPs, features = "Wfdc17", pt.size = 0) +
+  theme(
+    legend.position = "none",
+    axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1)
+  ) +
+  labs(x = NULL, y = "Expression", title = "FAPs") +
+  scale_x_discrete(labels = c("Sham", "2 weeks", "2.5 weeks", "3.5 weeks"))
+
+Platelets_Wfdc17 <- VlnPlot(LLC_Platelets, features = "Wfdc17", pt.size = 0) +
+  theme(
+    legend.position = "none",
+    axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1)
+  ) +
+  labs(x = NULL, y = "Expression", title = "Platelets") +
+  scale_x_discrete(labels = c("Sham", "2 weeks", "2.5 weeks", "3.5 weeks"))
+
+Monocytes_macrophages_Wfdc17 <- VlnPlot(LLC_Monocytes_macrophages, features = "Wfdc17", pt.size = 0) +
+  theme(
+    legend.position = "none",
+    axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1)
+  ) +
+  labs(x = NULL, y = "Expression", title = "Monocytes/macrophages") +
+  scale_x_discrete(labels = c("Sham", "2 weeks", "2.5 weeks", "3.5 weeks"))
+
+Neutrophils_Wfdc17 <- VlnPlot(LLC_Neutrophils, features = "Wfdc17", pt.size = 0) +
+  theme(
+    legend.position = "none",
+    axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1)
+  ) +
+  labs(x = NULL, y = "Expression", title = "Neutrophils") +
+  scale_x_discrete(labels = c("Sham", "2 weeks", "2.5 weeks", "3.5 weeks"))
+
+B_cells_Wfdc17 <- VlnPlot(LLC_B_cells, features = "Wfdc17", pt.size = 0) +
+  theme(
+    legend.position = "none",
+    axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1)
+  ) +
+  labs(x = NULL, y = "Expression", title = "B cells") +
+  scale_x_discrete(labels = c("Sham", "2 weeks", "2.5 weeks", "3.5 weeks"))
+
+T_NK_cells_Wfdc17 <- VlnPlot(LLC_T_NK_cells, features = "Wfdc17", pt.size = 0) +
+  theme(
+    legend.position = "none",
+    axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1)
+  ) +
+  labs(x = NULL, y = "Expression", title = "T cells/NK cells") +
+  scale_x_discrete(labels = c("Sham", "2 weeks", "2.5 weeks", "3.5 weeks"))
+
+Neural_glial_cells_Wfdc17 <- VlnPlot(LLC_Neural_glial_cells, features = "Wfdc17", pt.size = 0) +
+  theme(
+    legend.position = "none",
+    axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1)
+  ) +
+  labs(x = NULL, y = "Expression", title = "Neural/glial cells") +
+  scale_x_discrete(labels = c("Sham", "2 weeks", "2.5 weeks", "3.5 weeks"))
+
+Schwann_cells_Wfdc17 <- VlnPlot(LLC_Schwann_cells, features = "Wfdc17", pt.size = 0) +
+  theme(
+    legend.position = "none",
+    axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1)
+  ) +
+  labs(x = NULL, y = "Expression", title = "Schwann cells") +
+  scale_x_discrete(labels = c("Sham", "2 weeks", "2.5 weeks", "3.5 weeks"))
+
+grid.arrange(MuSCs_Wfdc17, Myonuclei_Wfdc17, Endothelial_cells_Wfdc17, vSMCs_Wfdc17, Pericytes_Wfdc17, FAPs_Wfdc17, Platelets_Wfdc17, Monocytes_macrophages_Wfdc17, Neutrophils_Wfdc17, B_cells_Wfdc17, T_NK_cells_Wfdc17, Neural_glial_cells_Wfdc17, Schwann_cells_Wfdc17, nrow = 3)
+```

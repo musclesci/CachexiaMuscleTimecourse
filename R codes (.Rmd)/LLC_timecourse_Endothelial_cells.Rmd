@@ -1,0 +1,443 @@
+---
+title: "LLC_timecourse_Endothelial_cells"
+author: "Alex Brown"
+date: "2025-07-16"
+output: html_document
+---
+
+
+
+# Load packages
+
+```{r, include=FALSE}
+library(Seurat)
+library(SeuratWrappers)
+library(tidyverse)
+library(Biobase)
+library(BiocGenerics)
+library(ggplot2)
+library(cowplot)
+library(grid)
+library(gridExtra)
+library(RColorBrewer)
+library(ggbeeswarm)
+library(pheatmap)
+library(viridis)
+library(monocle3)
+library(AnnotationDbi)
+library(org.Mm.eg.db)
+library(msigdbr)
+library(clusterProfiler)
+library(AnnotationDbi)
+library(org.Mm.eg.db)
+library(msigdbr)
+library(NMF)
+library(circlize)
+library(ComplexHeatmap)
+library(CellChat)
+```
+
+
+
+# Load data
+
+```{r, include=FALSE}
+load("C:/Users/nwb_l/Documents/r_projects/LLC_timecourse/LLC_timecourse_processed.RData")
+```
+
+### Already subsetted cells "LLC_Endothelial_cells"
+
+
+## Remove unnecessary objects to improve processing
+
+```{r, include=FALSE}
+rm(LLC_B_cells, LLC_FAPs, LLC_MuSCs, LLC_Monocytes_macrophages, LLC_Myonuclei, LLC_Neural_glial_cells, LLC_Neutrophils, LLC_Platelets, LLC_Schwann_cells, LLC_T_NK_cells, LLC_vSMCs, LLC_Pericytes, Sham, two_weeks, two.five_weeks, three.five_weeks, DEGs_LLC_B_cells, DEGs_LLC_FAPs, DEGs_LLC_Monocytes_macrophages, DEGs_LLC_MuSCs, DEGs_LLC_Myonuclei, DEGs_LLC_Neural_glial_cells, DEGs_LLC_Neutrophils, DEGs_LLC_Platelets, DEGs_LLC_Schwann_cells, DEGs_LLC_T_NK_cells, DEGs_LLC_vSMCs, DEGs_LLC_Pericytes, DEGs_LLC_clusters, ordered_datasets, cluster_proportions)
+```
+
+
+## UMAP plot highlighting Endothelial cells
+
+```{r}
+DimPlot(
+  LLC_combined,
+  reduction = "umap",
+  group.by = "seurat_clusters",
+  cells.highlight = list("Endothelial_cells" = WhichCells(LLC_combined, expression = seurat_clusters == "Endothelial cells")),
+  sizes.highlight = 1,
+  pt.size = 1,
+  cols.highlight = "#B99D05" 
+) +
+  ggplot2::labs(title = "", x = "UMAP1", y = "UMAP2") +
+  theme(
+    axis.text.x = element_blank(),
+    axis.text.y = element_blank(),
+    axis.ticks = element_blank()) +
+  theme(legend.position = "none")
+```
+
+
+
+# Re-process cells
+
+```{r, include=FALSE}
+LLC_Endothelial_cells <- NormalizeData(LLC_Endothelial_cells) %>%
+  FindVariableFeatures() %>%
+  ScaleData(features = all_genes) %>%
+  RunPCA(npcs = 50)
+```
+
+```{r}
+ElbowPlot(LLC_Endothelial_cells, ndims = 50)
+```
+
+```{r, include=FALSE}
+LLC_Endothelial_cells <- FindNeighbors(LLC_Endothelial_cells, dims = 1:34) %>%
+  FindClusters(resolution = 0.1)
+```
+
+```{r, include=FALSE}
+Idents(LLC_Endothelial_cells) <- "seurat_clusters"
+
+LLC_Endothelial_cells <- RunUMAP(LLC_Endothelial_cells, reduction = "pca", dims = 1:34)
+```
+
+
+
+# Annotate subclusters
+
+```{r, include=FALSE}
+DefaultAssay(LLC_Endothelial_cells) <- "RNA"
+
+Idents(LLC_Endothelial_cells) <- LLC_Endothelial_cells$seurat_clusters
+LLC_Endothelial_cells <- JoinLayers(LLC_Endothelial_cells, what = "all")
+DEGs_LLC_Endothelial_cells_subclusters <- FindAllMarkers(object = LLC_Endothelial_cells, group.by = "seurat_clusters", test.use = "LR", only.pos = TRUE, min.pct = 0.25, logfc.threshold = 0.25)
+```
+
+
+## Specify subclusters
+
+```{r, include=FALSE}
+LLC_Endothelial_cells_cluster_ids <- levels(LLC_Endothelial_cells$seurat_clusters)
+
+LLC_Endothelial_cells_cluster_labels <- c("Capillary", "Arterial", "Venous", "Capillary", "Arteriolar")
+
+LLC_Endothelial_cells_clusters <- LLC_Endothelial_cells@meta.data$seurat_clusters
+
+LLC_Endothelial_cells$seurat_clusters <- LLC_Endothelial_cells_cluster_labels[LLC_Endothelial_cells$seurat_clusters]
+```
+
+
+## Order conditions
+
+```{r, include=FALSE}
+LLC_Endothelial_cells$orig.ident <- factor(LLC_Endothelial_cells$orig.ident, levels = c("Sham", "2_weeks", "2.5_weeks", "3.5_weeks"))
+```
+
+
+## Order subclusters
+
+```{r, include=FALSE}
+LLC_Endothelial_cells$seurat_clusters <- factor(LLC_Endothelial_cells$seurat_clusters, levels = c("Capillary", "Arterial", "Arteriolar", "Venous"))
+```
+
+
+## Run FindAllMarkers again
+
+```{r, include=FALSE}
+DefaultAssay(LLC_Endothelial_cells) <- "RNA"
+
+Idents(LLC_Endothelial_cells) <- LLC_Endothelial_cells$seurat_clusters
+LLC_Endothelial_cells <- JoinLayers(LLC_Endothelial_cells, what = "all")
+DEGs_LLC_Endothelial_cells_subclusters <- FindAllMarkers(object = LLC_Endothelial_cells, group.by = "seurat_clusters", test.use = "LR", only.pos = TRUE, min.pct = 0.25, logfc.threshold = 0.25)
+```
+
+```{r, include=FALSE}
+write.csv(DEGs_LLC_Endothelial_cells_subclusters, file = "DEGs_LLC_Endothelial_cells_subclusters.csv", row.names = FALSE)
+```
+
+
+## Plot to show DEGs between subclusters
+
+```{r}
+DefaultAssay(LLC_Endothelial_cells) <- "RNA"
+Idents(LLC_Endothelial_cells) <- "seurat_clusters"
+
+DotPlot(object = LLC_Endothelial_cells,features = c("Timp4", "Car4", "Ssh2", "Lpl", "Egln1", "Clu", "Hey1", "Btnl9", "Fbln5", "Stmn2", "Fn1", "Mecom", "Lars2", "Cox7b", "Fis1", "Rassf3", "Cenpb", "Bag1", "Vwf", "Lrg1", "Ehd4", "Il6st", "Plvap")) +
+  scale_color_gradientn(colors = c("red", "white", "blue")) +
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust = 1, face = "italic"))
+```
+
+
+## Plot stacked barplot for subcluster proportions
+
+### Extract the proportions from the MuSCs Seurat object
+```{r, include=FALSE}
+LLC_Endothelial_cells_cluster_proportions <- LLC_Endothelial_cells@meta.data %>%
+  dplyr::select(orig.ident, seurat_clusters) %>%
+  group_by(orig.ident, seurat_clusters) %>%
+  summarize(count = n()) %>%
+  group_by(orig.ident) %>%
+  mutate(percentage = count / sum(count) * 100)
+```
+
+```{r, include=FALSE}
+write.csv(LLC_Endothelial_cells_cluster_proportions, file = "LLC_Endothelial_cells_cluster_proportions.csv", row.names = TRUE)
+```
+
+
+```{r}
+LLC_Endothelial_cells_cluster_proportions$orig.ident <- factor(
+  LLC_Endothelial_cells_cluster_proportions$orig.ident,
+  levels = c("Sham", "2_weeks", "2.5_weeks", "3.5_weeks"),
+  labels = c("Sham", "2 weeks", "2.5 weeks", "3.5 weeks"))
+
+ggplot(LLC_Endothelial_cells_cluster_proportions, aes(x = orig.ident, y = percentage, fill = seurat_clusters)) +
+  geom_bar(stat = "identity", width = 0.75, color = "black") +
+  scale_y_continuous(labels = scales::percent_format(scale = 1), expand = c(0, 0)) +
+  labs(title = "", x = "", y = "Proportion") +
+  theme(legend.position = "right", panel.background = element_blank(), axis.line = element_line(color = "black"), axis.text.x = element_text(angle = 45, hjust = 1)) +
+  guides(fill = guide_legend(title = NULL))
+```
+
+
+
+## Plot UMAP by subcluster
+
+```{r}
+DimPlot(LLC_Endothelial_cells, reduction = "umap", group.by = "seurat_clusters", repel = TRUE, pt.size = 1) +
+  ggplot2::labs(title = "", x = "UMAP1", y = "UMAP2") +
+  theme(axis.text.x = element_blank(), axis.text.y = element_blank(), axis.ticks = element_blank())
+```
+
+## Plot UMAP by condition
+
+```{r}
+DimPlot(LLC_Endothelial_cells, reduction = "umap", group.by = "orig.ident", repel = TRUE, pt.size = 1) +
+  ggplot2::labs(title = "", x = "UMAP1", y = "UMAP2") +
+  theme(axis.text.x = element_blank(), axis.text.y = element_blank(), axis.ticks = element_blank())
+```
+
+
+## Plot UMAP, conditions highlighted
+
+```{r}
+DimPlot(LLC_Endothelial_cells, reduction = "umap", group.by = "seurat_clusters", cells.highlight = list("Sham" = WhichCells(LLC_combined, expression = orig.ident == "Sham")), sizes.highlight = 1, pt.size = 1, cols.highlight = "#E87D72"
+) + 
+  ggplot2::labs(title = "", x = "UMAP1", y = "UMAP2") + 
+  theme( axis.text.x = element_blank(), axis.text.y = element_blank(), axis.ticks = element_blank()) + 
+  theme(legend.position = "none")
+
+DimPlot(LLC_Endothelial_cells, reduction = "umap", group.by = "seurat_clusters", cells.highlight = list("2_weeks" = WhichCells(LLC_combined, expression = orig.ident == "2_weeks")), sizes.highlight = 1, pt.size = 1, cols.highlight = "#87AD34") +
+  ggplot2::labs(title = "", x = "UMAP1", y = "UMAP2") +
+  theme(axis.text.x = element_blank(), axis.text.y = element_blank(), axis.ticks = element_blank()) +
+  theme(legend.position = "none")
+
+DimPlot(LLC_Endothelial_cells, reduction = "umap", group.by = "seurat_clusters", cells.highlight = list("2.5_weeks" = WhichCells(LLC_combined, expression = orig.ident == "2.5_weeks")), sizes.highlight = 1, pt.size = 1, cols.highlight = "#56BCC2") +
+  ggplot2::labs(title = "", x = "UMAP1", y = "UMAP2") +
+  theme(axis.text.x = element_blank(), axis.text.y = element_blank(), axis.ticks = element_blank()) +
+  theme(legend.position = "none")
+
+DimPlot(LLC_Endothelial_cells, reduction = "umap", group.by = "seurat_clusters", cells.highlight = list("3.5_weeks" = WhichCells(LLC_combined, expression = orig.ident == "3.5_weeks")), sizes.highlight = 1, pt.size = 1, cols.highlight = "#BC7FF8") +
+  ggplot2::labs(title = "", x = "UMAP1", y = "UMAP2") +
+  theme(axis.text.x = element_blank(), axis.text.y = element_blank(), axis.ticks = element_blank()) +
+  theme(legend.position = "none")
+```
+
+
+
+# DEGs
+
+## By condition
+
+```{r, include=FALSE}
+Idents(LLC_Endothelial_cells) <- "orig.ident"
+
+DEGs_LLC_Endothelial_cells_2_v_Sham <- FindMarkers(LLC_Endothelial_cells, ident.1 = "2_weeks", ident.2 = "Sham", logfc.threshold = 0, min.pct = 0.10, verbose = FALSE)
+DEGs_LLC_Endothelial_cells_2.5_v_Sham <- FindMarkers(LLC_Endothelial_cells, ident.1 = "2.5_weeks", ident.2 = "Sham", logfc.threshold = 0, min.pct = 0.10, verbose = FALSE)
+DEGs_LLC_Endothelial_cells_3.5_v_Sham <- FindMarkers(LLC_Endothelial_cells, ident.1 = "3.5_weeks", ident.2 = "Sham", logfc.threshold = 0, min.pct = 0.10, verbose = FALSE)
+```
+
+```{r, include=FALSE}
+write.csv(DEGs_LLC_Endothelial_cells_2_v_Sham, file = "DEGs_LLC_Endothelial_cells_2_v_Sham.csv", row.names = TRUE)
+write.csv(DEGs_LLC_Endothelial_cells_2.5_v_Sham, file = "DEGs_LLC_Endothelial_cells_2.5_v_Sham.csv", row.names = TRUE)
+write.csv(DEGs_LLC_Endothelial_cells_3.5_v_Sham, file = "DEGs_LLC_Endothelial_cells_3.5_v_Sham.csv", row.names = TRUE)
+```
+
+
+
+# Subset capillary subcluster, do DEGs at each time point
+
+```{r, include=FALSE}
+capillaries <- subset(LLC_Endothelial_cells, subset = seurat_clusters == "Capillary")
+Idents(capillaries) <- "orig.ident"
+
+
+DEGs_capillaries_2_v_Sham <- FindMarkers(capillaries, ident.1 = "2_weeks", ident.2 = "Sham", logfc.threshold = 0, min.pct = 0.10, verbose = FALSE)
+
+DEGs_capillaries_2.5_v_Sham <- FindMarkers(capillaries, ident.1 = "2.5_weeks", ident.2 = "Sham", logfc.threshold = 0, min.pct = 0.10, verbose = FALSE)
+
+DEGs_capillaries_3.5_v_Sham <- FindMarkers(capillaries, ident.1 = "3.5_weeks", ident.2 = "Sham", logfc.threshold = 0, min.pct = 0.10, verbose = FALSE)
+```
+
+```{r, include=FALSE}
+write.csv(DEGs_capillaries_2_v_Sham, file = "DEGs_capillaries_2_v_Sham.csv", row.names = TRUE)
+
+write.csv(DEGs_capillaries_2.5_v_Sham, file = "DEGs_capillaries_2.5_v_Sham.csv", row.names = TRUE)
+
+write.csv(DEGs_capillaries_3.5_v_Sham, file = "DEGs_capillaries_3.5_v_Sham.csv", row.names = TRUE)
+```
+
+
+## KEGG analyses for capillaries at each time point
+
+## Subset DEG for p_val_adj < 0.05
+```{r, include=FALSE}
+DEGs_capillaries_2_v_Sham <- na.omit(DEGs_capillaries_2_v_Sham)
+DEGs_capillaries_2_v_Sham <- subset(DEGs_capillaries_2_v_Sham, p_val_adj < 0.05)
+
+DEGs_capillaries_2.5_v_Sham <- na.omit(DEGs_capillaries_2.5_v_Sham)
+DEGs_capillaries_2.5_v_Sham <- subset(DEGs_capillaries_2.5_v_Sham, p_val_adj < 0.05)
+
+DEGs_capillaries_3.5_v_Sham <- na.omit(DEGs_capillaries_3.5_v_Sham)
+DEGs_capillaries_3.5_v_Sham <- subset(DEGs_capillaries_3.5_v_Sham, p_val_adj < 0.05)
+```
+
+
+## Take the row names of the specified genes in each condition that have an -2 > avg_log2FC > 0.2
+
+```{r, include=FALSE}
+DEGs_capillaries_2_v_Sham_up <- rownames(DEGs_capillaries_2_v_Sham[DEGs_capillaries_2_v_Sham$avg_log2FC > 0.2,])
+
+DEGs_capillaries_2.5_v_Sham_up <- rownames(DEGs_capillaries_2.5_v_Sham[DEGs_capillaries_2.5_v_Sham$avg_log2FC > 0.2,])
+
+DEGs_capillaries_3.5_v_Sham_up <- rownames(DEGs_capillaries_3.5_v_Sham[DEGs_capillaries_3.5_v_Sham$avg_log2FC > 0.2,])
+```
+
+
+## KEGG pathway analysis
+
+```{r, include=FALSE}
+### Convert gene symbols to Entrez IDs
+DEGs_capillaries_2_v_Sham_upIDs <- bitr(DEGs_capillaries_2_v_Sham_up,
+                  fromType = "SYMBOL",
+                  toType   = "ENTREZID",
+                  OrgDb    = org.Mm.eg.db)
+
+DEGs_capillaries_2_v_Sham_upkegg <- enrichKEGG(
+  gene         = DEGs_capillaries_2_v_Sham_upIDs$ENTREZID,
+  organism     = "mmu",
+  keyType      = "kegg",
+  pvalueCutoff = 0.05
+)
+
+
+DEGs_capillaries_2.5_v_Sham_upIDs <- bitr(DEGs_capillaries_2.5_v_Sham_up,
+                  fromType = "SYMBOL",
+                  toType   = "ENTREZID",
+                  OrgDb    = org.Mm.eg.db)
+
+DEGs_capillaries_2.5_v_Sham_upkegg <- enrichKEGG(
+  gene         = DEGs_capillaries_2.5_v_Sham_upIDs$ENTREZID,
+  organism     = "mmu",
+  keyType      = "kegg",
+  pvalueCutoff = 0.05
+)
+
+
+DEGs_capillaries_3.5_v_Sham_upIDs <- bitr(DEGs_capillaries_3.5_v_Sham_up,
+                  fromType = "SYMBOL",
+                  toType   = "ENTREZID",
+                  OrgDb    = org.Mm.eg.db)
+
+DEGs_capillaries_3.5_v_Sham_upkegg <- enrichKEGG(
+  gene         = DEGs_capillaries_3.5_v_Sham_upIDs$ENTREZID,
+  organism     = "mmu",
+  keyType      = "kegg",
+  pvalueCutoff = 0.05
+)
+```
+
+
+## .csv for KEGG pathways
+
+```{r, include=FALSE}
+write.csv(DEGs_capillaries_2_v_Sham_upkegg, file = "DEGs_capillaries_2_v_Sham_upkegg.csv", row.names = TRUE)
+
+write.csv(DEGs_capillaries_2.5_v_Sham_upkegg, file = "DEGs_capillaries_2.5_v_Sham_upkegg.csv", row.names = TRUE)
+
+write.csv(DEGs_capillaries_3.5_v_Sham_upkegg, file = "DEGs_capillaries_3.5_v_Sham_upkegg.csv", row.names = TRUE)
+```
+
+
+## Visualize KEGG pathways
+
+### 2 weeks
+
+```{r}
+signaling_2_weeks_pathways <- c(12, 15, 27, 34, 36, 37)
+kegg_2_weeks_signaling <- DEGs_capillaries_2_v_Sham_upkegg[signaling_2_weeks_pathways, ]
+
+kegg_2_weeks_signaling$Description <- gsub(" - Mus musculus \\(house mouse\\)$", "", kegg_2_weeks_signaling$Description)
+
+ggplot(kegg_2_weeks_signaling, aes(x = FoldEnrichment, 
+                           y = reorder(Description, FoldEnrichment),
+                           size = Count, 
+                           color = p.adjust)) +
+  geom_point() +
+  scale_color_gradient(low = "blue", high = "red", name = "adj. p-value") +
+  labs(x = "Fold Enrichment", y = NULL, 
+       title = "KEGG Capillaries 2-weeks") +
+  theme_minimal() +
+  theme(
+    axis.line = element_line(color = "black"),
+    axis.ticks = element_line(color = "black")
+  )
+```
+
+
+### 2.5 weeks
+
+```{r}
+signaling_2.5_weeks_pathways <- c(1, 2, 4, 11, 15)
+kegg_2.5_weeks_signaling <- DEGs_capillaries_2.5_v_Sham_upkegg[signaling_2.5_weeks_pathways, ]
+
+kegg_2.5_weeks_signaling$Description <- gsub(" - Mus musculus \\(house mouse\\)$", "", kegg_2.5_weeks_signaling$Description)
+
+ggplot(kegg_2.5_weeks_signaling, aes(x = FoldEnrichment, 
+                           y = reorder(Description, FoldEnrichment),
+                           size = Count, 
+                           color = p.adjust)) +
+  geom_point() +
+  scale_color_gradient(low = "blue", high = "red", name = "adj. p-value") +
+  labs(x = "Fold Enrichment", y = NULL, 
+       title = "KEGG Capillaries 2.5-weeks") +
+  theme_minimal() +
+  theme(
+    axis.line = element_line(color = "black"),
+    axis.ticks = element_line(color = "black")
+  )
+```
+
+
+### 3.5 weeks
+
+```{r}
+signaling_3.5_weeks_pathways <- c(7, 8, 9)
+kegg_3.5_weeks_signaling <- DEGs_capillaries_3.5_v_Sham_upkegg[signaling_3.5_weeks_pathways, ]
+
+kegg_3.5_weeks_signaling$Description <- gsub(" - Mus musculus \\(house mouse\\)$", "", kegg_3.5_weeks_signaling$Description)
+
+ggplot(kegg_3.5_weeks_signaling, aes(x = FoldEnrichment, 
+                           y = reorder(Description, FoldEnrichment),
+                           size = Count, 
+                           color = p.adjust)) +
+  geom_point() +
+  scale_color_gradient(low = "blue", high = "red", name = "adj. p-value") +
+  labs(x = "Fold Enrichment", y = NULL, 
+       title = "KEGG Capillaries 3.5-weeks") +
+  theme_minimal() +
+  theme(
+    axis.line = element_line(color = "black"),
+    axis.ticks = element_line(color = "black")
+  )
+```

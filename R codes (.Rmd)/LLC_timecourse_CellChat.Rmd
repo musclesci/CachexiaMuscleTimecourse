@@ -1,0 +1,1012 @@
+---
+title: "LLC_timecourse_CellChat"
+author: "Alex Brown"
+date: "2025-08-26"
+output: html_document
+---
+
+
+
+# Load packages
+
+```{r, include=FALSE}
+library(Seurat)
+library(SeuratWrappers)
+library(tidyverse)
+library(Biobase)
+library(BiocGenerics)
+library(ggplot2)
+library(RColorBrewer)
+library(NMF)
+library(circlize)
+library(ComplexHeatmap)
+library(CellChat)
+```
+
+
+
+# Load data
+
+```{r, include=FALSE}
+load("C:/Users/nwb_l/Documents/r_projects/LLC_timecourse/LLC_timecourse_processed.RData")
+```
+
+
+
+# Create CellChat object
+
+```{r, include=FALSE}
+data_input_Sham <- GetAssayData(Sham, assay = "RNA", layer = "data")
+data_input_2_weeks <- GetAssayData(two_weeks, assay = "RNA", layer = "data")
+data_input_2.5_weeks <- GetAssayData(two.five_weeks, assay = "RNA", layer = "data")
+data_input_3.5_weeks <- GetAssayData(three.five_weeks, assay = "RNA", layer = "data")
+
+labels_Sham <- Sham@meta.data$seurat_clusters
+samples_Sham <- Sham@meta.data$orig.ident
+labels_2_weeks <- two_weeks@meta.data$seurat_clusters
+samples_2_weeks <- two_weeks@meta.data$orig.ident
+labels_2.5_weeks <- two.five_weeks@meta.data$seurat_clusters
+samples_2.5_weeks <- two.five_weeks@meta.data$orig.ident
+labels_3.5_weeks <- three.five_weeks@meta.data$seurat_clusters
+samples_3.5_weeks <- three.five_weeks@meta.data$orig.ident
+
+cellchat_Sham_meta <- data.frame(group = labels_Sham, row.names = names(labels_Sham), samples = samples_Sham)
+cellchat_2_weeks_meta <- data.frame(group = labels_2_weeks, row.names = names(labels_2_weeks), samples = samples_2_weeks)
+cellchat_2.5_weeks_meta <- data.frame(group = labels_2.5_weeks, row.names = names(labels_2.5_weeks), samples = samples_2.5_weeks)
+cellchat_3.5_weeks_meta <- data.frame(group = labels_3.5_weeks, row.names = names(labels_3.5_weeks), samples = samples_3.5_weeks)
+
+cellchat_Sham_all <- createCellChat(object = data_input_Sham, meta = cellchat_Sham_meta, group.by = "group")
+cellchat_Sham_secreted <- createCellChat(object = data_input_Sham, meta = cellchat_Sham_meta, group.by = "group")
+cellchat_Sham_ECM <- createCellChat(object = data_input_Sham, meta = cellchat_Sham_meta, group.by = "group")
+cellchat_Sham_nps <- createCellChat(object = data_input_Sham, meta = cellchat_Sham_meta, group.by = "group")
+cellchat_Sham_ccc <- createCellChat(object = data_input_Sham, meta = cellchat_Sham_meta, group.by = "group")
+cellchat_2_weeks_all <- createCellChat(object = data_input_2_weeks, meta = cellchat_2_weeks_meta, group.by = "group")
+cellchat_2_weeks_secreted <- createCellChat(object = data_input_2_weeks, meta = cellchat_2_weeks_meta, group.by = "group")
+cellchat_2_weeks_ECM <- createCellChat(object = data_input_2_weeks, meta = cellchat_2_weeks_meta, group.by = "group")
+cellchat_2_weeks_nps <- createCellChat(object = data_input_2_weeks, meta = cellchat_2_weeks_meta, group.by = "group")
+cellchat_2_weeks_ccc <- createCellChat(object = data_input_2_weeks, meta = cellchat_2_weeks_meta, group.by = "group")
+cellchat_2.5_weeks_all <- createCellChat(object = data_input_2.5_weeks, meta = cellchat_2.5_weeks_meta, group.by = "group")
+cellchat_2.5_weeks_secreted <- createCellChat(object = data_input_2.5_weeks, meta = cellchat_2.5_weeks_meta, group.by = "group")
+cellchat_2.5_weeks_ECM <- createCellChat(object = data_input_2.5_weeks, meta = cellchat_2.5_weeks_meta, group.by = "group")
+cellchat_2.5_weeks_nps <- createCellChat(object = data_input_2.5_weeks, meta = cellchat_2.5_weeks_meta, group.by = "group")
+cellchat_2.5_weeks_ccc <- createCellChat(object = data_input_2.5_weeks, meta = cellchat_2.5_weeks_meta, group.by = "group")
+cellchat_3.5_weeks_all <- createCellChat(object = data_input_3.5_weeks, meta = cellchat_3.5_weeks_meta, group.by = "group")
+cellchat_3.5_weeks_secreted <- createCellChat(object = data_input_3.5_weeks, meta = cellchat_3.5_weeks_meta, group.by = "group")
+cellchat_3.5_weeks_ECM <- createCellChat(object = data_input_3.5_weeks, meta = cellchat_3.5_weeks_meta, group.by = "group")
+cellchat_3.5_weeks_nps <- createCellChat(object = data_input_3.5_weeks, meta = cellchat_3.5_weeks_meta, group.by = "group")
+cellchat_3.5_weeks_ccc <- createCellChat(object = data_input_3.5_weeks, meta = cellchat_3.5_weeks_meta, group.by = "group")
+```
+
+
+
+# Set which CellChat database to use
+
+```{r, include = FALSE}
+cellchat_Sham_all@DB <- CellChatDB.mouse
+cellchat_Sham_secreted@DB <- CellChatDB.mouse
+cellchat_Sham_ECM@DB <- CellChatDB.mouse
+cellchat_Sham_nps@DB <- CellChatDB.mouse
+cellchat_Sham_ccc@DB <- CellChatDB.mouse
+cellchat_2_weeks_all@DB <- CellChatDB.mouse
+cellchat_2_weeks_secreted@DB <- CellChatDB.mouse
+cellchat_2_weeks_ECM@DB <- CellChatDB.mouse
+cellchat_2_weeks_nps@DB <- CellChatDB.mouse
+cellchat_2_weeks_ccc@DB <- CellChatDB.mouse
+cellchat_2.5_weeks_all@DB <- CellChatDB.mouse
+cellchat_2.5_weeks_secreted@DB <- CellChatDB.mouse
+cellchat_2.5_weeks_ECM@DB <- CellChatDB.mouse
+cellchat_2.5_weeks_nps@DB <- CellChatDB.mouse
+cellchat_2.5_weeks_ccc@DB <- CellChatDB.mouse
+cellchat_3.5_weeks_all@DB <- CellChatDB.mouse
+cellchat_3.5_weeks_secreted@DB <- CellChatDB.mouse
+cellchat_3.5_weeks_ECM@DB <- CellChatDB.mouse
+cellchat_3.5_weeks_nps@DB <- CellChatDB.mouse
+cellchat_3.5_weeks_ccc@DB <- CellChatDB.mouse
+```
+
+
+
+# Subset for each interaction type
+
+```{r, include=FALSE}
+CellChatDB_secreted <- subsetDB(CellChatDB.mouse, search = "Secreted Signaling")
+CellChatDB_ECM <- subsetDB(CellChatDB.mouse, search = "ECM-Receptor")
+CellChatDB_nps <- subsetDB(CellChatDB.mouse, search = "Non-protein Signaling")
+CellChatDB_ccc <- subsetDB(CellChatDB.mouse, search = "Cell-Cell Contact")
+
+cellchat_Sham_secreted@DB <- CellChatDB_secreted
+cellchat_Sham_ECM@DB <- CellChatDB_ECM
+cellchat_Sham_nps@DB <- CellChatDB_nps
+cellchat_Sham_ccc@DB <- CellChatDB_ccc
+cellchat_2_weeks_secreted@DB <- CellChatDB_secreted
+cellchat_2_weeks_ECM@DB <- CellChatDB_ECM
+cellchat_2_weeks_nps@DB <- CellChatDB_nps
+cellchat_2_weeks_ccc@DB <- CellChatDB_ccc
+cellchat_2.5_weeks_secreted@DB <- CellChatDB_secreted
+cellchat_2.5_weeks_ECM@DB <- CellChatDB_ECM
+cellchat_2.5_weeks_nps@DB <- CellChatDB_nps
+cellchat_2.5_weeks_ccc@DB <- CellChatDB_ccc
+cellchat_3.5_weeks_secreted@DB <- CellChatDB_secreted
+cellchat_3.5_weeks_ECM@DB <- CellChatDB_ECM
+cellchat_3.5_weeks_nps@DB <- CellChatDB_nps
+cellchat_3.5_weeks_ccc@DB <- CellChatDB_ccc
+```
+
+
+
+# Subset expression data of signaling genes
+
+```{r, include=FALSE}
+cellchat_Sham_all <- subsetData(cellchat_Sham_all)
+cellchat_Sham_secreted <- subsetData(cellchat_Sham_secreted)
+cellchat_Sham_ECM <- subsetData(cellchat_Sham_ECM)
+cellchat_Sham_nps <- subsetData(cellchat_Sham_nps)
+cellchat_Sham_ccc <- subsetData(cellchat_Sham_ccc)
+cellchat_2_weeks_all <- subsetData(cellchat_2_weeks_all)
+cellchat_2_weeks_secreted <- subsetData(cellchat_2_weeks_secreted)
+cellchat_2_weeks_ECM <- subsetData(cellchat_2_weeks_ECM)
+cellchat_2_weeks_nps <- subsetData(cellchat_2_weeks_nps)
+cellchat_2_weeks_ccc <- subsetData(cellchat_2_weeks_ccc)
+cellchat_2.5_weeks_all <- subsetData(cellchat_2.5_weeks_all)
+cellchat_2.5_weeks_secreted <- subsetData(cellchat_2.5_weeks_secreted)
+cellchat_2.5_weeks_ECM <- subsetData(cellchat_2.5_weeks_ECM)
+cellchat_2.5_weeks_nps <- subsetData(cellchat_2.5_weeks_nps)
+cellchat_2.5_weeks_ccc <- subsetData(cellchat_2.5_weeks_ccc)
+cellchat_3.5_weeks_all <- subsetData(cellchat_3.5_weeks_all)
+cellchat_3.5_weeks_secreted <- subsetData(cellchat_3.5_weeks_secreted)
+cellchat_3.5_weeks_ECM <- subsetData(cellchat_3.5_weeks_ECM)
+cellchat_3.5_weeks_nps <- subsetData(cellchat_3.5_weeks_nps)
+cellchat_3.5_weeks_ccc <- subsetData(cellchat_3.5_weeks_ccc)
+```
+
+
+
+# CellChat processing
+
+```{r, include=FALSE}
+cellchat_Sham_all <- identifyOverExpressedGenes(cellchat_Sham_all)
+
+cellchat_Sham_secreted <- identifyOverExpressedGenes(cellchat_Sham_secreted)
+
+cellchat_Sham_ECM <- identifyOverExpressedGenes(cellchat_Sham_ECM)
+
+cellchat_Sham_nps <- identifyOverExpressedGenes(cellchat_Sham_nps)
+
+cellchat_Sham_ccc <- identifyOverExpressedGenes(cellchat_Sham_ccc)
+
+cellchat_2_weeks_all <- identifyOverExpressedGenes(cellchat_2_weeks_all)
+
+cellchat_2_weeks_secreted <- identifyOverExpressedGenes(cellchat_2_weeks_secreted)
+
+cellchat_2_weeks_ECM <- identifyOverExpressedGenes(cellchat_2_weeks_ECM)
+
+cellchat_2_weeks_nps <- identifyOverExpressedGenes(cellchat_2_weeks_nps)
+
+cellchat_2_weeks_ccc <- identifyOverExpressedGenes(cellchat_2_weeks_ccc)
+
+cellchat_2.5_weeks_all <- identifyOverExpressedGenes(cellchat_2.5_weeks_all)
+
+cellchat_2.5_weeks_secreted <- 
+  identifyOverExpressedGenes(cellchat_2.5_weeks_secreted)
+
+cellchat_2.5_weeks_ECM <- identifyOverExpressedGenes(cellchat_2.5_weeks_ECM)
+
+cellchat_2.5_weeks_nps <- identifyOverExpressedGenes(cellchat_2.5_weeks_nps)
+
+cellchat_2.5_weeks_ccc <- identifyOverExpressedGenes(cellchat_2.5_weeks_ccc)
+
+cellchat_3.5_weeks_all <- identifyOverExpressedGenes(cellchat_3.5_weeks_all)
+
+cellchat_3.5_weeks_secreted <- identifyOverExpressedGenes(cellchat_3.5_weeks_secreted)
+
+cellchat_3.5_weeks_ECM <- identifyOverExpressedGenes(cellchat_3.5_weeks_ECM)
+
+cellchat_3.5_weeks_nps <- identifyOverExpressedGenes(cellchat_3.5_weeks_nps)
+
+cellchat_3.5_weeks_ccc <- identifyOverExpressedGenes(cellchat_3.5_weeks_ccc)
+
+
+
+cellchat_Sham_all <- identifyOverExpressedInteractions(cellchat_Sham_all)
+
+cellchat_Sham_secreted <- identifyOverExpressedInteractions(cellchat_Sham_secreted)
+
+cellchat_Sham_ECM <- identifyOverExpressedInteractions(cellchat_Sham_ECM)
+
+cellchat_Sham_nps <- identifyOverExpressedInteractions(cellchat_Sham_nps)
+
+cellchat_Sham_ccc <- identifyOverExpressedInteractions(cellchat_Sham_ccc)
+
+cellchat_2_weeks_all <- identifyOverExpressedInteractions(cellchat_2_weeks_all)
+
+cellchat_2_weeks_secreted <- identifyOverExpressedInteractions(cellchat_2_weeks_secreted)
+
+cellchat_2_weeks_ECM <- identifyOverExpressedInteractions(cellchat_2_weeks_ECM)
+
+cellchat_2_weeks_nps <- identifyOverExpressedInteractions(cellchat_2_weeks_nps)
+
+cellchat_2_weeks_ccc <- identifyOverExpressedInteractions(cellchat_2_weeks_ccc)
+
+cellchat_2.5_weeks_all <- identifyOverExpressedInteractions(cellchat_2.5_weeks_all)
+
+cellchat_2.5_weeks_secreted <- identifyOverExpressedInteractions(cellchat_2.5_weeks_secreted)
+
+cellchat_2.5_weeks_ECM <- identifyOverExpressedInteractions(cellchat_2.5_weeks_ECM)
+
+cellchat_2.5_weeks_nps <- identifyOverExpressedInteractions(cellchat_2.5_weeks_nps)
+
+cellchat_2.5_weeks_ccc <- identifyOverExpressedInteractions(cellchat_2.5_weeks_ccc)
+
+cellchat_3.5_weeks_all <- identifyOverExpressedInteractions(cellchat_3.5_weeks_all)
+
+cellchat_3.5_weeks_secreted <- identifyOverExpressedInteractions(cellchat_3.5_weeks_secreted)
+
+cellchat_3.5_weeks_ECM <- identifyOverExpressedInteractions(cellchat_3.5_weeks_ECM)
+
+cellchat_3.5_weeks_nps <- identifyOverExpressedInteractions(cellchat_3.5_weeks_nps)
+
+cellchat_3.5_weeks_ccc <- identifyOverExpressedInteractions(cellchat_3.5_weeks_ccc)
+```
+
+
+
+# Project gene expression data onto protein-protein interaction network
+
+```{r, include=FALSE}
+cellchat_Sham_all <- projectData(cellchat_Sham_all, PPI.mouse)
+cellchat_Sham_secreted <- projectData(cellchat_Sham_secreted, PPI.mouse)
+cellchat_Sham_ECM <- projectData(cellchat_Sham_ECM, PPI.mouse)
+cellchat_Sham_nps <- projectData(cellchat_Sham_nps, PPI.mouse)
+cellchat_Sham_ccc <- projectData(cellchat_Sham_ccc, PPI.mouse)
+cellchat_2_weeks_all <- projectData(cellchat_2_weeks_all, PPI.mouse)
+cellchat_2_weeks_secreted <- projectData(cellchat_2_weeks_secreted, PPI.mouse)
+cellchat_2_weeks_ECM <- projectData(cellchat_2_weeks_ECM, PPI.mouse)
+cellchat_2_weeks_nps <- projectData(cellchat_2_weeks_nps, PPI.mouse)
+cellchat_2_weeks_ccc <- projectData(cellchat_2_weeks_ccc, PPI.mouse)
+cellchat_2.5_weeks_all <- projectData(cellchat_2.5_weeks_all, PPI.mouse)
+cellchat_2.5_weeks_secreted <- projectData(cellchat_2.5_weeks_secreted, PPI.mouse)
+cellchat_2.5_weeks_ECM <- projectData(cellchat_2.5_weeks_ECM, PPI.mouse)
+cellchat_2.5_weeks_nps <- projectData(cellchat_2.5_weeks_nps, PPI.mouse)
+cellchat_2.5_weeks_ccc <- projectData(cellchat_2.5_weeks_ccc, PPI.mouse)
+cellchat_3.5_weeks_all <- projectData(cellchat_3.5_weeks_all, PPI.mouse)
+cellchat_3.5_weeks_secreted <- projectData(cellchat_3.5_weeks_secreted, PPI.mouse)
+cellchat_3.5_weeks_ECM <- projectData(cellchat_3.5_weeks_ECM, PPI.mouse)
+cellchat_3.5_weeks_nps <- projectData(cellchat_3.5_weeks_nps, PPI.mouse)
+cellchat_3.5_weeks_ccc <- projectData(cellchat_3.5_weeks_ccc, PPI.mouse)
+```
+
+
+
+# Remove unused levels
+
+```{r, include=FALSE}
+cellchat_Sham_all@idents <- droplevels(cellchat_Sham_all@idents, exclude = setdiff(levels(cellchat_Sham_meta$labels_Sham), unique(cellchat_Sham_meta$labels_Sham)))
+
+cellchat_Sham_secreted@idents <- droplevels(cellchat_Sham_secreted@idents, exclude = setdiff(levels(cellchat_Sham_meta$labels_Sham), unique(cellchat_Sham_meta$labels_Sham)))
+
+cellchat_Sham_ECM@idents <- droplevels(cellchat_Sham_ECM@idents, exclude = setdiff(levels(cellchat_Sham_meta$labels_Sham), unique(cellchat_Sham_meta$labels_Sham)))
+
+cellchat_Sham_nps@idents <- droplevels(cellchat_Sham_nps@idents, exclude = setdiff(levels(cellchat_Sham_meta$labels_Sham), unique(cellchat_Sham_meta$labels_Sham)))
+
+cellchat_Sham_ccc@idents <- droplevels(cellchat_Sham_ccc@idents, exclude = setdiff(levels(cellchat_Sham_meta$labels_Sham), unique(cellchat_Sham_meta$labels_Sham)))
+
+cellchat_2_weeks_all@idents <- droplevels(cellchat_2_weeks_all@idents, exclude = setdiff(levels(cellchat_2_weeks_meta$labels_2_weeks), unique(cellchat_2_weeks_meta$labels_2_weeks)))
+
+cellchat_2_weeks_secreted@idents <- droplevels(cellchat_2_weeks_secreted@idents, exclude = setdiff(levels(cellchat_2_weeks_meta$labels_2_weeks), unique(cellchat_2_weeks_meta$labels_2_weeks)))
+
+cellchat_2_weeks_ECM@idents <- droplevels(cellchat_2_weeks_ECM@idents, exclude = setdiff(levels(cellchat_2_weeks_meta$labels_2_weeks), unique(cellchat_2_weeks_meta$labels_2_weeks)))
+
+cellchat_2_weeks_nps@idents <- droplevels(cellchat_2_weeks_nps@idents, exclude = setdiff(levels(cellchat_2_weeks_meta$labels_2_weeks), unique(cellchat_2_weeks_meta$labels_2_weeks)))
+
+cellchat_2_weeks_ccc@idents <- droplevels(cellchat_2_weeks_ccc@idents, exclude = setdiff(levels(cellchat_2_weeks_meta$labels_2_weeks), unique(cellchat_2_weeks_meta$labels_2_weeks)))
+
+cellchat_2.5_weeks_all@idents <- droplevels(cellchat_2.5_weeks_all@idents, exclude = setdiff(levels(cellchat_2.5_weeks_meta$labels_2.5_weeks), unique(cellchat_2.5_weeks_meta$labels_2.5_weeks)))
+
+cellchat_2.5_weeks_secreted@idents <- droplevels(cellchat_2.5_weeks_secreted@idents, exclude = setdiff(levels(cellchat_2.5_weeks_meta$labels_2.5_weeks), unique(cellchat_2.5_weeks_meta$labels_2.5_weeks)))
+
+cellchat_2.5_weeks_ECM@idents <- droplevels(cellchat_2.5_weeks_ECM@idents, exclude = setdiff(levels(cellchat_2.5_weeks_meta$labels_2.5_weeks), unique(cellchat_2.5_weeks_meta$labels_2.5_weeks)))
+
+cellchat_2.5_weeks_nps@idents <- droplevels(cellchat_2.5_weeks_nps@idents, exclude = setdiff(levels(cellchat_2.5_weeks_meta$labels_2.5_weeks), unique(cellchat_2.5_weeks_meta$labels_2.5_weeks)))
+
+cellchat_2.5_weeks_ccc@idents <- droplevels(cellchat_2.5_weeks_ccc@idents, exclude = setdiff(levels(cellchat_2.5_weeks_meta$labels_2.5_weeks), unique(cellchat_2.5_weeks_meta$labels_2.5_weeks)))
+
+cellchat_3.5_weeks_all@idents <- droplevels(cellchat_3.5_weeks_all@idents, exclude = setdiff(levels(cellchat_3.5_weeks_meta$labels_3.5_weeks), unique(cellchat_3.5_weeks_meta$labels_3.5_weeks)))
+
+cellchat_3.5_weeks_secreted@idents <- droplevels(cellchat_3.5_weeks_secreted@idents, exclude = setdiff(levels(cellchat_3.5_weeks_meta$labels_3.5_weeks), unique(cellchat_3.5_weeks_meta$labels_3.5_weeks)))
+
+cellchat_3.5_weeks_ECM@idents <- droplevels(cellchat_3.5_weeks_ECM@idents, exclude = setdiff(levels(cellchat_3.5_weeks_meta$labels_3.5_weeks), unique(cellchat_3.5_weeks_meta$labels_3.5_weeks)))
+
+cellchat_3.5_weeks_nps@idents <- droplevels(cellchat_3.5_weeks_nps@idents, exclude = setdiff(levels(cellchat_3.5_weeks_meta$labels_3.5_weeks), unique(cellchat_3.5_weeks_meta$labels_3.5_weeks)))
+
+cellchat_3.5_weeks_ccc@idents <- droplevels(cellchat_3.5_weeks_ccc@idents, exclude = setdiff(levels(cellchat_3.5_weeks_meta$labels_3.5_weeks), unique(cellchat_3.5_weeks_meta$labels_3.5_weeks)))
+```
+
+
+
+# Identify communication probabilities
+
+```{r, include=FALSE}
+cellchat_Sham_all <- computeCommunProb(cellchat_Sham_all)
+cellchat_Sham_all <- computeCommunProbPathway(cellchat_Sham_all)
+cellchat_Sham_all <- aggregateNet(cellchat_Sham_all)
+cellchat_Sham_all <- netAnalysis_computeCentrality(cellchat_Sham_all, slot.name = "netP")
+cellchat_Sham_secreted <- computeCommunProb(cellchat_Sham_secreted)
+cellchat_Sham_secreted <- computeCommunProbPathway(cellchat_Sham_secreted)
+cellchat_Sham_secreted <- aggregateNet(cellchat_Sham_secreted)
+cellchat_Sham_secreted <- netAnalysis_computeCentrality(cellchat_Sham_secreted, slot.name = "netP")
+cellchat_Sham_ECM <- computeCommunProb(cellchat_Sham_ECM)
+cellchat_Sham_ECM <- computeCommunProbPathway(cellchat_Sham_ECM)
+cellchat_Sham_ECM <- aggregateNet(cellchat_Sham_ECM)
+cellchat_Sham_ECM <- netAnalysis_computeCentrality(cellchat_Sham_ECM, slot.name = "netP")
+cellchat_Sham_nps <- computeCommunProb(cellchat_Sham_nps)
+cellchat_Sham_nps <- computeCommunProbPathway(cellchat_Sham_nps)
+cellchat_Sham_nps <- aggregateNet(cellchat_Sham_nps)
+cellchat_Sham_nps <- netAnalysis_computeCentrality(cellchat_Sham_nps, slot.name = "netP")
+cellchat_Sham_ccc <- computeCommunProb(cellchat_Sham_ccc)
+cellchat_Sham_ccc <- computeCommunProbPathway(cellchat_Sham_ccc)
+cellchat_Sham_ccc <- aggregateNet(cellchat_Sham_ccc)
+cellchat_Sham_ccc <- netAnalysis_computeCentrality(cellchat_Sham_ccc, slot.name = "netP")
+
+cellchat_2_weeks_all <- computeCommunProb(cellchat_2_weeks_all)
+cellchat_2_weeks_all <- computeCommunProbPathway(cellchat_2_weeks_all)
+cellchat_2_weeks_all <- aggregateNet(cellchat_2_weeks_all)
+cellchat_2_weeks_all <- netAnalysis_computeCentrality(cellchat_2_weeks_all, slot.name = "netP")
+cellchat_2_weeks_secreted <- computeCommunProb(cellchat_2_weeks_secreted)
+cellchat_2_weeks_secreted <- computeCommunProbPathway(cellchat_2_weeks_secreted)
+cellchat_2_weeks_secreted <- aggregateNet(cellchat_2_weeks_secreted)
+cellchat_2_weeks_secreted <- netAnalysis_computeCentrality(cellchat_2_weeks_secreted, slot.name = "netP")
+cellchat_2_weeks_ECM <- computeCommunProb(cellchat_2_weeks_ECM)
+cellchat_2_weeks_ECM <- computeCommunProbPathway(cellchat_2_weeks_ECM)
+cellchat_2_weeks_ECM <- aggregateNet(cellchat_2_weeks_ECM)
+cellchat_2_weeks_ECM <- netAnalysis_computeCentrality(cellchat_2_weeks_ECM, slot.name = "netP")
+cellchat_2_weeks_nps <- computeCommunProb(cellchat_2_weeks_nps)
+cellchat_2_weeks_nps <- computeCommunProbPathway(cellchat_2_weeks_nps)
+cellchat_2_weeks_nps <- aggregateNet(cellchat_2_weeks_nps)
+cellchat_2_weeks_nps <- netAnalysis_computeCentrality(cellchat_2_weeks_nps, slot.name = "netP")
+cellchat_2_weeks_ccc <- computeCommunProb(cellchat_2_weeks_ccc)
+cellchat_2_weeks_ccc <- computeCommunProbPathway(cellchat_2_weeks_ccc)
+cellchat_2_weeks_ccc <- aggregateNet(cellchat_2_weeks_ccc)
+cellchat_2_weeks_ccc <- netAnalysis_computeCentrality(cellchat_2_weeks_ccc, slot.name = "netP")
+
+cellchat_2.5_weeks_all <- computeCommunProb(cellchat_2.5_weeks_all)
+cellchat_2.5_weeks_all <- computeCommunProbPathway(cellchat_2.5_weeks_all)
+cellchat_2.5_weeks_all <- aggregateNet(cellchat_2.5_weeks_all)
+cellchat_2.5_weeks_all <- netAnalysis_computeCentrality(cellchat_2.5_weeks_all, slot.name = "netP")
+cellchat_2.5_weeks_secreted <- computeCommunProb(cellchat_2.5_weeks_secreted)
+cellchat_2.5_weeks_secreted <- computeCommunProbPathway(cellchat_2.5_weeks_secreted)
+cellchat_2.5_weeks_secreted <- aggregateNet(cellchat_2.5_weeks_secreted)
+cellchat_2.5_weeks_secreted <- netAnalysis_computeCentrality(cellchat_2.5_weeks_secreted, slot.name = "netP")
+cellchat_2.5_weeks_ECM <- computeCommunProb(cellchat_2.5_weeks_ECM)
+cellchat_2.5_weeks_ECM <- computeCommunProbPathway(cellchat_2.5_weeks_ECM)
+cellchat_2.5_weeks_ECM <- aggregateNet(cellchat_2.5_weeks_ECM)
+cellchat_2.5_weeks_ECM <- netAnalysis_computeCentrality(cellchat_2.5_weeks_ECM, slot.name = "netP")
+cellchat_2.5_weeks_nps <- computeCommunProb(cellchat_2.5_weeks_nps)
+cellchat_2.5_weeks_nps <- computeCommunProbPathway(cellchat_2.5_weeks_nps)
+cellchat_2.5_weeks_nps <- aggregateNet(cellchat_2.5_weeks_nps)
+cellchat_2.5_weeks_nps <- netAnalysis_computeCentrality(cellchat_2.5_weeks_nps, slot.name = "netP")
+cellchat_2.5_weeks_ccc <- computeCommunProb(cellchat_2.5_weeks_ccc)
+cellchat_2.5_weeks_ccc <- computeCommunProbPathway(cellchat_2.5_weeks_ccc)
+cellchat_2.5_weeks_ccc <- aggregateNet(cellchat_2.5_weeks_ccc)
+cellchat_2.5_weeks_ccc <- netAnalysis_computeCentrality(cellchat_2.5_weeks_ccc, slot.name = "netP")
+
+cellchat_3.5_weeks_all <- computeCommunProb(cellchat_3.5_weeks_all)
+cellchat_3.5_weeks_all <- computeCommunProbPathway(cellchat_3.5_weeks_all)
+cellchat_3.5_weeks_all <- aggregateNet(cellchat_3.5_weeks_all)
+cellchat_3.5_weeks_all <- netAnalysis_computeCentrality(cellchat_3.5_weeks_all, slot.name = "netP")
+cellchat_3.5_weeks_secreted <- computeCommunProb(cellchat_3.5_weeks_secreted)
+cellchat_3.5_weeks_secreted <- computeCommunProbPathway(cellchat_3.5_weeks_secreted)
+cellchat_3.5_weeks_secreted <- aggregateNet(cellchat_3.5_weeks_secreted)
+cellchat_3.5_weeks_secreted <- netAnalysis_computeCentrality(cellchat_3.5_weeks_secreted, slot.name = "netP")
+cellchat_3.5_weeks_ECM <- computeCommunProb(cellchat_3.5_weeks_ECM)
+cellchat_3.5_weeks_ECM <- computeCommunProbPathway(cellchat_3.5_weeks_ECM)
+cellchat_3.5_weeks_ECM <- aggregateNet(cellchat_3.5_weeks_ECM)
+cellchat_3.5_weeks_ECM <- netAnalysis_computeCentrality(cellchat_3.5_weeks_ECM, slot.name = "netP")
+cellchat_3.5_weeks_nps <- computeCommunProb(cellchat_3.5_weeks_nps)
+cellchat_3.5_weeks_nps <- computeCommunProbPathway(cellchat_3.5_weeks_nps)
+cellchat_3.5_weeks_nps <- aggregateNet(cellchat_3.5_weeks_nps)
+cellchat_3.5_weeks_nps <- netAnalysis_computeCentrality(cellchat_3.5_weeks_nps, slot.name = "netP")
+cellchat_3.5_weeks_ccc <- computeCommunProb(cellchat_3.5_weeks_ccc)
+cellchat_3.5_weeks_ccc <- computeCommunProbPathway(cellchat_3.5_weeks_ccc)
+cellchat_3.5_weeks_ccc <- aggregateNet(cellchat_3.5_weeks_ccc)
+cellchat_3.5_weeks_ccc <- netAnalysis_computeCentrality(cellchat_3.5_weeks_ccc, slot.name = "netP")
+```
+
+
+
+# Enriched pathways
+
+```{r, include=FALSE}
+enrichedLR_Sham_all <- extractEnrichedLR(cellchat_Sham_all, signaling = c(cellchat_Sham_all@netP[["pathways"]]), geneLR.return = TRUE)
+enrichedLR_Sham_secreted <- extractEnrichedLR(cellchat_Sham_secreted, signaling = c(cellchat_Sham_secreted@netP[["pathways"]]), geneLR.return = TRUE)
+enrichedLR_Sham_ECM <- extractEnrichedLR(cellchat_Sham_ECM, signaling = c(cellchat_Sham_ECM@netP[["pathways"]]), geneLR.return = TRUE)
+enrichedLR_Sham_nps <- extractEnrichedLR(cellchat_Sham_nps, signaling = c(cellchat_Sham_nps@netP[["pathways"]]), geneLR.return = TRUE)
+enrichedLR_Sham_ccc <- extractEnrichedLR(cellchat_Sham_ccc, signaling = c(cellchat_Sham_ccc@netP[["pathways"]]), geneLR.return = TRUE)
+enrichedLR_2_weeks_all <- extractEnrichedLR(cellchat_2_weeks_all, signaling = c(cellchat_2_weeks_all@netP[["pathways"]]), geneLR.return = TRUE)
+enrichedLR_2_weeks_secreted <- extractEnrichedLR(cellchat_2_weeks_secreted, signaling = c(cellchat_2_weeks_secreted@netP[["pathways"]]), geneLR.return = TRUE)
+enrichedLR_2_weeks_ECM <- extractEnrichedLR(cellchat_2_weeks_ECM, signaling = c(cellchat_2_weeks_ECM@netP[["pathways"]]), geneLR.return = TRUE)
+enrichedLR_2_weeks_nps <- extractEnrichedLR(cellchat_2_weeks_nps, signaling = c(cellchat_2_weeks_nps@netP[["pathways"]]), geneLR.return = TRUE)
+enrichedLR_2_weeks_ccc <- extractEnrichedLR(cellchat_2_weeks_ccc, signaling = c(cellchat_2_weeks_ccc@netP[["pathways"]]), geneLR.return = TRUE)
+enrichedLR_2.5_weeks_all <- extractEnrichedLR(cellchat_2.5_weeks_all, signaling = c(cellchat_2.5_weeks_all@netP[["pathways"]]), geneLR.return = TRUE)
+enrichedLR_2.5_weeks_secreted <- extractEnrichedLR(cellchat_2.5_weeks_secreted, signaling = c(cellchat_2.5_weeks_secreted@netP[["pathways"]]), geneLR.return = TRUE)
+enrichedLR_2.5_weeks_ECM <- extractEnrichedLR(cellchat_2.5_weeks_ECM, signaling = c(cellchat_2.5_weeks_ECM@netP[["pathways"]]), geneLR.return = TRUE)
+enrichedLR_2.5_weeks_nps <- extractEnrichedLR(cellchat_2.5_weeks_nps, signaling = c(cellchat_2.5_weeks_nps@netP[["pathways"]]), geneLR.return = TRUE)
+enrichedLR_2.5_weeks_ccc <- extractEnrichedLR(cellchat_2.5_weeks_ccc, signaling = c(cellchat_2.5_weeks_ccc@netP[["pathways"]]), geneLR.return = TRUE)
+enrichedLR_3.5_weeks_all <- extractEnrichedLR(cellchat_3.5_weeks_all, signaling = c(cellchat_3.5_weeks_all@netP[["pathways"]]), geneLR.return = TRUE)
+enrichedLR_3.5_weeks_secreted <- extractEnrichedLR(cellchat_3.5_weeks_secreted, signaling = c(cellchat_3.5_weeks_secreted@netP[["pathways"]]), geneLR.return = TRUE)
+enrichedLR_3.5_weeks_ECM <- extractEnrichedLR(cellchat_3.5_weeks_ECM, signaling = c(cellchat_3.5_weeks_ECM@netP[["pathways"]]), geneLR.return = TRUE)
+enrichedLR_3.5_weeks_nps <- extractEnrichedLR(cellchat_3.5_weeks_nps, signaling = c(cellchat_3.5_weeks_nps@netP[["pathways"]]), geneLR.return = TRUE)
+enrichedLR_3.5_weeks_ccc <- extractEnrichedLR(cellchat_3.5_weeks_ccc, signaling = c(cellchat_3.5_weeks_ccc@netP[["pathways"]]), geneLR.return = TRUE)
+
+
+
+enriched_pathways_Sham_all <- cellchat_Sham_all@netP[["pathways"]]
+enriched_pathways_Sham_secreted <- cellchat_Sham_secreted@netP[["pathways"]]
+enriched_pathways_Sham_ECM <- cellchat_Sham_ECM@netP[["pathways"]]
+enriched_pathways_Sham_nps <- cellchat_Sham_nps@netP[["pathways"]]
+enriched_pathways_Sham_ccc <- cellchat_Sham_ccc@netP[["pathways"]]
+enriched_pathways_2_weeks_all <- cellchat_2_weeks_all@netP[["pathways"]]
+enriched_pathways_2_weeks_secreted <- cellchat_2_weeks_secreted@netP[["pathways"]]
+enriched_pathways_2_weeks_ECM <- cellchat_2_weeks_ECM@netP[["pathways"]]
+enriched_pathways_2_weeks_nps <- cellchat_2_weeks_nps@netP[["pathways"]]
+enriched_pathways_2_weeks_ccc <- cellchat_2_weeks_ccc@netP[["pathways"]]
+enriched_pathways_2.5_weeks_all <- cellchat_2.5_weeks_all@netP[["pathways"]]
+enriched_pathways_2.5_weeks_secreted <- cellchat_2.5_weeks_secreted@netP[["pathways"]]
+enriched_pathways_2.5_weeks_ECM <- cellchat_2.5_weeks_ECM@netP[["pathways"]]
+enriched_pathways_2.5_weeks_nps <- cellchat_2.5_weeks_nps@netP[["pathways"]]
+enriched_pathways_2.5_weeks_ccc <- cellchat_2.5_weeks_ccc@netP[["pathways"]]
+enriched_pathways_3.5_weeks_all <- cellchat_3.5_weeks_all@netP[["pathways"]]
+enriched_pathways_3.5_weeks_secreted <- cellchat_3.5_weeks_secreted@netP[["pathways"]]
+enriched_pathways_3.5_weeks_ECM <- cellchat_3.5_weeks_ECM@netP[["pathways"]]
+enriched_pathways_3.5_weeks_nps <- cellchat_3.5_weeks_nps@netP[["pathways"]]
+enriched_pathways_3.5_weeks_ccc <- cellchat_3.5_weeks_ccc@netP[["pathways"]]
+```
+
+
+
+# Calculate
+
+## Number of interactions, weight of interactions, probability of interactions and p-values of interactions
+
+```{r, include=FALSE}
+cellchat_Sham_all_count <- cellchat_Sham_all@net$count
+write.csv(cellchat_Sham_all_count, file = "cellchat_Sham_all_count.csv", row.names = TRUE)
+cellchat_Sham_secreted_count <- cellchat_Sham_secreted@net$count
+write.csv(cellchat_Sham_secreted_count, file = "cellchat_Sham_secreted_count.csv", row.names = TRUE)
+cellchat_Sham_ECM_count <- cellchat_Sham_ECM@net$count
+write.csv(cellchat_Sham_ECM_count, file = "cellchat_Sham_ECM_count.csv", row.names = TRUE)
+cellchat_Sham_nps_count <- cellchat_Sham_nps@net$count
+write.csv(cellchat_Sham_nps_count, file = "cellchat_Sham_nps_count.csv", row.names = TRUE)
+cellchat_Sham_ccc_count <- cellchat_Sham_ccc@net$count
+write.csv(cellchat_Sham_ccc_count, file = "cellchat_Sham_ccc_count.csv", row.names = TRUE)
+cellchat_2_weeks_all_count <- cellchat_2_weeks_all@net$count
+write.csv(cellchat_2_weeks_all_count, file = "cellchat_2_weeks_all_count.csv", row.names = TRUE)
+cellchat_2_weeks_secreted_count <- cellchat_2_weeks_secreted@net$count
+write.csv(cellchat_2_weeks_secreted_count, file = "cellchat_2_weeks_secreted_count.csv", row.names = TRUE)
+cellchat_2_weeks_ECM_count <- cellchat_2_weeks_ECM@net$count
+write.csv(cellchat_2_weeks_ECM_count, file = "cellchat_2_weeks_ECM_count.csv", row.names = TRUE)
+cellchat_2_weeks_nps_count <- cellchat_2_weeks_nps@net$count
+write.csv(cellchat_2_weeks_nps_count, file = "cellchat_2_weeks_nps_count.csv", row.names = TRUE)
+cellchat_2_weeks_ccc_count <- cellchat_2_weeks_ccc@net$count
+write.csv(cellchat_2_weeks_ccc_count, file = "cellchat_2_weeks_ccc_count.csv", row.names = TRUE)
+cellchat_2.5_weeks_all_count <- cellchat_2.5_weeks_all@net$count
+write.csv(cellchat_2.5_weeks_all_count, file = "cellchat_2.5_weeks_all_count.csv", row.names = TRUE)
+cellchat_2.5_weeks_secreted_count <- cellchat_2.5_weeks_secreted@net$count
+write.csv(cellchat_2.5_weeks_secreted_count, file = "cellchat_2.5_weeks_secreted_count.csv", row.names = TRUE)
+cellchat_2.5_weeks_ECM_count <- cellchat_2.5_weeks_ECM@net$count
+write.csv(cellchat_2.5_weeks_ECM_count, file = "cellchat_2.5_weeks_ECM_count.csv", row.names = TRUE)
+cellchat_2.5_weeks_nps_count <- cellchat_2.5_weeks_nps@net$count
+write.csv(cellchat_2.5_weeks_nps_count, file = "cellchat_2.5_weeks_nps_count.csv", row.names = TRUE)
+cellchat_2.5_weeks_ccc_count <- cellchat_2.5_weeks_ccc@net$count
+write.csv(cellchat_2.5_weeks_ccc_count, file = "cellchat_2.5_weeks_ccc_count.csv", row.names = TRUE)
+cellchat_3.5_weeks_all_count <- cellchat_3.5_weeks_all@net$count
+write.csv(cellchat_3.5_weeks_all_count, file = "cellchat_3.5_weeks_all_count.csv", row.names = TRUE)
+cellchat_3.5_weeks_secreted_count <- cellchat_3.5_weeks_secreted@net$count
+write.csv(cellchat_3.5_weeks_secreted_count, file = "cellchat_3.5_weeks_secreted_count.csv", row.names = TRUE)
+cellchat_3.5_weeks_ECM_count <- cellchat_3.5_weeks_ECM@net$count
+write.csv(cellchat_3.5_weeks_ECM_count, file = "cellchat_3.5_weeks_ECM_count.csv", row.names = TRUE)
+cellchat_3.5_weeks_nps_count <- cellchat_3.5_weeks_nps@net$count
+write.csv(cellchat_3.5_weeks_nps_count, file = "cellchat_3.5_weeks_nps_count.csv", row.names = TRUE)
+cellchat_3.5_weeks_ccc_count <- cellchat_3.5_weeks_ccc@net$count
+write.csv(cellchat_3.5_weeks_ccc_count, file = "cellchat_3.5_weeks_ccc_count.csv", row.names = TRUE)
+
+cellchat_Sham_all@net$weight
+cellchat_Sham_secreted@net$weight
+cellchat_Sham_ECM@net$weight
+cellchat_Sham_nps@net$weight
+cellchat_Sham_ccc@net$weight
+cellchat_2_weeks_all@net$weight
+cellchat_2_weeks_secreted@net$weight
+cellchat_2_weeks_ECM@net$weight
+cellchat_2_weeks_nps@net$weight
+cellchat_2_weeks_ccc@net$weight
+cellchat_2.5_weeks_all@net$weight
+cellchat_2.5_weeks_secreted@net$weight
+cellchat_2.5_weeks_ECM@net$weight
+cellchat_2.5_weeks_nps@net$weight
+cellchat_2.5_weeks_ccc@net$weight
+cellchat_3.5_weeks_all@net$weight
+cellchat_3.5_weeks_secreted@net$weight
+cellchat_3.5_weeks_ECM@net$weight
+cellchat_3.5_weeks_nps@net$weight
+cellchat_3.5_weeks_ccc@net$weight
+
+cellchat_Sham_all@net$prob
+cellchat_Sham_secreted@net$prob
+cellchat_Sham_ECM@net$prob
+cellchat_Sham_nps@net$prob
+cellchat_Sham_ccc@net$prob
+cellchat_2_weeks_all@net$prob
+cellchat_2_weeks_secreted@net$prob
+cellchat_2_weeks_ECM@net$prob
+cellchat_2_weeks_nps@net$prob
+cellchat_2_weeks_ccc@net$prob
+cellchat_2.5_weeks_all@net$prob
+cellchat_2.5_weeks_secreted@net$prob
+cellchat_2.5_weeks_ECM@net$prob
+cellchat_2.5_weeks_nps@net$prob
+cellchat_2.5_weeks_ccc@net$prob
+cellchat_3.5_weeks_all@net$prob
+cellchat_3.5_weeks_secreted@net$prob
+cellchat_3.5_weeks_ECM@net$prob
+cellchat_3.5_weeks_nps@net$prob
+cellchat_3.5_weeks_ccc@net$prob
+
+cellchat_Sham_all@net$pval
+cellchat_Sham_secreted@net$pval
+cellchat_Sham_ECM@net$pval
+cellchat_Sham_nps@net$pval
+cellchat_Sham_ccc@net$pval
+cellchat_2_weeks_all@net$pval
+cellchat_2_weeks_secreted@net$pval
+cellchat_2_weeks_ECM@net$pval
+cellchat_2_weeks_nps@net$pval
+cellchat_2_weeks_ccc@net$pval
+cellchat_2.5_weeks_all@net$pval
+cellchat_2.5_weeks_secreted@net$pval
+cellchat_2.5_weeks_ECM@net$pval
+cellchat_2.5_weeks_nps@net$pval
+cellchat_2.5_weeks_ccc@net$pval
+cellchat_3.5_weeks_all@net$pval
+cellchat_3.5_weeks_secreted@net$pval
+cellchat_3.5_weeks_ECM@net$pval
+cellchat_3.5_weeks_nps@net$pval
+cellchat_3.5_weeks_ccc@net$pval
+```
+
+
+
+# Visualize
+
+## Specify colours
+
+```{r, include=FALSE}
+cluster_colours <- c(
+  "MuSCs" = "#EA7F74",
+  "Myonuclei" = "#D68E32",
+  "Endothelial cells" = "#B79C32",
+  "vSMCs" = "#91A934",
+  "Pericytes" = "#57B133",
+  "FAPs" = "#55BA76",
+  "Platelets" = "#56BDAA",
+  "Monocytes/macrophages" = "#55B7D4",
+  "Neutrophils" = "#4CA9F5",
+  "B cells" = "#8B92F8",
+  "T cells/NK cells" = "#C67AF4",
+  "Neural/glial cells" = "#E46BD6",
+  "Schwann cells" = "#EB6EA8"
+)
+```
+
+
+
+## Heatmap, interaction strength between all cell types
+
+```{r}
+netVisual_heatmap(cellchat_Sham_all, slot.name = "net", measure = "weight", color.heatmap = "Reds")
+
+netVisual_heatmap(cellchat_2_weeks_all, slot.name = "net", measure = "weight", color.heatmap = "Reds")
+
+netVisual_heatmap(cellchat_2.5_weeks_all, slot.name = "net", measure = "weight", color.heatmap = "Reds")
+
+netVisual_heatmap(cellchat_3.5_weeks_all, slot.name = "net", measure = "weight", color.heatmap = "Reds")
+```
+
+
+
+# All cells to MuSCs
+
+## Circle plot from all cells to MuSCs
+
+```{r}
+netVisual_circle(cellchat_Sham_all@net$count, weight.scale = TRUE, label.edge = TRUE, title.name = "Number of interactions", arrow.size = 0.05, targets.use = "MuSCs")
+
+netVisual_circle(cellchat_2_weeks_all@net$count, weight.scale = TRUE, label.edge = TRUE, title.name = "Number of interactions", arrow.size = 0.05, targets.use = "MuSCs")
+
+netVisual_circle(cellchat_2.5_weeks_all@net$count, weight.scale = TRUE, label.edge = TRUE, title.name = "Number of interactions", arrow.size = 0.05, targets.use = "MuSCs")
+
+netVisual_circle(cellchat_3.5_weeks_all@net$count, weight.scale = TRUE, label.edge = TRUE, title.name = "Number of interactions", arrow.size = 0.05, targets.use = "MuSCs")
+```
+
+
+
+## Identify enriched pathways from all cells to MuSCs
+
+```{r}
+### Extract communication probabilities at the pathway level
+netP_Sham <- subsetCommunication(cellchat_Sham_all, slot.name = "netP")
+netP_2_weeks <- subsetCommunication(cellchat_2_weeks_all, slot.name = "netP")
+netP_2.5_weeks <- subsetCommunication(cellchat_2.5_weeks_all, slot.name = "netP")
+netP_3.5_weeks <- subsetCommunication(cellchat_3.5_weeks_all, slot.name = "netP")
+
+### Subset for enriched pathways ONLY when MuSCs are the target
+netP_Sham_MuSCs <- netP_Sham[netP_Sham$target == "MuSCs", ]
+netP_2_weeks_MuSCs <- netP_2_weeks[netP_2_weeks$target == "MuSCs", ]
+netP_2.5_weeks_MuSCs <- netP_2.5_weeks[netP_2.5_weeks$target == "MuSCs", ]
+netP_3.5_weeks_MuSCs <- netP_3.5_weeks[netP_3.5_weeks$target == "MuSCs", ]
+
+### Get unique pathways that target the MuSCs
+pathways_Sham_MuSCs <- unique(netP_Sham_MuSCs$pathway_name)
+pathways_2_weeks_MuSCs <- unique(netP_2_weeks_MuSCs$pathway_name)
+pathways_2.5_weeks_MuSCs <- unique(netP_2.5_weeks_MuSCs$pathway_name)
+pathways_3.5_weeks_MuSCs <- unique(netP_3.5_weeks_MuSCs$pathway_name)
+
+head(pathways_Sham_MuSCs)
+head(pathways_2_weeks_MuSCs)
+head(pathways_2.5_weeks_MuSCs)
+head(pathways_3.5_weeks_MuSCs)
+```
+
+### LAMININ, MIF, SELL, TGFb, VCAM, BMP, CADM, COLLAGEN
+
+
+## DotPlots for outgoing signaling patterns for the specified pathways
+```{r}
+windows(width = 20, height = 16)
+selectK(cellchat_Sham_all, pattern = "outgoing")
+windows(width = 20, height = 16)
+selectK(cellchat_2_weeks_all, pattern = "outgoing")
+windows(width = 20, height = 16)
+selectK(cellchat_2.5_weeks_all, pattern = "outgoing")
+windows(width = 20, height = 16)
+selectK(cellchat_3.5_weeks_all, pattern = "outgoing")
+### Choose the number of patterns (k) by visualizing Measure Score by pattern number (number of patterns should be before the line drops)
+
+cellchat_Sham_all <- identifyCommunicationPatterns(cellchat_Sham_all, pattern = "outgoing", k = 2)
+cellchat_2_weeks_all <- identifyCommunicationPatterns(cellchat_2_weeks_all, pattern = "outgoing", k = 2)
+cellchat_2.5_weeks_all <- identifyCommunicationPatterns(cellchat_2.5_weeks_all, pattern = "outgoing", k = 2)
+cellchat_3.5_weeks_all <- identifyCommunicationPatterns(cellchat_3.5_weeks_all, pattern = "outgoing", k = 2)
+
+windows(width = 20, height = 16)
+netAnalysis_dot(cellchat_Sham_all, pattern = "outgoing", pathway.show = c("LAMININ", "MIF", "SELL", "TGFb", "VCAM", "BMP", "CADM", "COLLAGEN"))
+
+windows(width = 20, height = 16)
+netAnalysis_dot(cellchat_2_weeks_all, pattern = "outgoing", pathway.show = c("LAMININ", "MIF", "SELL", "TGFb", "VCAM", "BMP", "CADM", "COLLAGEN"))
+
+windows(width = 20, height = 16)
+netAnalysis_dot(cellchat_2.5_weeks_all, pattern = "outgoing", pathway.show = c("LAMININ", "MIF", "SELL", "TGFb", "VCAM", "BMP", "CADM", "COLLAGEN"))
+
+windows(width = 20, height = 16)
+netAnalysis_dot(cellchat_3.5_weeks_all, pattern = "outgoing", pathway.show = c("LAMININ", "MIF", "SELL", "TGFb", "VCAM", "BMP", "CADM", "COLLAGEN"))
+```
+
+
+## DotPlots for outgoing signaling patterns for ECM-related pathways
+```{r}
+windows(width = 20, height = 16)
+selectK(cellchat_Sham_all, pattern = "outgoing")
+windows(width = 20, height = 16)
+selectK(cellchat_2_weeks_all, pattern = "outgoing")
+windows(width = 20, height = 16)
+selectK(cellchat_2.5_weeks_all, pattern = "outgoing")
+windows(width = 20, height = 16)
+selectK(cellchat_3.5_weeks_all, pattern = "outgoing")
+### Choose the number of patterns (k) by visualizing Measure Score by pattern number (number of patterns should be before the line drops)
+
+cellchat_Sham_all <- identifyCommunicationPatterns(cellchat_Sham_all, pattern = "outgoing", k = 2)
+cellchat_2_weeks_all <- identifyCommunicationPatterns(cellchat_2_weeks_all, pattern = "outgoing", k = 2)
+cellchat_2.5_weeks_all <- identifyCommunicationPatterns(cellchat_2.5_weeks_all, pattern = "outgoing", k = 2)
+cellchat_3.5_weeks_all <- identifyCommunicationPatterns(cellchat_3.5_weeks_all, pattern = "outgoing", k = 2)
+
+windows(width = 20, height = 16)
+netAnalysis_dot(cellchat_Sham_all, pattern = "outgoing", pathway.show = c("LAMININ", "VCAM", "CADM", "COLLAGEN"))
+
+windows(width = 20, height = 16)
+netAnalysis_dot(cellchat_2_weeks_all, pattern = "outgoing", pathway.show = c("LAMININ", "VCAM", "CADM", "COLLAGEN"))
+
+windows(width = 20, height = 16)
+netAnalysis_dot(cellchat_2.5_weeks_all, pattern = "outgoing", pathway.show = c("LAMININ", "VCAM","CADM", "COLLAGEN"))
+
+windows(width = 20, height = 16)
+netAnalysis_dot(cellchat_3.5_weeks_all, pattern = "outgoing", pathway.show = c("LAMININ", "VCAM", "CADM", "COLLAGEN"))
+```
+
+
+## Chord plot of different signaling
+
+### LAMININ
+```{r}
+par(mfrow = c(1, 1), xpd = TRUE)
+par(cex = 0.5)
+
+netVisual_chord_gene(cellchat_Sham_all, signaling = "LAMININ", targets.use = "MuSCs", color.use = cluster_colours, show.legend = FALSE)
+netVisual_chord_gene(cellchat_2_weeks_all, signaling = "LAMININ", targets.use = "MuSCs", color.use = cluster_colours, show.legend = FALSE)
+netVisual_chord_gene(cellchat_2.5_weeks_all, signaling = "LAMININ", targets.use = "MuSCs", color.use = cluster_colours, show.legend = FALSE)
+netVisual_chord_gene(cellchat_3.5_weeks_all, signaling = "LAMININ", targets.use = "MuSCs", color.use = cluster_colours, show.legend = FALSE)
+```
+
+### MIF
+```{r}
+par(mfrow = c(1, 1), xpd = TRUE)
+par(cex = 0.5)
+
+netVisual_chord_gene(cellchat_Sham_all, signaling = "MIF", targets.use = "MuSCs", color.use = cluster_colours, show.legend = FALSE)
+netVisual_chord_gene(cellchat_2_weeks_all, signaling = "MIF", targets.use = "MuSCs", color.use = cluster_colours, show.legend = FALSE)
+netVisual_chord_gene(cellchat_2.5_weeks_all, signaling = "MIF", targets.use = "MuSCs", color.use = cluster_colours, show.legend = FALSE)
+netVisual_chord_gene(cellchat_3.5_weeks_all, signaling = "MIF", targets.use = "MuSCs", color.use = cluster_colours, show.legend = FALSE)
+```
+
+### SELL
+```{r}
+par(mfrow = c(1, 1), xpd = TRUE)
+par(cex = 0.5)
+
+netVisual_chord_gene(cellchat_Sham_all, signaling = "SELL", targets.use = "MuSCs", color.use = cluster_colours, show.legend = FALSE)
+netVisual_chord_gene(cellchat_2_weeks_all, signaling = "SELL", targets.use = "MuSCs", color.use = cluster_colours, show.legend = FALSE)
+netVisual_chord_gene(cellchat_2.5_weeks_all, signaling = "SELL", targets.use = "MuSCs", color.use = cluster_colours, show.legend = FALSE)
+netVisual_chord_gene(cellchat_3.5_weeks_all, signaling = "SELL", targets.use = "MuSCs", color.use = cluster_colours, show.legend = FALSE)
+```
+
+### TGFb
+```{r}
+par(mfrow = c(1, 1), xpd = TRUE)
+par(cex = 0.5)
+
+netVisual_chord_gene(cellchat_Sham_all, signaling = "TGFb", targets.use = "MuSCs", color.use = cluster_colours, show.legend = FALSE)
+netVisual_chord_gene(cellchat_2_weeks_all, signaling = "TGFb", targets.use = "MuSCs", color.use = cluster_colours, show.legend = FALSE)
+netVisual_chord_gene(cellchat_2.5_weeks_all, signaling = "TGFb", targets.use = "MuSCs", color.use = cluster_colours, show.legend = FALSE)
+netVisual_chord_gene(cellchat_3.5_weeks_all, signaling = "TGFb", targets.use = "MuSCs", color.use = cluster_colours, show.legend = FALSE)
+```
+
+### VCAM
+```{r}
+par(mfrow = c(1, 1), xpd = TRUE)
+par(cex = 0.5)
+
+netVisual_chord_gene(cellchat_Sham_all, signaling = "VCAM", targets.use = "MuSCs", color.use = cluster_colours, show.legend = FALSE)
+netVisual_chord_gene(cellchat_2_weeks_all, signaling = "VCAM", targets.use = "MuSCs", color.use = cluster_colours, show.legend = FALSE)
+netVisual_chord_gene(cellchat_2.5_weeks_all, signaling = "VCAM", targets.use = "MuSCs", color.use = cluster_colours, show.legend = FALSE)
+netVisual_chord_gene(cellchat_3.5_weeks_all, signaling = "VCAM", targets.use = "MuSCs", color.use = cluster_colours, show.legend = FALSE)
+```
+
+### BMP
+```{r}
+par(mfrow = c(1, 1), xpd = TRUE)
+par(cex = 0.5)
+
+netVisual_chord_gene(cellchat_Sham_all, signaling = "BMP", targets.use = "MuSCs", color.use = cluster_colours, show.legend = FALSE)
+netVisual_chord_gene(cellchat_2_weeks_all, signaling = "BMP", targets.use = "MuSCs", color.use = cluster_colours, show.legend = FALSE)
+netVisual_chord_gene(cellchat_2.5_weeks_all, signaling = "BMP", targets.use = "MuSCs", color.use = cluster_colours, show.legend = FALSE)
+netVisual_chord_gene(cellchat_3.5_weeks_all, signaling = "BMP", targets.use = "MuSCs", color.use = cluster_colours, show.legend = FALSE)
+```
+
+### CADM
+```{r}
+par(mfrow = c(1, 1), xpd = TRUE)
+par(cex = 0.5)
+
+netVisual_chord_gene(cellchat_Sham_all, signaling = "CADM", targets.use = "MuSCs", color.use = cluster_colours, show.legend = FALSE)
+netVisual_chord_gene(cellchat_2_weeks_all, signaling = "CADM", targets.use = "MuSCs", color.use = cluster_colours, show.legend = FALSE)
+netVisual_chord_gene(cellchat_2.5_weeks_all, signaling = "CADM", targets.use = "MuSCs", color.use = cluster_colours, show.legend = FALSE)
+netVisual_chord_gene(cellchat_3.5_weeks_all, signaling = "CADM", targets.use = "MuSCs", color.use = cluster_colours, show.legend = FALSE)
+```
+
+```{r}
+Idents(LLC_combined) <- "seurat_clusters"
+VlnPlot(LLC_combined, features = "Cadm1", pt.size = 0)
+VlnPlot(LLC_combined, features = "Cadm3", pt.size = 0)
+```
+
+
+### COLLAGEN
+```{r}
+par(mfrow = c(1, 1), xpd = TRUE)
+par(cex = 0.5)
+
+netVisual_chord_gene(cellchat_Sham_all, signaling = "COLLAGEN", targets.use = "MuSCs", color.use = cluster_colours, show.legend = FALSE)
+netVisual_chord_gene(cellchat_2_weeks_all, signaling = "COLLAGEN", targets.use = "MuSCs", color.use = cluster_colours, show.legend = FALSE)
+netVisual_chord_gene(cellchat_2.5_weeks_all, signaling = "COLLAGEN", targets.use = "MuSCs", color.use = cluster_colours, show.legend = FALSE)
+netVisual_chord_gene(cellchat_3.5_weeks_all, signaling = "COLLAGEN", targets.use = "MuSCs", color.use = cluster_colours, show.legend = FALSE)
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+### NOTE - TGFb signaling contribution switches from the resident cells to the immune cells as early as 2 weeks. Let's take a closer look into how the signaling changes over the course of cachexia.
+
+
+## Chord plot of TGFb signaling
+
+```{r}
+par(mfrow = c(1, 1), xpd = TRUE)
+par(cex = 0.5)
+
+netVisual_chord_gene(cellchat_Sham_all, signaling = "TGFb")
+netVisual_chord_gene(cellchat_2_weeks_all, signaling = "TGFb")
+netVisual_chord_gene(cellchat_2.5_weeks_all, signaling = "TGFb")
+netVisual_chord_gene(cellchat_3.5_weeks_all, signaling = "TGFb")
+
+netVisual_chord_gene(cellchat_Sham_all, signaling = "TGFb", targets.use = "MuSCs")
+```
+
+
+## Heatmaps of TGFb signaling
+
+```{r}
+par(mfrow = c(1,2), xpd = TRUE)
+
+netVisual_heatmap(cellchat_Sham_all, signaling = "TGFb", title.name = "Sham TGFb signaling", color.heatmap = "Reds")
+
+netVisual_heatmap(cellchat_2_weeks_all, signaling = "TGFb", title.name = "2 weeks TGFb signaling", color.heatmap = "Reds")
+
+netVisual_heatmap(cellchat_2.5_weeks_all, signaling = "TGFb", title.name = "2.5 weeks TGFb signaling", color.heatmap = "Reds")
+
+netVisual_heatmap(cellchat_3.5_weeks_all, signaling = "TGFb", title.name = "3.5 weeks TGFb signaling", color.heatmap = "Reds")
+```
+
+### The bars on the edge of the heatmap indicate communication strength of the TGFb pathway. Notice how the MuSCs go from the 3rd most important reciever to not at all. Let's see how the interaction strength of TGFb signaling changes in each population with cachexia.
+
+## Extract interaction strengths of senders and receivers
+
+```{r}
+Sham_TGFb_index <- which(cellchat_Sham_all@netP$pathways == "TGFb")
+Sham_TGFb_weights <- cellchat_Sham_all@netP$prob[,,Sham_TGFb_index]
+
+two_weeks_TGFb_index <- which(cellchat_2_weeks_all@netP$pathways == "TGFb")
+two_weeks_TGFb_weights <- cellchat_2_weeks_all@netP$prob[,,two_weeks_TGFb_index]
+
+two.five_weeks_TGFb_index <- which(cellchat_2.5_weeks_all@netP$pathways == "TGFb")
+two.five_weeks_TGFb_weights <- cellchat_2.5_weeks_all@netP$prob[,,two.five_weeks_TGFb_index]
+
+three.five_weeks_TGFb_index <- which(cellchat_3.5_weeks_all@netP$pathways == "TGFb")
+three.five_weeks_TGFb_weights <- cellchat_3.5_weeks_all@netP$prob[,,three.five_weeks_TGFb_index]
+
+# Export
+write.csv(Sham_TGFb_weights, file = "Sham_TGFb_weights.csv", row.names = TRUE)
+write.csv(two_weeks_TGFb_weights, file = "two_weeks_TGFb_weights.csv", row.names = TRUE)
+write.csv(two.five_weeks_TGFb_weights, file = "two.five_weeks_TGFb_weights.csv", row.names = TRUE)
+write.csv(three.five_weeks_TGFb_weights, file = "three.five_weeks_TGFb_weights.csv", row.names = TRUE)
+```
+
+
+## Violin plots for TGFb receptor signaling in MuSCs
+
+```{r}
+Idents(LLC_MuSCs) <- "orig.ident"
+
+VlnPlot(LLC_MuSCs, features = "Tgfbr1", pt.size = 0) +
+  theme(legend.position = "none", axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1), plot.title = element_text(face = "italic")) +
+  labs(x = NULL, y = "Expression", title = "Tgfbr1")
+
+VlnPlot(LLC_MuSCs, features = "Tgfbr2", pt.size = 0) +
+  theme(legend.position = "none", axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1), plot.title = element_text(face = "italic")) +
+  labs(x = NULL, y = "Expression", title = "Tgfbr2")
+
+VlnPlot(LLC_MuSCs, features = "Tgfbr3", pt.size = 0) +
+  theme(legend.position = "none", axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1), plot.title = element_text(face = "italic")) +
+  labs(x = NULL, y = "Expression", title = "Tgfbr3")
+
+VlnPlot(LLC_MuSCs, features = "Acvr1", pt.size = 0) +
+    theme(legend.position = "none", axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1), plot.title = element_text(face = "italic")) +
+    labs(x = NULL, y = "Expression", title = "Acvr1")
+```
+
+
+## Violin plots of Tgfb in cell types
+
+```{r}
+Idents(LLC_combined) <- "seurat_clusters"
+
+VlnPlot(LLC_combined, features = "Tgfb1", pt.size = 0) +
+    theme(legend.position = "none", axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1), plot.title = element_text(face = "italic")) +
+    labs(x = NULL, y = "Expression", title = "Tgfb1")
+
+VlnPlot(LLC_combined, features = "Tgfb2", pt.size = 0) +
+    theme(legend.position = "none", axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1), plot.title = element_text(face = "italic")) +
+    labs(x = NULL, y = "Expression", title = "Tgfb2")
+
+VlnPlot(LLC_combined, features = "Tgfb3", pt.size = 0) +
+    theme(legend.position = "none", axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1), plot.title = element_text(face = "italic")) +
+    labs(x = NULL, y = "Expression", title = "Tgfb3")
+```
+
+
+## Violin plots of Tgfb1 in cell types by condition
+
+```{r}
+Idents(LLC_Endothelial_cells) <- "orig.ident"
+Idents(LLC_vSMCs) <- "orig.ident"
+Idents(LLC_Platelets) <- "orig.ident"
+Idents(LLC_Monocytes_macrophages) <- "orig.ident"
+Idents(LLC_B_cells) <- "orig.ident"
+Idents(LLC_T_NK_cells) <- "orig.ident"
+
+VlnPlot(LLC_Endothelial_cells, features = "Tgfb1", pt.size = 0) +
+    theme(legend.position = "none", axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1), plot.title = element_text(face = "italic")) +
+    labs(x = NULL, y = "Expression", title = "Endothelial cells Tgfb1")
+
+VlnPlot(LLC_vSMCs, features = "Tgfb1", pt.size = 0) +
+    theme(legend.position = "none", axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1), plot.title = element_text(face = "italic")) +
+    labs(x = NULL, y = "Expression", title = "vSMCs Tgfb1")
+
+VlnPlot(LLC_Platelets, features = "Tgfb1", pt.size = 0) +
+    theme(legend.position = "none", axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1), plot.title = element_text(face = "italic")) +
+    labs(x = NULL, y = "Expression", title = "Platelets Tgfb1")
+
+VlnPlot(LLC_Monocytes_macrophages, features = "Tgfb1", pt.size = 0) +
+    theme(legend.position = "none", axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1), plot.title = element_text(face = "italic")) +
+    labs(x = NULL, y = "Expression", title = "Monocytes/macrophages Tgfb1")
+
+VlnPlot(LLC_B_cells, features = "Tgfb1", pt.size = 0) +
+    theme(legend.position = "none", axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1), plot.title = element_text(face = "italic")) +
+    labs(x = NULL, y = "Expression", title = "B cells Tgfb1")
+
+VlnPlot(LLC_T_NK_cells, features = "Tgfb1", pt.size = 0) +
+    theme(legend.position = "none", axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1), plot.title = element_text(face = "italic")) +
+    labs(x = NULL, y = "Expression", title = "T/NK cells Tgfb1")
+```
+
+
+## Violin plots of Tgfb2 in cell types by condition
+
+```{r}
+Idents(LLC_vSMCs) <- "orig.ident"
+Idents(LLC_FAPs) <- "orig.ident"
+Idents(LLC_Platelets) <- "orig.ident"
+
+VlnPlot(LLC_vSMCs, features = "Tgfb2", pt.size = 0) +
+    theme(legend.position = "none", axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1), plot.title = element_text(face = "italic")) +
+    labs(x = NULL, y = "Expression", title = "vSMCs Tgfb2")
+
+VlnPlot(LLC_FAPs, features = "Tgfb2", pt.size = 0) +
+    theme(legend.position = "none", axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1), plot.title = element_text(face = "italic")) +
+    labs(x = NULL, y = "Expression", title = "FAPs Tgfb2")
+
+VlnPlot(LLC_Platelets, features = "Tgfb2", pt.size = 0) +
+    theme(legend.position = "none", axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1), plot.title = element_text(face = "italic")) +
+    labs(x = NULL, y = "Expression", title = "Platelets Tgfb2")
+```
+
+
+## Violin plots of Tgfb2 in cell types by condition
+
+```{r}
+Idents(LLC_vSMCs) <- "orig.ident"
+
+VlnPlot(LLC_vSMCs, features = "Tgfb3", pt.size = 0) +
+    theme(legend.position = "none", axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1), plot.title = element_text(face = "italic")) +
+    labs(x = NULL, y = "Expression", title = "vSMCs Tgfb3")
+```

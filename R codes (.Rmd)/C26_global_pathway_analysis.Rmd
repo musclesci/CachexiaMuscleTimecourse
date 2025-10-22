@@ -1,0 +1,308 @@
+---
+title: "C26_global_pathway_analysis"
+author: "Alex Brown"
+date: "2025-09-17"
+output: html_document
+---
+
+
+
+# Load packages
+
+```{r, include=FALSE}
+library(Seurat)
+library(SeuratWrappers)
+library(tidyverse)
+library(Biobase)
+library(BiocGenerics)
+library(ggplot2)
+library(cowplot)
+library(grid)
+library(gridExtra)
+library(RColorBrewer)
+library(ggbeeswarm)
+library(AnnotationDbi)
+library(org.Mm.eg.db)
+library(msigdbr)
+library(clusterProfiler)
+library(AnnotationDbi)
+library(org.Mm.eg.db)
+library(msigdbr)
+```
+
+
+
+# Load data
+
+```{r, include=FALSE}
+load("C:/Users/nwb_l/Documents/r_projects/Pryce_2025_scRNAseq/Pryce_C26_processed.RData")
+```
+
+
+
+# DEGs for each cluster at each timepoint
+
+```{r, include=FALSE}
+Idents(C26_MuSCs) <- "orig.ident"
+Idents(C26_Myonuclei) <- "orig.ident"
+Idents(C26_Endothelial_cells) <- "orig.ident"
+Idents(C26_vSMCs_pericytes) <- "orig.ident"
+Idents(C26_FAPs) <- "orig.ident"
+Idents(C26_Tenocytes) <- "orig.ident"
+Idents(C26_Platelets) <- "orig.ident"
+Idents(C26_Mast_cells) <- "orig.ident"
+Idents(C26_Dendritic_cells) <- "orig.ident"
+Idents(C26_Monocytes_macrophages) <- "orig.ident"
+Idents(C26_Neutrophils) <- "orig.ident"
+Idents(C26_B_cells) <- "orig.ident"
+Idents(C26_T_NK_cells) <- "orig.ident"
+Idents(C26_Neural_glial_cells) <- "orig.ident"
+Idents(C26_Schwann_cells) <- "orig.ident"
+```
+
+### DEGs for each cluster already generated
+
+
+## Subset DEGs for p_val_adj < 0.05 and acg_log2FC > 0.2
+
+```{r, include=FALSE}
+# --- MuSCs ---
+DEGs_C26_MuSCs_subset <- subset(DEGs_C26_MuSCs, p_val_adj < 0.05 & avg_log2FC > 0.2)
+
+# --- Myonuclei ---
+DEGs_C26_Myonuclei_subset <- subset(DEGs_C26_Myonuclei, p_val_adj < 0.05 & avg_log2FC > 0.2)
+
+# --- Endothelial cells ---
+DEGs_C26_Endothelial_cells_subset <- subset(DEGs_C26_Endothelial_cells, p_val_adj < 0.05 & avg_log2FC > 0.2)
+
+# --- vSMCs / Pericytes ---
+DEGs_C26_vSMCs_pericytes_subset <- subset(DEGs_C26_vSMCs_pericytes, p_val_adj < 0.05 & avg_log2FC > 0.2)
+
+# --- FAPs ---
+DEGs_C26_FAPs_subset <- subset(DEGs_C26_FAPs, p_val_adj < 0.05 & avg_log2FC > 0.2)
+
+# --- Tenocytes ---
+DEGs_C26_Tenocytes_subset <- subset(DEGs_C26_Tenocytes, p_val_adj < 0.05 & avg_log2FC > 0.2)
+
+# --- Platelets ---
+DEGs_C26_Platelets_subset <- subset(DEGs_C26_Platelets, p_val_adj < 0.05 & avg_log2FC > 0.2)
+
+# --- Mast cells ---
+DEGs_C26_Mast_cells_subset <- subset(DEGs_C26_Mast_cells, p_val_adj < 0.05 & avg_log2FC > 0.2)
+
+# --- Dendritic cells ---
+DEGs_C26_Dendritic_cells_subset <- subset(DEGs_C26_Dendritic_cells, p_val_adj < 0.05 & avg_log2FC > 0.2)
+
+# --- Monocytes / Macrophages ---
+DEGs_C26_Monocytes_macrophages_subset <- subset(DEGs_C26_Monocytes_macrophages, p_val_adj < 0.05 & avg_log2FC > 0.2)
+
+# --- Neutrophils ---
+DEGs_C26_Neutrophils_subset <- subset(DEGs_C26_Neutrophils, p_val_adj < 0.05 & avg_log2FC > 0.2)
+
+# --- B cells ---
+DEGs_C26_B_cells_subset <- subset(DEGs_C26_B_cells, p_val_adj < 0.05 & avg_log2FC > 0.2)
+
+# --- T & NK cells ---
+DEGs_C26_T_NK_cells_subset <- subset(DEGs_C26_T_NK_cells, p_val_adj < 0.05 & avg_log2FC > 0.2)
+
+# --- Neural / Glial cells ---
+DEGs_C26_Neural_glial_cells_subset <- subset(DEGs_C26_Neural_glial_cells, p_val_adj < 0.05 & avg_log2FC > 0.2)
+
+# --- Schwann cells ---
+DEGs_C26_Schwann_cells_subset <- subset(DEGs_C26_Schwann_cells, p_val_adj < 0.05 & avg_log2FC > 0.2)
+```
+
+
+
+# KEGG pathway analysis
+
+```{r, include=FALSE}
+run_kegg <- function(deg_df) {
+  if(nrow(deg_df) == 0) return(NULL)  # skip empty DEG tables
+  ids <- bitr(
+    rownames(deg_df),
+    fromType = "SYMBOL",
+    toType   = "ENTREZID",
+    OrgDb    = org.Mm.eg.db
+  )
+  enrichKEGG(
+    gene         = ids$ENTREZID,
+    organism     = "mmu",
+    keyType      = "kegg",
+    pvalueCutoff = 0.05
+  )
+}
+
+
+# --- MuSCs ---
+DEGs_C26_MuSCs_upkegg <- run_kegg(DEGs_C26_MuSCs_subset)
+
+# --- Myonuclei ---
+DEGs_C26_Myonuclei_upkegg <- run_kegg(DEGs_C26_Myonuclei_subset)
+
+# --- Endothelial cells ---
+DEGs_C26_Endothelial_cells_upkegg <- run_kegg(DEGs_C26_Endothelial_cells_subset)
+
+# --- vSMCs / Pericytes ---
+DEGs_C26_vSMCs_pericytes_upkegg <- run_kegg(DEGs_C26_vSMCs_pericytes_subset)
+
+# --- FAPs ---
+DEGs_C26_FAPs_upkegg <- run_kegg(DEGs_C26_FAPs_subset)
+
+# --- Tenocytes ---
+DEGs_C26_Tenocytes_upkegg <- run_kegg(DEGs_C26_Tenocytes_subset)
+
+# --- Platelets ---
+DEGs_C26_Platelets_upkegg <- run_kegg(DEGs_C26_Platelets_subset)
+
+# --- Mast cells ---
+DEGs_C26_Mast_cells_upkegg <- run_kegg(DEGs_C26_Mast_cells_subset)
+
+# --- Dendritic cells ---
+DEGs_C26_Dendritic_cells_upkegg <- run_kegg(DEGs_C26_Dendritic_cells_subset)
+
+# --- Monocytes / Macrophages ---
+DEGs_C26_Monocytes_macrophages_upkegg <- run_kegg(DEGs_C26_Monocytes_macrophages_subset)
+
+# --- Neutrophils ---
+DEGs_C26_Neutrophils_upkegg <- run_kegg(DEGs_C26_Neutrophils_subset)
+
+# --- B cells ---
+DEGs_C26_B_cells_upkegg <- run_kegg(DEGs_C26_B_cells_subset)
+
+# --- T & NK cells ---
+DEGs_C26_T_NK_cells_upkegg <- run_kegg(DEGs_C26_T_NK_cells_subset)
+
+# --- Neural / Glial cells ---
+DEGs_C26_Neural_glial_cells_upkegg <- run_kegg(DEGs_C26_Neural_glial_cells_subset)
+
+# --- Schwann cells ---
+DEGs_C26_Schwann_cells_upkegg <- run_kegg(DEGs_C26_Schwann_cells_subset)
+```
+
+
+## .csv for KEGG pathways
+
+```{r, include=FALSE}
+# --- MuSCs ---
+write.csv(DEGs_C26_MuSCs_upkegg, file = "DEGs_C26_MuSCs_upkegg.csv", row.names = TRUE)
+
+# --- Myonuclei ---
+write.csv(DEGs_C26_Myonuclei_upkegg, file = "DEGs_C26_Myonuclei_upkegg.csv", row.names = TRUE)
+
+# --- Endothelial cells ---
+write.csv(DEGs_C26_Endothelial_cells_upkegg, file = "DEGs_C26_Endothelial_cells_upkegg.csv", row.names = TRUE)
+
+# --- vSMCs / Pericytes ---
+write.csv(DEGs_C26_vSMCs_pericytes_upkegg, file = "DEGs_C26_vSMCs_pericytes_upkegg.csv", row.names = TRUE)
+
+# --- FAPs ---
+write.csv(DEGs_C26_FAPs_upkegg, file = "DEGs_C26_FAPs_upkegg.csv", row.names = TRUE)
+
+# --- Tenocytes ---
+write.csv(DEGs_C26_Tenocytes_upkegg, file = "DEGs_C26_Tenocytes_upkegg.csv", row.names = TRUE)
+
+# --- Platelets ---
+write.csv(DEGs_C26_Platelets_upkegg, file = "DEGs_C26_Platelets_upkegg.csv", row.names = TRUE)
+
+# --- Mast cells ---
+write.csv(DEGs_C26_Mast_cells_upkegg, file = "DEGs_C26_Mast_cells_upkegg.csv", row.names = TRUE)
+
+# --- Dendritic cells ---
+write.csv(DEGs_C26_Dendritic_cells_upkegg, file = "DEGs_C26_Dendritic_cells_upkegg.csv", row.names = TRUE)
+
+# --- Monocytes / Macrophages ---
+write.csv(DEGs_C26_Monocytes_macrophages_upkegg, file = "DEGs_C26_Monocytes_macrophages_upkegg.csv", row.names = TRUE)
+
+# --- Neutrophils ---
+write.csv(DEGs_C26_Neutrophils_upkegg, file = "DEGs_C26_Neutrophils_upkegg.csv", row.names = TRUE)
+
+# --- B cells ---
+write.csv(DEGs_C26_B_cells_upkegg, file = "DEGs_C26_B_cells_upkegg.csv", row.names = TRUE)
+
+# --- T & NK cells ---
+write.csv(DEGs_C26_T_NK_cells_upkegg, file = "DEGs_C26_T_NK_cells_upkegg.csv", row.names = TRUE)
+
+# --- Neural / Glial cells ---
+write.csv(DEGs_C26_Neural_glial_cells_upkegg, file = "DEGs_C26_Neural_glial_cells_upkegg.csv", row.names = TRUE)
+
+# --- Schwann cells ---
+write.csv(DEGs_C26_Schwann_cells_upkegg, file = "DEGs_C26_Schwann_cells_upkegg.csv", row.names = TRUE)
+```
+
+
+
+# Enriched signaling pathways
+
+# MuSCs
+### Relaxin, Estrogen, AGE-RAGE
+
+
+
+# Myonuclei
+### Glucagon, HIF-1
+
+
+
+# Enothelial cells
+### Rap1, MAPK, PI3K-Akt, FoxO, Sphingolipid, Retrograde endocannabinoid, Thyroid hormone, AGE-RAGE, Wnt, Estrogen, Ras, HIF-1, JAK-STAT, Chemokine, P53, Apelin, Relaxin, Oxytocin, ErbB, Prolactin, NOD-like receptor, B cell receptor, TNF, Neutrophin, Fc epsilon RI, Glucagon, VEGF, NF-kappa B, T cell receptor
+
+
+
+# vSMCs/pericytes
+### PI3K-Akt, p53, AGE-RAGE, Relaxin, Ras, Rap1, MAPK
+
+
+
+# FAPs
+### AGE-RAGE, PI3K-Akt, Retrograde endocannabinoid signaling, HIF-1, Relaxin, Neutrophin, Ras, Rap1, Insulin, Oxytocin, MAPK, Estrogen, Wnt, FoxO, Apelin, ErbB, TNF, C-type lectin, VEGF, Glucagon, Sphingolipid, Thyroid hormone, mTOR, Chemokine, cAMP, TGF-beta, AMPK, IL-17, Prolactin, NF-kappa B, NOD-like receptor
+
+
+
+# Tenocytes
+### Retrograde endocannabinoid, PI3K-Akt, AGE-RAGE, Rap1, Relaxin, Neutrophin, FoxO, Estrogen
+
+
+
+# Platelets
+### Relaxin, PI3K-Akt, IL-17
+
+
+
+# Mast cells
+### Retrograde endocannabinoid signaling
+
+
+
+# Dendritic cells
+### NONE
+
+
+
+# Monocytes/macrophages
+### Retrograde endocannabinoid signaling, IL-17, Oxytocin, HIF-1
+
+
+
+# Neutrophils
+### Chemokine, Sphingolipid, B cell receptor, Fc epsilon RI, Oxytocin, NF-kappa B, C-type lectin receptor, IL-17, Rap1, NOD-like receptor, cAMP
+
+
+
+# B cells
+### Oxytocin, IL-17, Hippo, T cell receptor, B cell receptor, Retrograde endocannabinoid, 
+
+
+
+# T cells/NK cells
+### T cell receptor, Oxytocin, IL-17, Rap1, cAMP, HIF-1
+
+
+
+# Neural/glial cells
+### NONE
+
+
+
+# Schwann cells
+### Ras

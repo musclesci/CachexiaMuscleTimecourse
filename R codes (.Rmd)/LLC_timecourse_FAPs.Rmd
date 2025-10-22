@@ -1,0 +1,467 @@
+---
+title: "LLC_timecourse_FAPs"
+author: "Alex Brown"
+date: "2025-07-15"
+output: html_document
+---
+
+
+
+# Load packages
+
+```{r, include=FALSE}
+library(Seurat)
+library(SeuratWrappers)
+library(tidyverse)
+library(Biobase)
+library(BiocGenerics)
+library(ggplot2)
+library(cowplot)
+library(grid)
+library(gridExtra)
+library(RColorBrewer)
+library(ggbeeswarm)
+library(pheatmap)
+library(DDRTree)
+library(monocle3)
+library(UCell)
+```
+
+
+
+# Load data
+
+```{r, include=FALSE}
+load("C:/Users/nwb_l/Documents/r_projects/LLC_timecourse/LLC_timecourse_processed.RData")
+```
+
+### Already subsetted cells "LLC_FAPs"
+
+
+## Remove unnecessary objects to improve processing
+
+```{r, include=FALSE}
+rm(LLC_B_cells, LLC_Endothelial_cells, LLC_Monocytes_macrophages, LLC_MuSCs, LLC_Myonuclei, LLC_Neural_glial_cells, LLC_Neutrophils, LLC_Platelets, LLC_Schwann_cells, LLC_T_NK_cells, LLC_vSMCs, LLC_Pericytes, Sham, two_weeks, two.five_weeks, three.five_weeks, DEGs_LLC_B_cells, DEGs_LLC_Endothelial_cells, DEGs_LLC_Monocytes_macrophages, DEGs_MuSCs, DEGs_LLC_Myonuclei, DEGs_LLC_Neural_glial_cells, DEGs_LLC_Neutrophils, DEGs_LLC_Platelets, DEGs_LLC_Schwann_cells, DEGs_LLC_T_NK_cells, DEGs_LLC_vSMCs, DEGs_LLC_Pericytes, DEGs_LLC_clusters, ordered_datasets, cluster_proportions)
+```
+
+
+## UMAP plot highlighting FAPs
+
+```{r}
+DimPlot(
+  LLC_combined,
+  reduction = "umap",
+  group.by = "seurat_clusters",
+  cells.highlight = list("FAPs" = WhichCells(LLC_combined, expression = seurat_clusters == "FAPs")),
+  sizes.highlight = 1,
+  pt.size = 1,
+  cols.highlight = "#92AA34" 
+) +
+  ggplot2::labs(title = "", x = "UMAP1", y = "UMAP2") +
+  theme(
+    axis.text.x = element_blank(),
+    axis.text.y = element_blank(),
+    axis.ticks = element_blank()) +
+  theme(legend.position = "none")
+```
+
+
+
+# Re-process cells
+
+```{r, include=FALSE}
+LLC_FAPs <- NormalizeData(LLC_FAPs) %>%
+  FindVariableFeatures() %>%
+  ScaleData(features = all_genes) %>%
+  RunPCA(npcs = 50)
+```
+
+```{r}
+ElbowPlot(LLC_FAPs, ndims = 50)
+```
+
+```{r, include=FALSE}
+LLC_FAPs <- FindNeighbors(LLC_FAPs, dims = 1:35) %>%
+  FindClusters(resolution = 0.3)
+```
+
+```{r, include=FALSE}
+Idents(LLC_FAPs) <- "seurat_clusters"
+
+LLC_FAPs <- RunUMAP(LLC_FAPs, reduction = "pca", dims = 1:35)
+```
+
+
+
+# Annotate subclusters
+
+```{r, include=FALSE}
+DefaultAssay(LLC_FAPs) <- "RNA"
+
+Idents(LLC_FAPs) <- LLC_FAPs$seurat_clusters
+LLC_FAPs <- JoinLayers(LLC_FAPs, what = "all")
+DEGs_LLC_FAPs_subclusters <- FindAllMarkers(object = LLC_FAPs, group.by = "seurat_clusters", test.use = "LR", only.pos = TRUE, min.pct = 0.25, logfc.threshold = 0.25)
+```
+
+
+## Specify subclusters
+
+```{r, include=FALSE}
+LLC_FAPs_cluster_ids <- levels(LLC_FAPs$seurat_clusters)
+
+LLC_FAPs_cluster_labels <- c("Stem", "Pro-remodeling", "Tenocytes", "Transitional", "Transitional", "Pro-remodeling", "Dlk1+", "Tenm2+")
+
+LLC_FAPs_clusters <- LLC_FAPs@meta.data$seurat_clusters
+
+LLC_FAPs$seurat_clusters <- LLC_FAPs_cluster_labels[LLC_FAPs$seurat_clusters]
+
+```
+
+
+## Order conditions
+
+```{r, include=FALSE}
+LLC_FAPs$orig.ident <- factor(LLC_FAPs$orig.ident, levels = c("Sham", "2_weeks", "2.5_weeks", "3.5_weeks"))
+```
+
+
+## Order subclusters
+
+```{r, include=FALSE}
+LLC_FAPs$seurat_clusters <- factor(LLC_FAPs$seurat_clusters, levels = c("Stem", "Transitional", "Pro-remodeling", "Dlk1+", "Tenm2+", "Tenocytes"))
+```
+
+
+## Run FindAllMarkers again
+
+```{r, include=FALSE}
+DefaultAssay(LLC_FAPs) <- "RNA"
+
+Idents(LLC_FAPs) <- LLC_FAPs$seurat_clusters
+LLC_FAPs <- JoinLayers(LLC_FAPs, what = "all")
+DEGs_LLC_FAPs_subclusters <- FindAllMarkers(object = LLC_FAPs, group.by = "seurat_clusters", test.use = "LR", only.pos = TRUE, min.pct = 0.25, logfc.threshold = 0.25)
+```
+
+```{r, include=FALSE}
+write.csv(DEGs_LLC_FAPs_subclusters, file = "DEGs_LLC_FAPs_subclusters.csv", row.names = FALSE)
+```
+
+
+## Plot to show DEGs between subclusters
+
+```{r}
+LLC_FAPs_cluster_ids <- levels(LLC_FAPs$seurat_clusters)
+Idents(LLC_FAPs) <- "seurat_clusters"
+
+VlnPlot_Dpp4 <- VlnPlot(LLC_FAPs, features = "Dpp4") +
+  theme(
+    legend.position = "none",
+    axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1),
+    plot.title = element_text(face = "italic")
+  ) +
+  labs(x = NULL, y = "Expression", title = expression(italic("Dpp4")))
+
+VlnPlot_Gdf10 <- VlnPlot(LLC_FAPs, features = "Gdf10") +
+  theme(
+    legend.position = "none",
+    axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1),
+    plot.title = element_text(face = "italic")
+  ) +
+  labs(x = NULL, y = "Expression", title = expression(italic("Gdf10")))
+
+VlnPlot_Mme <- VlnPlot(LLC_FAPs, features = "Mme") +
+  theme(
+    legend.position = "none",
+    axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1),
+    plot.title = element_text(face = "italic")
+  ) +
+  labs(x = NULL, y = "Expression", title = expression(italic("Mme")))
+
+VlnPlot_Tenm2 <- VlnPlot(LLC_FAPs, features = "Tenm2") +
+  theme(
+    legend.position = "none",
+    axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1),
+    plot.title = element_text(face = "italic")
+  ) +
+  labs(x = NULL, y = "Expression", title = expression(italic("Tenm2")))
+
+VlnPlot_Dlk1 <- VlnPlot(LLC_FAPs, features = "Dlk1") +
+  theme(
+    legend.position = "none",
+    axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1),
+    plot.title = element_text(face = "italic")
+  ) +
+  labs(x = NULL, y = "Expression", title = expression(italic("Dlk1")))
+
+VlnPlot_Tnmd <- VlnPlot(LLC_FAPs, features = "Tnmd") +
+  theme(
+    legend.position = "none",
+    axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1),
+    plot.title = element_text(face = "italic")
+  ) +
+  labs(x = NULL, y = "Expression", title = expression(italic("Tnmd")))
+
+grid.arrange(VlnPlot_Dpp4, VlnPlot_Gdf10, VlnPlot_Mme, VlnPlot_Tenm2, VlnPlot_Dlk1, VlnPlot_Tnmd, nrow = 2, ncol = 3)
+```
+
+
+## Plot stacked barplot for subcluster proportions
+
+### Extract the proportions from the FAPs Seurat object
+```{r, include=FALSE}
+LLC_FAPs_cluster_proportions <- LLC_FAPs@meta.data %>%
+  dplyr::select(orig.ident, seurat_clusters) %>%
+  group_by(orig.ident, seurat_clusters) %>%
+  summarize(count = n()) %>%
+  group_by(orig.ident) %>%
+  mutate(percentage = count / sum(count) * 100)
+```
+
+```{r, include=FALSE}
+write.csv(LLC_FAPs_cluster_proportions, file = "LLC_FAPs_cluster_proportions.csv", row.names = TRUE)
+```
+
+
+```{r}
+LLC_FAPs_cluster_proportions$orig.ident <- factor(
+  LLC_FAPs_cluster_proportions$orig.ident,
+  levels = c("Sham", "2_weeks", "2.5_weeks", "3.5_weeks"),
+  labels = c("Sham", "2 weeks", "2.5 weeks", "3.5 weeks"))
+
+ggplot(LLC_FAPs_cluster_proportions, aes(x = orig.ident, y = percentage, fill = seurat_clusters)) +
+  geom_bar(stat = "identity", width = 0.75, color = "black") +
+  scale_y_continuous(labels = scales::percent_format(scale = 1), expand = c(0, 0)) +
+  labs(title = "", x = "", y = "Proportion") +
+  theme(legend.position = "right", panel.background = element_blank(), axis.line = element_line(color = "black"), axis.text.x = element_text(angle = 45, hjust = 1)) +
+  guides(fill = guide_legend(title = NULL))
+```
+
+
+## Plot UMAP by subcluster
+
+```{r}
+DimPlot(LLC_FAPs, reduction = "umap", group.by = "seurat_clusters", repel = TRUE, pt.size = 1) +
+  ggplot2::labs(title = "", x = "UMAP1", y = "UMAP2") +
+  theme(axis.text.x = element_blank(), axis.text.y = element_blank(), axis.ticks = element_blank())
+```
+
+## Plot UMAP by condition
+
+```{r}
+DimPlot(LLC_FAPs, reduction = "umap", group.by = "orig.ident", repel = TRUE, pt.size = 1) +
+  ggplot2::labs(title = "", x = "UMAP1", y = "UMAP2") +
+  theme(axis.text.x = element_blank(), axis.text.y = element_blank(), axis.ticks = element_blank())
+```
+
+
+## Plot UMAP, conditions highlighted
+
+```{r}
+DimPlot(LLC_FAPs, reduction = "umap", group.by = "seurat_clusters", cells.highlight = list("Sham" = WhichCells(LLC_combined, expression = orig.ident == "Sham")), sizes.highlight = 1, pt.size = 1, cols.highlight = "#E87D72"
+) + 
+  ggplot2::labs(title = "", x = "UMAP1", y = "UMAP2") + 
+  theme( axis.text.x = element_blank(), axis.text.y = element_blank(), axis.ticks = element_blank()) + 
+  theme(legend.position = "none")
+
+DimPlot(LLC_FAPs, reduction = "umap", group.by = "seurat_clusters", cells.highlight = list("2_weeks" = WhichCells(LLC_combined, expression = orig.ident == "2_weeks")), sizes.highlight = 1, pt.size = 1, cols.highlight = "#87AD34") +
+  ggplot2::labs(title = "", x = "UMAP1", y = "UMAP2") +
+  theme(axis.text.x = element_blank(), axis.text.y = element_blank(), axis.ticks = element_blank()) +
+  theme(legend.position = "none")
+
+DimPlot(LLC_FAPs, reduction = "umap", group.by = "seurat_clusters", cells.highlight = list("2.5_weeks" = WhichCells(LLC_combined, expression = orig.ident == "2.5_weeks")), sizes.highlight = 1, pt.size = 1, cols.highlight = "#56BCC2") +
+  ggplot2::labs(title = "", x = "UMAP1", y = "UMAP2") +
+  theme(axis.text.x = element_blank(), axis.text.y = element_blank(), axis.ticks = element_blank()) +
+  theme(legend.position = "none")
+
+DimPlot(LLC_FAPs, reduction = "umap", group.by = "seurat_clusters", cells.highlight = list("3.5_weeks" = WhichCells(LLC_combined, expression = orig.ident == "3.5_weeks")), sizes.highlight = 1, pt.size = 1, cols.highlight = "#BC7FF8") +
+  ggplot2::labs(title = "", x = "UMAP1", y = "UMAP2") +
+  theme(axis.text.x = element_blank(), axis.text.y = element_blank(), axis.ticks = element_blank()) +
+  theme(legend.position = "none")
+```
+
+
+## Collagen gene expression scoring by condition
+
+```{r}
+Idents(LLC_FAPs) <- "orig.ident"
+
+### Find Collagen genes in data set
+grep("^Col", rownames(LLC_FAPs), value = TRUE)
+
+collagen_genes <- c("Col9a1", "Col19a1", "Col3a1", "Col5a2", "Col4a4", "Col4a3", "Col6a3", "Col5a1", "Col9a3", "Col20a1", "Col11a1", "Col25a1", "Col24a1", "Col15a1", "Col27a1", "Col9a2", "Col8a2", "Col16a1", "Col26a1", "Col1a2", "Col28a1", "Col4a1", "Col4a2", "Col5a3", "Col12a1", "Col6a6", "Col6a5", "Col6a4", "Col7a1", "Col10a1", "Col13a1", "Col6a2", "Col6a1", "Col18a1", "Col23a1", "Col1a1", "Col4a3bp", "Col14a1", "Col22a1", "Col2a1", "Col8a1", "Col11a2", "Col17a1", "Col4a6", "Col4a5")
+
+### Score cells
+collagen_score <- AddModuleScore_UCell(LLC_FAPs, features = list(collagen_genes), name = "collagen_score")
+
+means_collagen_score <- collagen_score@meta.data %>%
+  group_by(orig.ident) %>%
+  summarise(average_collagen_score = mean(signature_1collagen_score, na.rm = TRUE))
+
+print(means_collagen_score)
+
+VlnPlot(collagen_score, features = "signature_1collagen_score", group.by = "orig.ident", pt.size = 0) +
+  theme(legend.position = "none", axis.text.x = element_text(angle = 45)) +
+  labs(x = NULL, y = "Collagen Score", title = NULL) +
+  geom_hline(yintercept = 0, linetype = "solid", color = "black")
+```
+
+
+
+# DEGs
+
+```{r, include=FALSE}
+Idents(LLC_FAPs) <- "orig.ident"
+
+DEGs_LLC_FAPs_2_v_Sham <- FindMarkers(LLC_FAPs, ident.1 = "2_weeks", ident.2 = "Sham", logfc.threshold = 0, min.pct = 0.10, verbose = FALSE)
+DEGs_LLC_FAPs_2.5_v_Sham <- FindMarkers(LLC_FAPs, ident.1 = "2.5_weeks", ident.2 = "Sham", logfc.threshold = 0, min.pct = 0.10, verbose = FALSE)
+DEGs_LLC_FAPs_3.5_v_Sham <- FindMarkers(LLC_FAPs, ident.1 = "3.5_weeks", ident.2 = "Sham", logfc.threshold = 0, min.pct = 0.10, verbose = FALSE)
+```
+
+```{r, include=FALSE}
+write.csv(DEGs_LLC_FAPs_2_v_Sham, file = "DEGs_LLC_FAPs_2_v_Sham.csv", row.names = TRUE)
+write.csv(DEGs_LLC_FAPs_2.5_v_Sham, file = "DEGs_LLC_FAPs_2.5_v_Sham.csv", row.names = TRUE)
+write.csv(DEGs_LLC_FAPs_3.5_v_Sham, file = "DEGs_LLC_FAPs_3.5_v_Sham.csv", row.names = TRUE)
+```
+
+
+
+# Pseudotime
+
+## Convert seurat_object to cell_data_set
+
+```{r, include=FALSE}
+Idents(LLC_FAPs) <- "seurat_clusters"
+
+LLC_FAPs_cds <- as.cell_data_set(LLC_FAPs)
+fData(LLC_FAPs_cds)$gene_short_name <- rownames(fData(LLC_FAPs_cds))
+```
+
+
+## Assign partitions
+
+```{r, include=FALSE}
+recreate.partition <- c(rep(1, length(LLC_FAPs_cds@colData@rownames)))
+names(recreate.partition) <- LLC_FAPs_cds@colData@rownames
+recreate.partition <- as.factor(recreate.partition)
+
+LLC_FAPs_cds@clusters$UMAP$partitions <- recreate.partition
+```
+
+
+## Assign cluster information
+
+```{r, include=FALSE}
+list_LLC_FAPs_clusters <- LLC_FAPs@active.ident
+LLC_FAPs_cds@clusters$UMAP$clusters <- list_LLC_FAPs_clusters
+```
+
+
+## Assign UMAP coordinate - cell embedding
+
+```{r, include=FALSE}
+LLC_FAPs_cds@int_colData@listData$reducedDims$UMAP <- LLC_FAPs@reductions$umap@cell.embeddings
+```
+
+
+## Order cells in pseudotime
+
+```{r, include=FALSE}
+LLC_FAPs_cds <- learn_graph(LLC_FAPs_cds, use_partition = FALSE)
+
+cluster_assignments <- LLC_FAPs_cds@clusters$UMAP$clusters
+
+root_cells <- names(cluster_assignments[cluster_assignments == "Stem"])
+
+LLC_FAPs_cds <- order_cells(LLC_FAPs_cds, reduction_method = "UMAP", root_cells = root_cells)
+```
+
+
+## Add pseudotime to metadata
+
+```{r, include=FALSE}
+LLC_FAPs_cds$monocle3_pseudotime <- pseudotime(LLC_FAPs_cds)
+```
+
+
+## Create file with pseudotime values
+
+```{r, include=FALSE}
+LLC_FAPs_pseudotime_data <- as.data.frame(colData(LLC_FAPs_cds))
+```
+
+```{r, include=FALSE}
+write.csv(LLC_FAPs_pseudotime_data, file = "LLC_FAPs_pseudotime_data.csv", row.names = TRUE)
+```
+
+
+## Plot in pseudotime
+
+```{r}
+plot_cells(LLC_FAPs_cds, color_cells_by = "pseudotime", 
+           label_branch_points = FALSE, 
+           label_roots = FALSE,
+           label_leaves = FALSE,
+           group_label_size = 3,
+           cell_size = 1.5,
+           trajectory_graph_color = "green") +
+  theme(axis.text.x = element_blank(), axis.text.y = element_blank(), axis.ticks = element_blank())
+```
+
+
+## Check pseudotime values by clusters ("check" to see that the early cells are indeed at a lower pseudotime than the later differentiated)
+
+```{r}
+ggplot(LLC_FAPs_pseudotime_data, aes(monocle3_pseudotime, seurat_clusters, fill = seurat_clusters)) +
+  geom_boxplot(show.legend = FALSE) +
+  labs(x = "Pseudotime", y = NULL) +
+  theme_classic()
+```
+
+
+
+# Branch Analyses
+
+## Stem branch
+
+```{r, include=FALSE}
+choose_graph_segments(LLC_FAPs_cds)
+```
+
+```{r, include=FALSE}
+FAPs_stem_branch <- choose_cells(LLC_FAPs_cds)
+```
+
+```{r, include=FALSE}
+FAPs_stem_branch_deg <- graph_test(FAPs_stem_branch, neighbor_graph = "principal_graph", cores = 1)
+FAPs_stem_branch_deg <- FAPs_stem_branch_deg %>%
+  arrange(q_value) %>%
+  filter(status == "OK" & q_value <0.05) %>%
+  na.omit(FAPs_stem_branch_deg)
+```
+
+```{r, include=FALSE}
+write.csv(FAPs_stem_branch_deg, file = "DEGs_FAPs_stem_branch.csv", row.names = TRUE)
+```
+
+
+## Pro-remodeling branch
+
+```{r, include=FALSE}
+choose_graph_segments(LLC_FAPs_cds)
+```
+
+```{r, include=FALSE}
+FAPs_remodel_branch <- choose_cells(LLC_FAPs_cds)
+```
+
+```{r, include=FALSE}
+FAPs_remodel_branch_deg <- graph_test(FAPs_remodel_branch, neighbor_graph = "principal_graph", cores = 1)
+FAPs_remodel_branch_deg <- FAPs_remodel_branch_deg %>%
+  arrange(q_value) %>%
+  filter(status == "OK" & q_value <0.05) %>%
+  na.omit(FAPs_remodel_branch_deg)
+```
+
+```{r, include=FALSE}
+write.csv(FAPs_remodel_branch_deg, file = "DEGs_FAPs_Pro-remodeling_branch.csv", row.names = TRUE)
+```

@@ -1,0 +1,1333 @@
+---
+title: "Pryce_et_al_2025_processing"
+author: "Alex Brown"
+date: "2025-07-02"
+output: html_document
+---
+
+
+
+# Load packages
+
+```{r, include=FALSE}
+library(Seurat)
+library(SeuratWrappers)
+library(hdf5r)
+library(harmony)
+library(tidyverse)
+library(Biobase)
+library(BiocGenerics)
+library(ggplot2)
+library(cowplot)
+library(grid)
+library(gridExtra)
+library(RColorBrewer)
+library(ggbeeswarm)
+library(pheatmap)
+library(viridis)
+library(EnhancedVolcano)
+library(scDblFinder)
+```
+
+
+
+# Read in data
+
+```{r, include=FALSE}
+getwd()
+```
+
+
+## CD45- populations
+
+```{r, include=FALSE}
+C26_CD45neg_CTL_1 <- Read10X_h5("data/GSM7920264_S15_raw_feature_bc_matrix.h5")
+C26_CD45neg_C26_1 <- Read10X_h5("data/GSM7920265_S16_raw_feature_bc_matrix.h5")
+C26_CD45neg_C26_2 <- Read10X_h5("data/GSM7920270_C26_S63_raw_feature_bc_matrix.h5")
+```
+
+
+## CD45+ populations
+
+```{r, include=FALSE}
+C26_CD45pos_CTL_1 <- Read10X_h5("data/GSM7920266_S17_raw_feature_bc_matrix.h5")
+C26_CD45pos_CTL_2 <- Read10X_h5("data/GSM7920268_C26_S60_raw_feature_bc_matrix.h5")
+C26_CD45pos_C26_1 <- Read10X_h5("data/GSM7920267_S18_raw_feature_bc_matrix.h5")
+C26_CD45pos_C26_2 <- Read10X_h5("data/GSM7920269_C26_S62_raw_feature_bc_matrix.h5")
+```
+
+
+
+# Create Seurat object
+
+## CD45- populations
+
+```{r, include=FALSE}
+C26_CD45neg_CTL_1_so <- CreateSeuratObject(counts = C26_CD45neg_CTL_1, min.cells = 3, project = "C26_CD45neg_CTL_1")
+C26_CD45neg_C26_1_so <- CreateSeuratObject(counts = C26_CD45neg_C26_1, min.cells = 3, project = "C26_CD45neg_C26_1")
+C26_CD45neg_C26_2_so <- CreateSeuratObject(counts = C26_CD45neg_C26_2, min.cells = 3, project = "C26_CD45neg_C26_2")
+```
+
+
+## CD45+ populations
+
+```{r, include=FALSE}
+C26_CD45pos_CTL_1_so <- CreateSeuratObject(counts = C26_CD45pos_CTL_1, min.cells = 3, project = "C26_CD45pos_CTL_1")
+C26_CD45pos_CTL_2_so <- CreateSeuratObject(counts = C26_CD45pos_CTL_2, min.cells = 3, project = "C26_CD45pos_CTL_2")
+C26_CD45pos_C26_1_so <- CreateSeuratObject(counts = C26_CD45pos_C26_1, min.cells = 3, project = "C26_CD45pos_C26_1")
+C26_CD45pos_C26_2_so <- CreateSeuratObject(counts = C26_CD45pos_C26_2, min.cells = 3, project = "C26_CD45pos_C26_2")
+```
+
+
+
+# 1. QC
+
+## % mitochondrial reads
+
+```{r, include=FALSE}
+C26_CD45neg_CTL_1_so[["percent.mito"]] <- PercentageFeatureSet(C26_CD45neg_CTL_1_so, pattern = "^mt-")
+
+C26_CD45neg_C26_1_so[["percent.mito"]] <- PercentageFeatureSet(C26_CD45neg_C26_1_so, pattern = "^mt-")
+
+C26_CD45neg_C26_2_so[["percent.mito"]] <- PercentageFeatureSet(C26_CD45neg_C26_2_so, pattern = "^mt-")
+
+C26_CD45pos_CTL_1_so[["percent.mito"]] <- PercentageFeatureSet(C26_CD45pos_CTL_1_so, pattern = "^mt-")
+
+C26_CD45pos_CTL_2_so[["percent.mito"]] <- PercentageFeatureSet(C26_CD45pos_CTL_2_so, pattern = "^mt-")
+
+C26_CD45pos_C26_1_so[["percent.mito"]] <- PercentageFeatureSet(C26_CD45pos_C26_1_so, pattern = "^mt-")
+
+C26_CD45pos_C26_2_so[["percent.mito"]] <- PercentageFeatureSet(C26_CD45pos_C26_2_so, pattern = "^mt-")
+```
+
+
+## QC plots
+
+### % mitochondrial reads
+
+```{r, include=FALSE}
+percent_mito_C26_CD45neg_CTL_1 <- VlnPlot(C26_CD45neg_CTL_1_so, features = "percent.mito", raster = FALSE) +
+  theme(legend.position = "none", axis.text.x = element_text(angle = 0, vjust = 0.5, hjust = 0.5)) +
+  labs(x = NULL, y = "% mitochondrial genes", title = NULL)
+
+percent_mito_C26_CD45neg_C26_1 <- VlnPlot(C26_CD45neg_C26_1_so, features = "percent.mito", raster = FALSE) +
+  theme(legend.position = "none", axis.text.x = element_text(angle = 0, vjust = 0.5, hjust = 0.5)) +
+  labs(x = NULL, y = "% mitochondrial genes", title = NULL) +
+  scale_x_discrete(labels = "C26_CD45neg_C26_1")
+
+percent_mito_C26_CD45neg_C26_2 <- VlnPlot(C26_CD45neg_C26_2_so, features = "percent.mito", raster = FALSE) +
+  theme(legend.position = "none", axis.text.x = element_text(angle = 0, vjust = 0.5, hjust = 0.5)) +
+  labs(x = NULL, y = "% mitochondrial genes", title = NULL) +
+  scale_x_discrete(labels = "C26_CD45neg_C26_2")
+
+percent_mito_KPP_CD45neg_CTL <- VlnPlot(KPP_CD45neg_CTL_so, features = "percent.mito", raster = FALSE) +
+  theme(legend.position = "none", axis.text.x = element_text(angle = 0, vjust = 0.5, hjust = 0.5)) +
+  labs(x = NULL, y = "% mitochondrial genes", title = NULL) +
+  scale_x_discrete(labels = "KPP_CD45neg_CTL")
+
+percent_mito_C26_CD45pos_CTL_1 <- VlnPlot(C26_CD45pos_CTL_1_so, features = "percent.mito", raster = FALSE) +
+  theme(legend.position = "none", axis.text.x = element_text(angle = 0, vjust = 0.5, hjust = 0.5)) +
+  labs(x = NULL, y = "% mitochondrial genes", title = NULL) +
+  scale_x_discrete(labels = "C26_CD45pos_CTL_1")
+
+percent_mito_C26_CD45pos_CTL_2 <- VlnPlot(C26_CD45pos_CTL_2_so, features = "percent.mito", raster = FALSE) +
+  theme(legend.position = "none", axis.text.x = element_text(angle = 0, vjust = 0.5, hjust = 0.5)) +
+  labs(x = NULL, y = "% mitochondrial genes", title = NULL) +
+  scale_x_discrete(labels = "C26_CD45pos_CTL_2")
+
+percent_mito_C26_CD45pos_C26_1 <- VlnPlot(C26_CD45pos_C26_1_so, features = "percent.mito", raster = FALSE) +
+  theme(legend.position = "none", axis.text.x = element_text(angle = 0, vjust = 0.5, hjust = 0.5)) +
+  labs(x = NULL, y = "% mitochondrial genes", title = NULL) +
+  scale_x_discrete(labels = "C26_CD45pos_C26_1")
+
+percent_mito_C26_CD45pos_C26_2 <- VlnPlot(C26_CD45pos_C26_2_so, features = "percent.mito", raster = FALSE) +
+  theme(legend.position = "none", axis.text.x = element_text(angle = 0, vjust = 0.5, hjust = 0.5)) +
+  labs(x = NULL, y = "% mitochondrial genes", title = NULL) +
+  scale_x_discrete(labels = "C26_CD45pos_C26_2")
+
+percent_mito_KPP_CD45pos_CTL <- VlnPlot(KPP_CD45pos_CTL_so, features = "percent.mito", raster = FALSE) +
+  theme(legend.position = "none", axis.text.x = element_text(angle = 0, vjust = 0.5, hjust = 0.5)) +
+  labs(x = NULL, y = "% mitochondrial genes", title = NULL) +
+  scale_x_discrete(labels = "KPP_CD45pos_CTL")
+```
+
+```{r}
+percent_mito_combined <- grid.arrange(percent_mito_C26_CD45neg_CTL_1, percent_mito_C26_CD45neg_C26_1, percent_mito_C26_CD45neg_C26_2,  percent_mito_C26_CD45pos_CTL_1, percent_mito_C26_CD45pos_CTL_2, percent_mito_C26_CD45pos_C26_1, percent_mito_C26_CD45pos_C26_2, nrow = 2, ncol = 4)
+```
+
+
+### nFeatures
+
+```{r, include=FALSE}
+nFeature_C26_CD45neg_CTL_1 <- VlnPlot(C26_CD45neg_CTL_1_so, features = "nFeature_RNA", raster = FALSE) +
+  theme(legend.position = "none", axis.text.x = element_text(angle = 0, vjust = 0.5, hjust = 0.5)) +
+  labs(x = NULL, y = "# features", title = NULL) +
+  scale_y_continuous(limits = c(0, 10000))
+
+nFeature_C26_CD45neg_C26_1 <- VlnPlot(C26_CD45neg_C26_1_so, features = "nFeature_RNA", raster = FALSE) +
+  theme(legend.position = "none", axis.text.x = element_text(angle = 0, vjust = 0.5, hjust = 0.5)) +
+  labs(x = NULL, y = "# features", title = NULL) +
+  scale_y_continuous(limits = c(0, 10000))
+
+nFeature_C26_CD45neg_C26_2 <- VlnPlot(C26_CD45neg_C26_2_so, features = "nFeature_RNA", raster = FALSE) +
+  theme(legend.position = "none", axis.text.x = element_text(angle = 0, vjust = 0.5, hjust = 0.5)) +
+  labs(x = NULL, y = "# features", title = NULL) +
+  scale_y_continuous(limits = c(0, 10000))
+
+nFeature_C26_CD45pos_CTL_1 <- VlnPlot(C26_CD45pos_CTL_1_so, features = "nFeature_RNA", raster = FALSE) +
+  theme(legend.position = "none", axis.text.x = element_text(angle = 0, vjust = 0.5, hjust = 0.5)) +
+  labs(x = NULL, y = "# features", title = NULL) +
+  scale_y_continuous(limits = c(0, 10000))
+
+nFeature_C26_CD45pos_CTL_2 <- VlnPlot(C26_CD45pos_CTL_2_so, features = "nFeature_RNA", raster = FALSE) +
+  theme(legend.position = "none", axis.text.x = element_text(angle = 0, vjust = 0.5, hjust = 0.5)) +
+  labs(x = NULL, y = "# features", title = NULL) +
+  scale_y_continuous(limits = c(0, 10000))
+
+nFeature_C26_CD45pos_C26_1 <- VlnPlot(C26_CD45pos_C26_1_so, features = "nFeature_RNA", raster = FALSE) +
+  theme(legend.position = "none", axis.text.x = element_text(angle = 0, vjust = 0.5, hjust = 0.5)) +
+  labs(x = NULL, y = "# features", title = NULL) +
+  scale_y_continuous(limits = c(0, 10000))
+
+nFeature_C26_CD45pos_C26_2 <- VlnPlot(C26_CD45pos_C26_2_so, features = "nFeature_RNA", raster = FALSE) +
+  theme(legend.position = "none", axis.text.x = element_text(angle = 0, vjust = 0.5, hjust = 0.5)) +
+  labs(x = NULL, y = "# features", title = NULL) +
+  scale_y_continuous(limits = c(0, 10000))
+```
+
+```{r}
+nFeature_combined <- grid.arrange(nFeature_C26_CD45neg_CTL_1, nFeature_C26_CD45neg_C26_1, nFeature_C26_CD45neg_C26_2,  nFeature_C26_CD45pos_CTL_1, nFeature_C26_CD45pos_CTL_2, nFeature_C26_CD45pos_C26_1, nFeature_C26_CD45pos_C26_2, nrow = 2, ncol = 4)
+```
+
+
+### nCounts
+
+```{r, include=FALSE}
+nCount_C26_CD45neg_CTL_1 <- VlnPlot(C26_CD45neg_CTL_1_so, features = "nCount_RNA") +
+  theme(legend.position = "none", axis.text.x = element_text(angle = 0, vjust = 0.5, hjust = 0.5)) +
+  labs(x = NULL, y = "# counts", title = NULL) +
+  scale_y_continuous(limits = c(0, 100000), breaks = seq(0, 100000, by = 25000))
+
+nCount_C26_CD45neg_C26_1 <- VlnPlot(C26_CD45neg_C26_1_so, features = "nCount_RNA") +
+  theme(legend.position = "none", axis.text.x = element_text(angle = 0, vjust = 0.5, hjust = 0.5)) +
+  labs(x = NULL, y = "# counts", title = NULL) +
+  scale_y_continuous(limits = c(0, 100000), breaks = seq(0, 100000, by = 25000))
+
+nCount_C26_CD45neg_C26_2 <- VlnPlot(C26_CD45neg_C26_2_so, features = "nCount_RNA") +
+  theme(legend.position = "none", axis.text.x = element_text(angle = 0, vjust = 0.5, hjust = 0.5)) +
+  labs(x = NULL, y = "# counts", title = NULL) +
+  scale_y_continuous(limits = c(0, 100000), breaks = seq(0, 100000, by = 25000))
+
+nCount_C26_CD45pos_CTL_1 <- VlnPlot(C26_CD45pos_CTL_1_so, features = "nCount_RNA") +
+  theme(legend.position = "none", axis.text.x = element_text(angle = 0, vjust = 0.5, hjust = 0.5)) +
+  labs(x = NULL, y = "# counts", title = NULL) +
+  scale_y_continuous(limits = c(0, 100000), breaks = seq(0, 100000, by = 25000))
+
+nCount_C26_CD45pos_CTL_2 <- VlnPlot(C26_CD45pos_CTL_2_so, features = "nCount_RNA") +
+  theme(legend.position = "none", axis.text.x = element_text(angle = 0, vjust = 0.5, hjust = 0.5)) +
+  labs(x = NULL, y = "# counts", title = NULL) +
+  scale_y_continuous(limits = c(0, 100000), breaks = seq(0, 100000, by = 25000))
+
+nCount_C26_CD45pos_C26_1 <- VlnPlot(C26_CD45pos_C26_1_so, features = "nCount_RNA") +
+  theme(legend.position = "none", axis.text.x = element_text(angle = 0, vjust = 0.5, hjust = 0.5)) +
+  labs(x = NULL, y = "# counts", title = NULL) +
+  scale_y_continuous(limits = c(0, 100000), breaks = seq(0, 100000, by = 25000))
+
+nCount_C26_CD45pos_C26_2 <- VlnPlot(C26_CD45pos_C26_2_so, features = "nCount_RNA") +
+  theme(legend.position = "none", axis.text.x = element_text(angle = 0, vjust = 0.5, hjust = 0.5)) +
+  labs(x = NULL, y = "# counts", title = NULL) +
+  scale_y_continuous(limits = c(0, 100000), breaks = seq(0, 100000, by = 25000))
+```
+
+```{r}
+nCount_combined <- grid.arrange(nCount_C26_CD45neg_CTL_1, nCount_C26_CD45neg_C26_1, nCount_C26_CD45neg_C26_2, nCount_C26_CD45pos_CTL_1, nCount_C26_CD45pos_CTL_2, nCount_C26_CD45pos_C26_1, nCount_C26_CD45pos_C26_2, nCount_KPP_CD45pos_CTL, nrow = 2, ncol = 4)
+```
+
+
+### nFeatures vs. nCounts
+
+```{r, include=FALSE}
+nFeature_nCount_C26_CD45neg_CTL_1 <- FeatureScatter(C26_CD45neg_CTL_1_so, feature1 = "nFeature_RNA", feature2 = "nCount_RNA") +
+  geom_smooth(method = 'lm') +
+  theme(legend.position = "none", axis.text.x = element_text(angle = 0, vjust = 0.5, hjust = 0.5, size = 5),
+        axis.text.y = element_text(size = 5), axis.title.x = element_text(size = 10), axis.title.y = element_text(size = 15), plot.title = element_text(size = 10)) +
+  labs(x = "C26_CD45neg_CTL_1", y = "# counts") +
+  scale_x_continuous(limits = c(0, 10000), breaks = seq(0, 10000, by = 2500)) +
+  scale_y_continuous(limits = c(0, 100000), breaks = seq(0, 100000, by = 25000))
+
+nFeature_nCount_C26_CD45neg_C26_1 <- FeatureScatter(C26_CD45neg_C26_1_so, feature1 = "nFeature_RNA", feature2 = "nCount_RNA") +
+  geom_smooth(method = 'lm') +
+  theme(legend.position = "none", axis.text.x = element_text(angle = 0, vjust = 0.5, hjust = 0.5, size = 5),
+        axis.text.y = element_text(size = 5), axis.title.x = element_text(size = 10), axis.title.y = element_text(size = 15), plot.title = element_text(size = 10)) +
+  labs(x = "C26_CD45neg_C26_1", y = "# counts") +
+  scale_x_continuous(limits = c(0, 10000), breaks = seq(0, 10000, by = 2500)) +
+  scale_y_continuous(limits = c(0, 100000), breaks = seq(0, 100000, by = 25000))
+
+nFeature_nCount_C26_CD45neg_C26_2 <- FeatureScatter(C26_CD45neg_C26_2_so, feature1 = "nFeature_RNA", feature2 = "nCount_RNA") +
+  geom_smooth(method = 'lm') +
+  theme(legend.position = "none", axis.text.x = element_text(angle = 0, vjust = 0.5, hjust = 0.5, size = 5),
+        axis.text.y = element_text(size = 5), axis.title.x = element_text(size = 10), axis.title.y = element_text(size = 15), plot.title = element_text(size = 10)) +
+  labs(x = "C26_CD45neg_C26_2", y = "# counts") +
+  scale_x_continuous(limits = c(0, 10000), breaks = seq(0, 10000, by = 2500)) +
+  scale_y_continuous(limits = c(0, 100000), breaks = seq(0, 100000, by = 25000))
+
+nFeature_nCount_C26_CD45pos_CTL_1 <- FeatureScatter(C26_CD45pos_CTL_1_so, feature1 = "nFeature_RNA", feature2 = "nCount_RNA") +
+  geom_smooth(method = 'lm') +
+  theme(legend.position = "none", axis.text.x = element_text(angle = 0, vjust = 0.5, hjust = 0.5, size = 5),
+        axis.text.y = element_text(size = 5), axis.title.x = element_text(size = 10), axis.title.y = element_text(size = 15), plot.title = element_text(size = 10)) +
+  labs(x = "C26_CD45pos_CTL_1", y = "# counts") +
+  scale_x_continuous(limits = c(0, 10000), breaks = seq(0, 10000, by = 2500)) +
+  scale_y_continuous(limits = c(0, 100000), breaks = seq(0, 100000, by = 25000))
+
+nFeature_nCount_C26_CD45pos_CTL_2 <- FeatureScatter(C26_CD45pos_CTL_2_so, feature1 = "nFeature_RNA", feature2 = "nCount_RNA") +
+  geom_smooth(method = 'lm') +
+  theme(legend.position = "none", axis.text.x = element_text(angle = 0, vjust = 0.5, hjust = 0.5, size = 5),
+        axis.text.y = element_text(size = 5), axis.title.x = element_text(size = 10), axis.title.y = element_text(size = 15), plot.title = element_text(size = 10)) +
+  labs(x = "C26_CD45pos_CTL_2", y = "# counts") +
+  scale_x_continuous(limits = c(0, 10000), breaks = seq(0, 10000, by = 2500)) +
+  scale_y_continuous(limits = c(0, 100000), breaks = seq(0, 100000, by = 25000))
+
+nFeature_nCount_C26_CD45pos_C26_1 <- FeatureScatter(C26_CD45pos_C26_1_so, feature1 = "nFeature_RNA", feature2 = "nCount_RNA") +
+  geom_smooth(method = 'lm') +
+  theme(legend.position = "none", axis.text.x = element_text(angle = 0, vjust = 0.5, hjust = 0.5, size = 5),
+        axis.text.y = element_text(size = 5), axis.title.x = element_text(size = 10), axis.title.y = element_text(size = 15), plot.title = element_text(size = 10)) +
+  labs(x = "C26_CD45pos_C26_1", y = "# counts") +
+  scale_x_continuous(limits = c(0, 10000), breaks = seq(0, 10000, by = 2500)) +
+  scale_y_continuous(limits = c(0, 100000), breaks = seq(0, 100000, by = 25000))
+
+nFeature_nCount_C26_CD45pos_C26_2 <- FeatureScatter(C26_CD45pos_C26_2_so, feature1 = "nFeature_RNA", feature2 = "nCount_RNA") +
+  geom_smooth(method = 'lm') +
+  theme(legend.position = "none", axis.text.x = element_text(angle = 0, vjust = 0.5, hjust = 0.5, size = 5),
+        axis.text.y = element_text(size = 5), axis.title.x = element_text(size = 10), axis.title.y = element_text(size = 15), plot.title = element_text(size = 10)) +
+  labs(x = "C26_CD45pos_C26_2", y = "# counts") +
+  scale_x_continuous(limits = c(0, 10000), breaks = seq(0, 10000, by = 2500)) +
+  scale_y_continuous(limits = c(0, 100000), breaks = seq(0, 100000, by = 25000))
+```
+
+```{r}
+nFeature_nCount_combined <- grid.arrange(nFeature_nCount_C26_CD45neg_CTL_1, nFeature_nCount_C26_CD45neg_C26_1, nFeature_nCount_C26_CD45neg_C26_2, nFeature_nCount_C26_CD45pos_CTL_1, nFeature_nCount_C26_CD45pos_CTL_2, nFeature_nCount_C26_CD45pos_C26_1, nFeature_nCount_C26_CD45pos_C26_2, nrow = 2, ncol = 4)
+```
+
+
+
+# 2. Filtering
+
+```{r, include=FALSE}
+C26_CD45neg_CTL_1_filtered <- subset(C26_CD45neg_CTL_1_so, subset = nFeature_RNA > 200 & nFeature_RNA < 60000 & nCount_RNA > 500 & nCount_RNA < 15000 & percent.mito < 10)
+
+C26_CD45neg_C26_1_filtered <- subset(C26_CD45neg_C26_1_so, subset = nFeature_RNA > 200 & nFeature_RNA < 60000 & nCount_RNA > 500 & nCount_RNA < 15000 & percent.mito < 10)
+
+C26_CD45neg_C26_2_filtered <- subset(C26_CD45neg_C26_2_so, subset = nFeature_RNA > 200 & nFeature_RNA < 60000 & nCount_RNA > 500 & nCount_RNA < 15000 & percent.mito < 10)
+
+C26_CD45pos_CTL_1_filtered <- subset(C26_CD45pos_CTL_1_so, subset = nFeature_RNA > 200 & nFeature_RNA < 60000 & nCount_RNA > 500 & nCount_RNA < 15000 & percent.mito < 10)
+
+C26_CD45pos_CTL_2_filtered <- subset(C26_CD45pos_CTL_2_so, subset = nFeature_RNA > 200 & nFeature_RNA < 60000 & nCount_RNA > 500 & nCount_RNA < 15000 & percent.mito < 10)
+
+C26_CD45pos_C26_1_filtered <- subset(C26_CD45pos_C26_1_so, subset = nFeature_RNA > 200 & nFeature_RNA < 60000 & nCount_RNA > 500 & nCount_RNA < 15000 & percent.mito < 10)
+
+C26_CD45pos_C26_2_filtered <- subset(C26_CD45pos_C26_2_so, subset = nFeature_RNA > 200 & nFeature_RNA < 60000 & nCount_RNA > 500 & nCount_RNA < 15000 & percent.mito < 10)
+```
+
+
+
+# 3. Pre-process
+
+```{r, include=FALSE}
+all_genes_C26_CD45neg_CTL_1 <- rownames(C26_CD45neg_CTL_1_filtered)
+
+all_genes_C26_CD45neg_C26_1 <- rownames(C26_CD45neg_C26_1_filtered)
+
+all_genes_C26_CD45neg_C26_2 <- rownames(C26_CD45neg_C26_2_filtered)
+
+all_genes_C26_CD45pos_CTL_1 <- rownames(C26_CD45pos_CTL_1_filtered)
+
+all_genes_C26_CD45pos_CTL_2 <- rownames(C26_CD45pos_CTL_2_filtered)
+
+all_genes_C26_CD45pos_C26_1 <- rownames(C26_CD45pos_C26_1_filtered)
+
+all_genes_C26_CD45pos_C26_2 <- rownames(C26_CD45pos_C26_2_filtered)
+```
+
+
+## C26_CD45neg_CTL_1
+
+```{r, include=FALSE}
+C26_CD45neg_CTL_1_norm <- C26_CD45neg_CTL_1_filtered %>%
+  NormalizeData(normalization.method = "LogNormalize", scale.factor = 10000) %>%
+  FindVariableFeatures(selection.method = "vst", nfeatures = 2000) %>%
+  ScaleData(features = all_genes_C26_CD45neg_CTL_1) %>%
+  RunPCA(npcs = 50)
+```
+
+```{r}
+ElbowPlot(C26_CD45neg_CTL_1_norm, ndims = 50) ### to check dims
+```
+
+```{r, include=FALSE}
+C26_CD45neg_CTL_1_norm <- C26_CD45neg_CTL_1_norm %>%
+  FindNeighbors(dims = 1:42) %>%
+  FindClusters(resolution = 0.1) %>%
+  RunUMAP(dims = 1:42)
+```
+
+
+## C26_CD45neg_C26_1
+
+```{r, include=FALSE}
+C26_CD45neg_C26_1_norm <- C26_CD45neg_C26_1_filtered %>%
+  NormalizeData(normalization.method = "LogNormalize", scale.factor = 10000) %>%
+  FindVariableFeatures(selection.method = "vst", nfeatures = 2000) %>%
+  ScaleData(features = all_genes_C26_CD45neg_C26_1) %>%
+  RunPCA(npcs = 50)
+```
+
+```{r}
+ElbowPlot(C26_CD45neg_C26_1_norm, ndims = 50) ### to check dims
+```
+
+```{r, include=FALSE}
+C26_CD45neg_C26_1_norm <- C26_CD45neg_C26_1_norm %>%
+  FindNeighbors(dims = 1:44) %>%
+  FindClusters(resolution = 0.1) %>%
+  RunUMAP(dims = 1:44)
+```
+
+
+## C26_CD45neg_C26_2
+
+```{r, include=FALSE}
+C26_CD45neg_C26_2_norm <- C26_CD45neg_C26_2_filtered %>%
+  NormalizeData(normalization.method = "LogNormalize", scale.factor = 10000) %>%
+  FindVariableFeatures(selection.method = "vst", nfeatures = 2000) %>%
+  ScaleData(features = all_genes_C26_CD45neg_C26_2) %>%
+  RunPCA(npcs = 50)
+```
+
+```{r}
+ElbowPlot(C26_CD45neg_C26_2_norm, ndims = 50) ### to check dims
+```
+
+```{r, include=FALSE}
+C26_CD45neg_C26_2_norm <- C26_CD45neg_C26_2_norm %>%
+  FindNeighbors(dims = 1:36) %>%
+  FindClusters(resolution = 0.1) %>%
+  RunUMAP(dims = 1:36)
+```
+
+
+## C26_CD45pos_CTL_1
+
+```{r, include=FALSE}
+C26_CD45pos_CTL_1_norm <- C26_CD45pos_CTL_1_filtered %>%
+  NormalizeData(normalization.method = "LogNormalize", scale.factor = 10000) %>%
+  FindVariableFeatures(selection.method = "vst", nfeatures = 2000) %>%
+  ScaleData(features = all_genes_C26_CD45pos_CTL_1) %>%
+  RunPCA(npcs = 50)
+```
+
+```{r}
+ElbowPlot(C26_CD45pos_CTL_1_norm, ndims = 50) ### to check dims
+```
+
+```{r, include=FALSE}
+C26_CD45pos_CTL_1_norm <- C26_CD45pos_CTL_1_norm %>%
+  FindNeighbors(dims = 1:42) %>%
+  FindClusters(resolution = 0.1) %>%
+  RunUMAP(dims = 1:42)
+```
+
+
+## C26_CD45pos_CTL_2
+
+```{r, include=FALSE}
+C26_CD45pos_CTL_2_norm <- C26_CD45pos_CTL_2_filtered %>%
+  NormalizeData(normalization.method = "LogNormalize", scale.factor = 10000) %>%
+  FindVariableFeatures(selection.method = "vst", nfeatures = 2000) %>%
+  ScaleData(features = all_genes_C26_CD45pos_CTL_2) %>%
+  RunPCA(npcs = 50)
+```
+
+```{r}
+ElbowPlot(C26_CD45pos_CTL_2_norm, ndims = 50) ### to check dims
+```
+
+```{r, include=FALSE}
+C26_CD45pos_CTL_2_norm <- C26_CD45pos_CTL_2_norm %>%
+  FindNeighbors(dims = 1:39) %>%
+  FindClusters(resolution = 0.1) %>%
+  RunUMAP(dims = 1:39)
+```
+
+
+
+## C26_CD45pos_C26_1
+
+```{r, include=FALSE}
+C26_CD45pos_C26_1_norm <- C26_CD45pos_C26_1_filtered %>%
+  NormalizeData(normalization.method = "LogNormalize", scale.factor = 10000) %>%
+  FindVariableFeatures(selection.method = "vst", nfeatures = 2000) %>%
+  ScaleData(features = all_genes_C26_CD45pos_C26_1) %>%
+  RunPCA(npcs = 50)
+```
+
+```{r}
+ElbowPlot(C26_CD45pos_C26_1_norm, ndims = 50) ### to check dims
+```
+
+```{r, include=FALSE}
+C26_CD45pos_C26_1_norm <- C26_CD45pos_C26_1_norm %>%
+  FindNeighbors(dims = 1:43) %>%
+  FindClusters(resolution = 0.1) %>%
+  RunUMAP(dims = 1:43)
+```
+
+
+## C26_CD45pos_C26_2
+
+```{r, include=FALSE}
+C26_CD45pos_C26_2_norm <- C26_CD45pos_C26_2_filtered %>%
+  NormalizeData(normalization.method = "LogNormalize", scale.factor = 10000) %>%
+  FindVariableFeatures(selection.method = "vst", nfeatures = 2000) %>%
+  ScaleData(features = all_genes_C26_CD45pos_C26_2) %>%
+  RunPCA(npcs = 50)
+```
+
+```{r}
+ElbowPlot(C26_CD45pos_C26_2_norm, ndims = 50) ### to check dims
+```
+
+```{r, include=FALSE}
+C26_CD45pos_C26_2_norm <- C26_CD45pos_C26_2_norm %>%
+  FindNeighbors(dims = 1:37) %>%
+  FindClusters(resolution = 0.1) %>%
+  RunUMAP(dims = 1:37)
+```
+
+
+
+# 4. scDblFinder
+
+```{r, include=FALSE}
+C26_CD45neg_CTL_1_dbl <- scDblFinder(GetAssayData(C26_CD45neg_CTL_1_norm, slot = "counts"), clusters = Idents(C26_CD45neg_CTL_1_norm))
+
+C26_CD45neg_CTL_1_norm$scDblFinder.class <- C26_CD45neg_CTL_1_dbl$scDblFinder.class
+
+
+C26_CD45neg_C26_1_dbl <- scDblFinder(GetAssayData(C26_CD45neg_C26_1_norm, slot = "counts"), clusters = Idents(C26_CD45neg_C26_1_norm))
+
+C26_CD45neg_C26_1_norm$scDblFinder.class <- C26_CD45neg_C26_1_dbl$scDblFinder.class
+
+
+C26_CD45neg_C26_2_dbl <- scDblFinder(GetAssayData(C26_CD45neg_C26_2_norm, slot = "counts"), clusters = Idents(C26_CD45neg_C26_2_norm))
+
+C26_CD45neg_C26_2_norm$scDblFinder.class <- C26_CD45neg_C26_2_dbl$scDblFinder.class
+
+
+C26_CD45pos_CTL_1_dbl <- scDblFinder(GetAssayData(C26_CD45pos_CTL_1_norm, slot = "counts"), clusters = Idents(C26_CD45pos_CTL_1_norm))
+
+C26_CD45pos_CTL_1_norm$scDblFinder.class <- C26_CD45pos_CTL_1_dbl$scDblFinder.class
+
+
+C26_CD45pos_CTL_2_dbl <- scDblFinder(GetAssayData(C26_CD45pos_CTL_2_norm, slot = "counts"), clusters = Idents(C26_CD45pos_CTL_2_norm))
+
+C26_CD45pos_CTL_2_norm$scDblFinder.class <- C26_CD45pos_CTL_2_dbl$scDblFinder.class
+
+
+C26_CD45pos_C26_1_dbl <- scDblFinder(GetAssayData(C26_CD45pos_C26_1_norm, slot = "counts"), clusters = Idents(C26_CD45pos_C26_1_norm))
+
+C26_CD45pos_C26_1_norm$scDblFinder.class <- C26_CD45pos_C26_1_dbl$scDblFinder.class
+
+
+C26_CD45pos_C26_2_dbl <- scDblFinder(GetAssayData(C26_CD45pos_C26_2_norm, slot = "counts"), clusters = Idents(C26_CD45pos_C26_2_norm))
+
+C26_CD45pos_C26_2_norm$scDblFinder.class <- C26_CD45pos_C26_2_dbl$scDblFinder.class
+```
+
+
+## See number of singlets vs. doublets
+
+```{r}
+table(C26_CD45neg_CTL_1_norm$scDblFinder.class)
+table(C26_CD45neg_C26_1_norm$scDblFinder.class)
+table(C26_CD45neg_C26_2_norm$scDblFinder.class)
+table(C26_CD45pos_CTL_1_norm$scDblFinder.class)
+table(C26_CD45pos_CTL_2_norm$scDblFinder.class)
+table(C26_CD45pos_C26_1_norm$scDblFinder.class)
+table(C26_CD45pos_C26_2_norm$scDblFinder.class)
+```
+
+
+## Visualize doublets
+
+```{r}
+DimPlot(
+  C26_CD45neg_CTL_1_norm,
+  reduction = "umap",
+  group.by = "scDblFinder.class",
+  cells.highlight = list("doublet" = WhichCells(C26_CD45neg_CTL_1_norm, expression = scDblFinder.class == "doublet")),
+  sizes.highlight = 1,
+  pt.size = 1,
+  cols.highlight = "#D73027"
+) +
+  ggplot2::labs(title = "C26_CD45neg_CTL_1", x = "UMAP1", y = "UMAP2") +
+  theme(
+    axis.text.x = element_blank(),
+    axis.text.y = element_blank(),
+    axis.ticks = element_blank()) +
+  theme(legend.position = "none")
+
+DimPlot(
+  C26_CD45neg_C26_1_norm,
+  reduction = "umap",
+  group.by = "scDblFinder.class",
+  cells.highlight = list("doublet" = WhichCells(C26_CD45neg_C26_1_norm, expression = scDblFinder.class == "doublet")),
+  sizes.highlight = 1,
+  pt.size = 1,
+  cols.highlight = "#D73027"
+) +
+  ggplot2::labs(title = "C26_CD45neg_C26_1", x = "UMAP1", y = "UMAP2") +
+  theme(
+    axis.text.x = element_blank(),
+    axis.text.y = element_blank(),
+    axis.ticks = element_blank()) +
+  theme(legend.position = "none")
+
+DimPlot(
+  C26_CD45neg_C26_2_norm,
+  reduction = "umap",
+  group.by = "scDblFinder.class",
+  cells.highlight = list("doublet" = WhichCells(C26_CD45neg_C26_2_norm, expression = scDblFinder.class == "doublet")),
+  sizes.highlight = 1,
+  pt.size = 1,
+  cols.highlight = "#D73027"
+) +
+  ggplot2::labs(title = "C26_CD45neg_C26_2", x = "UMAP1", y = "UMAP2") +
+  theme(
+    axis.text.x = element_blank(),
+    axis.text.y = element_blank(),
+    axis.ticks = element_blank()) +
+  theme(legend.position = "none")
+
+DimPlot(
+  C26_CD45pos_CTL_1_norm,
+  reduction = "umap",
+  group.by = "scDblFinder.class",
+  cells.highlight = list("doublet" = WhichCells(C26_CD45pos_CTL_1_norm, expression = scDblFinder.class == "doublet")),
+  sizes.highlight = 1,
+  pt.size = 1,
+  cols.highlight = "#D73027"
+) +
+  ggplot2::labs(title = "C26_CD45pos_CTL_1", x = "UMAP1", y = "UMAP2") +
+  theme(
+    axis.text.x = element_blank(),
+    axis.text.y = element_blank(),
+    axis.ticks = element_blank()) +
+  theme(legend.position = "none")
+
+DimPlot(
+  C26_CD45pos_CTL_2_norm,
+  reduction = "umap",
+  group.by = "scDblFinder.class",
+  cells.highlight = list("doublet" = WhichCells(C26_CD45pos_CTL_2_norm, expression = scDblFinder.class == "doublet")),
+  sizes.highlight = 1,
+  pt.size = 1,
+  cols.highlight = "#D73027"
+) +
+  ggplot2::labs(title = "C26_CD45pos_CTL_2", x = "UMAP1", y = "UMAP2") +
+  theme(
+    axis.text.x = element_blank(),
+    axis.text.y = element_blank(),
+    axis.ticks = element_blank()) +
+  theme(legend.position = "none")
+
+DimPlot(
+  C26_CD45pos_C26_1_norm,
+  reduction = "umap",
+  group.by = "scDblFinder.class",
+  cells.highlight = list("doublet" = WhichCells(C26_CD45pos_C26_1_norm, expression = scDblFinder.class == "doublet")),
+  sizes.highlight = 1,
+  pt.size = 1,
+  cols.highlight = "#D73027"
+) +
+  ggplot2::labs(title = "C26_CD45pos_C26_1", x = "UMAP1", y = "UMAP2") +
+  theme(
+    axis.text.x = element_blank(),
+    axis.text.y = element_blank(),
+    axis.ticks = element_blank()) +
+  theme(legend.position = "none")
+
+DimPlot(
+  C26_CD45pos_C26_2_norm,
+  reduction = "umap",
+  group.by = "scDblFinder.class",
+  cells.highlight = list("doublet" = WhichCells(C26_CD45pos_C26_2_norm, expression = scDblFinder.class == "doublet")),
+  sizes.highlight = 1,
+  pt.size = 1,
+  cols.highlight = "#D73027"
+) +
+  ggplot2::labs(title = "C26_CD45pos_C26_2", x = "UMAP1", y = "UMAP2") +
+  theme(
+    axis.text.x = element_blank(),
+    axis.text.y = element_blank(),
+    axis.ticks = element_blank()) +
+  theme(legend.position = "none")
+```
+
+```{r, include=FALSE}
+Idents(C26_CD45neg_CTL_1_norm) <- C26_CD45neg_CTL_1_norm@meta.data$scDblFinder.class
+
+Idents(C26_CD45neg_C26_1_norm) <- C26_CD45neg_C26_1_norm@meta.data$scDblFinder.class
+
+Idents(C26_CD45neg_C26_2_norm) <- C26_CD45neg_C26_2_norm@meta.data$scDblFinder.class
+
+Idents(C26_CD45pos_CTL_1_norm) <- C26_CD45pos_CTL_1_norm@meta.data$scDblFinder.class
+
+Idents(C26_CD45pos_CTL_2_norm) <- C26_CD45pos_CTL_2_norm@meta.data$scDblFinder.class
+
+Idents(C26_CD45pos_C26_1_norm) <- C26_CD45pos_C26_1_norm@meta.data$scDblFinder.class
+
+Idents(C26_CD45pos_C26_2_norm) <- C26_CD45pos_C26_2_norm@meta.data$scDblFinder.class
+```
+
+```{r, include=FALSE}
+nFeature_doublets_C26_CD45neg_CTL_1 <- VlnPlot(C26_CD45neg_CTL_1_norm, features = "nFeature_RNA", cols = c("singlet" = "#4575B4", "doublet" = "#D73027")) + theme(legend.position = "none", axis.text.x = element_text(angle = 0, vjust = 0.5, hjust = 0.5)) +
+    labs(x = "C26_CD45neg_CTL_1", y = "# features", title = NULL) +
+    scale_y_continuous(limits = c(0, 5000))
+
+nFeature_doublets_C26_CD45neg_C26_1 <- VlnPlot(C26_CD45neg_C26_1_norm, features = "nFeature_RNA", cols = c("singlet" = "#4575B4", "doublet" = "#D73027")) + theme(legend.position = "none", axis.text.x = element_text(angle = 0, vjust = 0.5, hjust = 0.5)) +
+    labs(x = "C26_CD45neg_C26_1", y = "# features", title = NULL) +
+    scale_y_continuous(limits = c(0, 5000))
+
+nFeature_doublets_C26_CD45neg_C26_2 <- VlnPlot(C26_CD45neg_C26_2_norm, features = "nFeature_RNA", cols = c("singlet" = "#4575B4", "doublet" = "#D73027")) + theme(legend.position = "none", axis.text.x = element_text(angle = 0, vjust = 0.5, hjust = 0.5)) +
+    labs(x = "C26_CD45neg_C26_2", y = "# features", title = NULL) +
+    scale_y_continuous(limits = c(0, 5000))
+
+nFeature_doublets_C26_CD45pos_CTL_1 <- VlnPlot(C26_CD45pos_CTL_1_norm, features = "nFeature_RNA", cols = c("singlet" = "#4575B4", "doublet" = "#D73027")) + theme(legend.position = "none", axis.text.x = element_text(angle = 0, vjust = 0.5, hjust = 0.5)) +
+    labs(x = "C26_CD45pos_CTL_1", y = "# features", title = NULL) +
+    scale_y_continuous(limits = c(0, 5000))
+
+nFeature_doublets_C26_CD45pos_CTL_2 <- VlnPlot(C26_CD45pos_CTL_2_norm, features = "nFeature_RNA", cols = c("singlet" = "#4575B4", "doublet" = "#D73027")) + theme(legend.position = "none", axis.text.x = element_text(angle = 0, vjust = 0.5, hjust = 0.5)) +
+    labs(x = "C26_CD45pos_CTL_2", y = "# features", title = NULL) +
+    scale_y_continuous(limits = c(0, 5000))
+
+nFeature_doublets_C26_CD45pos_C26_1 <- VlnPlot(C26_CD45pos_C26_1_norm, features = "nFeature_RNA", cols = c("singlet" = "#4575B4", "doublet" = "#D73027")) + theme(legend.position = "none", axis.text.x = element_text(angle = 0, vjust = 0.5, hjust = 0.5)) +
+    labs(x = "C26_CD45pos_C26_1", y = "# features", title = NULL) +
+    scale_y_continuous(limits = c(0, 5000))
+
+nFeature_doublets_C26_CD45pos_C26_2 <- VlnPlot(C26_CD45pos_C26_2_norm, features = "nFeature_RNA", cols = c("singlet" = "#4575B4", "doublet" = "#D73027")) + theme(legend.position = "none", axis.text.x = element_text(angle = 0, vjust = 0.5, hjust = 0.5)) +
+    labs(x = "C26_CD45pos_C26_2", y = "# features", title = NULL) +
+    scale_y_continuous(limits = c(0, 5000))
+```
+
+```{r}
+nFeature_doublets <- grid.arrange(nFeature_doublets_C26_CD45neg_CTL_1, nFeature_doublets_C26_CD45neg_C26_1, nFeature_doublets_C26_CD45neg_C26_2,  nFeature_doublets_C26_CD45pos_CTL_1, nFeature_doublets_C26_CD45pos_CTL_2, nFeature_doublets_C26_CD45pos_C26_1, nFeature_doublets_C26_CD45pos_C26_2, nrow = 2, ncol = 4)
+```
+
+```{r, include=FALSE}
+nCount_doublets_C26_CD45neg_CTL_1 <- VlnPlot(C26_CD45neg_CTL_1_norm, features = "nCount_RNA", cols = c("singlet" = "#4575B4", "doublet" = "#D73027")) + theme(legend.position = "none", axis.text.x = element_text(angle = 0, vjust = 0.5, hjust = 0.5)) +
+    labs(x = "C26_CD45neg_CTL_1", y = "# counts", title = NULL) +
+    scale_y_continuous(limits = c(0, 15000))
+
+nCount_doublets_C26_CD45neg_C26_1 <- VlnPlot(C26_CD45neg_C26_1_norm, features = "nCount_RNA", cols = c("singlet" = "#4575B4", "doublet" = "#D73027")) + theme(legend.position = "none", axis.text.x = element_text(angle = 0, vjust = 0.5, hjust = 0.5)) +
+    labs(x = "C26_CD45neg_C26_1", y = "# counts", title = NULL) +
+    scale_y_continuous(limits = c(0, 15000))
+
+nCount_doublets_C26_CD45neg_C26_2 <- VlnPlot(C26_CD45neg_C26_2_norm, features = "nCount_RNA", cols = c("singlet" = "#4575B4", "doublet" = "#D73027")) + theme(legend.position = "none", axis.text.x = element_text(angle = 0, vjust = 0.5, hjust = 0.5)) +
+    labs(x = "C26_CD45neg_C26_2", y = "# counts", title = NULL) +
+    scale_y_continuous(limits = c(0, 15000))
+
+nCount_doublets_C26_CD45pos_CTL_1 <- VlnPlot(C26_CD45pos_CTL_1_norm, features = "nCount_RNA", cols = c("singlet" = "#4575B4", "doublet" = "#D73027")) + theme(legend.position = "none", axis.text.x = element_text(angle = 0, vjust = 0.5, hjust = 0.5)) +
+    labs(x = "C26_CD45pos_CTL_1", y = "# counts", title = NULL) +
+    scale_y_continuous(limits = c(0, 15000))
+
+nCount_doublets_C26_CD45pos_CTL_2 <- VlnPlot(C26_CD45pos_CTL_2_norm, features = "nCount_RNA", cols = c("singlet" = "#4575B4", "doublet" = "#D73027")) + theme(legend.position = "none", axis.text.x = element_text(angle = 0, vjust = 0.5, hjust = 0.5)) +
+    labs(x = "C26_CD45pos_CTL_2", y = "# counts", title = NULL) +
+    scale_y_continuous(limits = c(0, 15000))
+
+nCount_doublets_C26_CD45pos_C26_1 <- VlnPlot(C26_CD45pos_C26_1_norm, features = "nCount_RNA", cols = c("singlet" = "#4575B4", "doublet" = "#D73027")) + theme(legend.position = "none", axis.text.x = element_text(angle = 0, vjust = 0.5, hjust = 0.5)) +
+    labs(x = "C26_CD45pos_C26_1", y = "# counts", title = NULL) +
+    scale_y_continuous(limits = c(0, 15000))
+
+nCount_doublets_C26_CD45pos_C26_2 <- VlnPlot(C26_CD45pos_C26_2_norm, features = "nCount_RNA", cols = c("singlet" = "#4575B4", "doublet" = "#D73027")) + theme(legend.position = "none", axis.text.x = element_text(angle = 0, vjust = 0.5, hjust = 0.5)) +
+    labs(x = "C26_CD45pos_C26_2", y = "# counts", title = NULL) +
+    scale_y_continuous(limits = c(0, 15000))
+```
+
+```{r}
+nCount_doublets <- grid.arrange(nCount_doublets_C26_CD45neg_CTL_1, nCount_doublets_C26_CD45neg_C26_1, nCount_doublets_C26_CD45neg_C26_2,  nCount_doublets_C26_CD45pos_CTL_1, nCount_doublets_C26_CD45pos_CTL_2, nCount_doublets_C26_CD45pos_C26_1, nCount_doublets_C26_CD45pos_C26_2, nrow = 2, ncol = 4)
+```
+
+
+## Remove doublets
+
+```{r, include=FALSE}
+C26_CD45neg_CTL_1_singlets <- subset(C26_CD45neg_CTL_1_norm, subset = scDblFinder.class == "singlet")
+
+C26_CD45neg_C26_1_singlets <- subset(C26_CD45neg_C26_1_norm, subset = scDblFinder.class == "singlet")
+
+C26_CD45neg_C26_2_singlets <- subset(C26_CD45neg_C26_2_norm, subset = scDblFinder.class == "singlet")
+
+C26_CD45pos_CTL_1_singlets <- subset(C26_CD45pos_CTL_1_norm, subset = scDblFinder.class == "singlet")
+
+C26_CD45pos_CTL_2_singlets <- subset(C26_CD45pos_CTL_2_norm, subset = scDblFinder.class == "singlet")
+
+C26_CD45pos_C26_1_singlets <- subset(C26_CD45pos_C26_1_norm, subset = scDblFinder.class == "singlet")
+
+C26_CD45pos_C26_2_singlets <- subset(C26_CD45pos_C26_2_norm, subset = scDblFinder.class == "singlet")
+```
+
+
+
+# 5. Combine conditions
+
+## Remove unused objects from environment to allow processing
+
+```{r, include=FALSE}
+rm(C26_CD45neg_CTL_1, C26_CD45neg_CTL_1_so, C26_CD45neg_CTL_1_filtered, C26_CD45neg_CTL_1_norm, C26_CD45neg_CTL_1_dbl, C26_CD45neg_C26_1, C26_CD45neg_C26_1_so, C26_CD45neg_C26_1_filtered, C26_CD45neg_C26_1_norm, C26_CD45neg_C26_1_dbl, C26_CD45neg_C26_2, C26_CD45neg_C26_2_so, C26_CD45neg_C26_2_filtered, C26_CD45neg_C26_2_norm, C26_CD45neg_C26_2_dbl, C26_CD45pos_CTL_1, C26_CD45pos_CTL_1_so, C26_CD45pos_CTL_1_filtered, C26_CD45pos_CTL_1_norm, C26_CD45pos_CTL_1_dbl, C26_CD45pos_CTL_2, C26_CD45pos_CTL_2_so, C26_CD45pos_CTL_2_filtered, C26_CD45pos_CTL_2_norm, C26_CD45pos_CTL_2_dbl, C26_CD45pos_C26_1, C26_CD45pos_C26_1_so, C26_CD45pos_C26_1_filtered, C26_CD45pos_C26_1_norm, C26_CD45pos_C26_1_dbl, C26_CD45pos_C26_2, C26_CD45pos_C26_2_so, C26_CD45pos_C26_2_filtered, C26_CD45pos_C26_2_norm, C26_CD45pos_C26_2_dbl)
+```
+
+
+## Merge data
+
+```{r, include=FALSE}
+ordered_datasets_C26 <- c(C26_CD45neg_CTL_1_singlets,
+                          C26_CD45neg_C26_1_singlets,
+                          C26_CD45neg_C26_2_singlets,
+                          C26_CD45pos_CTL_1_singlets,
+                          C26_CD45pos_CTL_2_singlets,
+                          C26_CD45pos_C26_1_singlets,
+                          C26_CD45pos_C26_2_singlets)
+features_merge_C26 <- SelectIntegrationFeatures(object.list = ordered_datasets_C26)
+```
+
+
+## Find anchors
+
+```{r, include=FALSE}
+anchors_merge_C26 <- FindIntegrationAnchors(object.list = list(C26_CD45neg_CTL_1_singlets, C26_CD45neg_C26_1_singlets, C26_CD45neg_C26_2_singlets, C26_CD45pos_CTL_1_singlets, C26_CD45pos_CTL_2_singlets, C26_CD45pos_C26_1_singlets, C26_CD45pos_C26_2_singlets), anchor.features = features_merge_C26)
+```
+
+
+## Remove unused objects from environment
+
+```{r, include=FALSE}
+rm(C26_CD45neg_CTL_1_singlets, C26_CD45neg_C26_1_singlets, C26_CD45neg_C26_2_singlets, C26_CD45pos_CTL_1_singlets, C26_CD45pos_CTL_2_singlets, C26_CD45pos_C26_1_singlets, C26_CD45pos_C26_2_singlets)
+```
+
+
+## Combine data
+
+```{r, include=FALSE}
+C26_combined <- IntegrateData(anchorset = anchors_merge_C26)
+DefaultAssay(C26_combined) <- "integrated"
+```
+
+
+
+# 6. Re-process
+
+## Scale and run PCA
+
+```{r, include=FALSE}
+all_genes_C26 <- rownames(C26_combined)
+C26_combined <- ScaleData(C26_combined, features = all_genes_C26)
+C26_combined <- RunPCA(C26_combined, npcs = 50)
+```
+
+```{r}
+ElbowPlot(C26_combined, ndims = 50)
+```
+
+
+## Cluster
+
+```{r, include=FALSE}
+C26_combined <- C26_combined %>%
+  FindNeighbors(dims = 1:45) %>%
+  FindClusters(resolution = 0.3)
+
+Idents(C26_combined) <- "seurat_clusters"
+
+umap.method = 'umap-learn'
+metric = 'correlation'
+
+C26_combined <- RunUMAP(C26_combined, reduction = "pca", dims = 1:45)
+```
+
+
+
+# 7. Annotate cells
+
+```{r, include=FALSE}
+cluster_ids_C26 <- levels(C26_combined$seurat_clusters)
+```
+
+```{r, include=FALSE}
+cluster_labels_C26 <- c("FAPs", 
+                        "T cells/NK cells",
+                        "Endothelial cells",
+                        "FAPs",
+                        "B cells",
+                        "Neutrophils",
+                        "Monocytes/macrophages",
+                        "Myonuclei",
+                        "Tenocytes",
+                        "Epithelial cells",
+                        "vSMCs/pericytes",
+                        "MuSCs",
+                        "FAPs",
+                        "Mast cells",
+                        "T cells/NK cells",
+                        "Platelets",
+                        "Dendritic cells",
+                        "FAPs",
+                        "Schwann cells",
+                        "Neural/glial cells")
+```
+
+```{r, include=FALSE}
+cluster_to_cell_type_C26 <- setNames(cluster_labels_C26, cluster_ids_C26)
+
+C26_combined$seurat_clusters <- cluster_labels_C26[C26_combined$seurat_clusters]
+```
+
+
+## Order conditions
+
+```{r, include=FALSE}
+C26_combined$orig.ident <- factor(C26_combined$orig.ident, levels = c("C26_CD45neg_CTL_1", "C26_CD45neg_C26_1", "C26_CD45neg_C26_2", "C26_CD45pos_CTL_1", "C26_CD45pos_CTL_2", "C26_CD45pos_C26_1", "C26_CD45pos_C26_2"))
+```
+
+
+## Order clusters
+
+```{r, include=FALSE}
+C26_combined$seurat_clusters <- factor(C26_combined$seurat_clusters, levels = c("MuSCs", 
+    "Myonuclei",
+    "Endothelial cells",
+    "vSMCs/pericytes",
+    "FAPs",
+    "Tenocytes",
+    "Platelets",
+    "Mast cells",
+    "Dendritic cells",
+    "Monocytes/macrophages",
+    "Neutrophils",
+    "B cells",
+    "T cells/NK cells", 
+    "Neural/glial cells",
+    "Schwann cells",
+    "Epithelial cells"))
+```
+
+### DotPlot to show differentially expressed genes between clusters
+
+```{r}
+DefaultAssay(C26_combined) <- "RNA"
+Idents(C26_combined) <- "seurat_clusters"
+
+DotPlot(object = C26_combined, features = c("Pax7", "Acta1", "Cdh5",  "Myl9", "Pdgfrb", "Pdgfra", "Tnmd", "Mmrn1", "Cpa3", "Fscn1", "Ccr2", "Cd68", "S100a9", "Ms4a1", "Nkg7", "Il7r", "Ptn", "Mpz", "Krt15")) +
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1, face = "italic")) +
+  scale_color_gradientn(colors = c("red", "white", "blue")) +
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust = 1, face = "italic"))
+```
+
+
+## Find markers between clusters
+
+```{r, include=FALSE}
+DefaultAssay(C26_combined) <- "RNA"
+
+Idents(C26_combined) <- C26_combined$seurat_clusters
+
+C26_combined <- JoinLayers(C26_combined, what = "all")
+
+DEGs_C26_clusters <- FindAllMarkers(object = C26_combined, group.by = "seurat_clusters", test.use = "LR", only.pos = TRUE, min.pct = 0.25, logfc.threshold = 0.25)
+```
+
+```{r, include=FALSE}
+write.csv(DEGs_C26_clusters, file = "DEGs_C26_clusters.csv", row.names = FALSE)
+```
+
+
+## Remove Epithelial cells
+
+```{r, include=FALSE}
+C26_epithelial_removed <- "Epithelial cells"
+C26_combined <- subset(C26_combined, seurat_clusters != C26_epithelial_removed)
+```
+
+
+## Remove unused objects from environment
+
+```{r, include=FALSE}
+rm(anchors_merge_C26, ordered_datasets_C26, all_genes_C26_CD45neg_CTL_1, all_genes_C26_CD45neg_C26_1, all_genes_C26_CD45neg_C26_2, all_genes_C26_CD45pos_CTL_1, all_genes_C26_CD45pos_CTL_2, all_genes_C26_CD45pos_C26_1, all_genes_C26_CD45pos_C26_2)
+```
+
+
+
+# 8. Combine conditions
+
+```{r, include=FALSE}
+C26_combined$orig.ident <- ifelse(
+  C26_combined$orig.ident %in% c("C26_CD45neg_CTL_1", "C26_CD45pos_CTL_1", "C26_CD45pos_CTL_2"), "C26_CTL",
+  ifelse(C26_combined$orig.ident %in% c("C26_CD45neg_C26_1", "C26_CD45neg_C26_2", "C26_CD45pos_C26_1", "C26_CD45pos_C26_2"), "C26_C26", C26_combined$orig.ident)
+)
+```
+
+```{r, include=FALSE}
+C26_combined$orig.ident <- factor(C26_combined$orig.ident, levels = c("C26_CTL", "C26_C26"))
+```
+
+
+
+# 9. Visualize
+
+## UMAP clusters
+
+```{r}
+DimPlot(C26_combined, reduction = "umap", group.by = "seurat_clusters", repel = TRUE, pt.size = 1) +
+  ggplot2::labs(title = "", x = "UMAP1", y = "UMAP2") +
+  theme(axis.text.x = element_blank(), axis.text.y = element_blank(), axis.ticks = element_blank())
+```
+
+## UMAP conditions
+
+```{r}
+DimPlot(C26_combined, reduction = "umap", group.by = "orig.ident", repel = TRUE, pt.size = 1, cols = c("C26_CTL" = "#E87D72", "C26_C26" = "#BC7FF8")) +
+  ggplot2::labs(title = "", x = "UMAP1", y = "UMAP2") +
+  theme(axis.text.x = element_blank(), axis.text.y = element_blank(), axis.ticks = element_blank())
+```
+
+## Highlighted by condition
+
+```{r}
+DimPlot(
+  C26_combined,
+  reduction = "umap",
+  group.by = "seurat_clusters",
+  cells.highlight = list("C26_CTL" = WhichCells(C26_combined, expression = orig.ident == "C26_CTL")),
+  sizes.highlight = 1,
+  pt.size = 1,
+  cols.highlight = "#E87D72"
+) +
+  ggplot2::labs(title = "", x = "UMAP1", y = "UMAP2") +
+  theme(
+    axis.text.x = element_blank(),
+    axis.text.y = element_blank(),
+    axis.ticks = element_blank()) +
+  theme(legend.position = "none")
+
+DimPlot(
+  C26_combined,
+  reduction = "umap",
+  group.by = "seurat_clusters",
+  cells.highlight = list("C26_C26" = WhichCells(C26_combined, expression = orig.ident == "C26_C26")),
+  sizes.highlight = 1,
+  pt.size = 1,
+  cols.highlight = "#BC7FF8"
+) +
+  ggplot2::labs(title = "", x = "UMAP1", y = "UMAP2") +
+  theme(
+    axis.text.x = element_blank(),
+    axis.text.y = element_blank(),
+    axis.ticks = element_blank()) +
+  theme(legend.position = "none")
+```
+
+### Cell numbers per cluster for each time point
+
+```{r}
+C26_cell_counts_cluster <- table(C26_combined@meta.data$seurat_clusters, C26_combined@meta.data$orig.ident)
+```
+
+```{r, include=FALSE}
+write.csv(C26_cell_counts_cluster, file = "C26_cell_counts_cluster.csv", row.names = TRUE)
+```
+
+### Stacked barplot for cell counts per time point
+#### NOTE - this may not make sense to show for approximate cell proportions in the muscle because they split CD45+ and CD45- into different runs (so immune cells will be over represented).
+
+#### Extract cluster proportions
+```{r, include=FALSE}
+C26_cluster_proportions <- C26_combined@meta.data %>%
+  dplyr::select(orig.ident, seurat_clusters) %>%
+  group_by(orig.ident, seurat_clusters) %>%
+  summarize(count = n()) %>%
+  group_by(orig.ident) %>%
+  mutate(percentage = count / sum(count) * 100)
+```
+
+#### Create stacked barplot
+```{r}
+C26_cluster_proportions$orig.ident <- factor(
+  C26_cluster_proportions$orig.ident,
+  levels = c("C26_CTL", "C26_C26"),
+  labels = c("CTL", "C26"))
+
+ggplot(C26_cluster_proportions, aes(x = orig.ident, y = percentage, fill = seurat_clusters)) +
+  geom_bar(stat = "identity", width = 0.75, color = "black") +
+  scale_y_continuous(labels = scales::percent_format(scale = 1), expand = c(0, 0)) +
+  labs(title = "", x = "", y = "Proportion") +
+  theme(legend.position = "right",  panel.background = element_blank(), axis.line = element_line(color = "black"), axis.text.x = element_text(angle = 45, hjust = 1)) +
+  guides(fill = guide_legend(title = NULL))
+```
+
+
+
+# 10. Subset
+
+## Conditions
+
+```{r, include=FALSE}
+Idents(C26_combined) <- "orig.ident"
+
+C26_CTL <- subset(C26_combined, idents = "C26_CTL")
+C26_C26 <- subset(C26_combined, idents = "C26_C26")
+```
+
+
+## Clusters
+
+```{r, include=FALSE}
+Idents(C26_combined) <- "seurat_clusters"
+
+C26_MuSCs <- subset(C26_combined, idents = "MuSCs")
+C26_Myonuclei <- subset(C26_combined, idents = "Myonuclei")
+C26_Endothelial_cells <- subset(C26_combined, idents = "Endothelial cells")
+C26_vSMCs_pericytes <- subset(C26_combined, idents = "vSMCs/pericytes")
+C26_FAPs <- subset(C26_combined, idents = "FAPs")
+C26_Tenocytes <- subset(C26_combined, idents = "Tenocytes")
+C26_Platelets <- subset(C26_combined, idents = "Platelets")
+C26_Mast_cells <- subset(C26_combined, idents = "Mast cells")
+C26_Dendritic_cells <- subset(C26_combined, idents = "Dendritic cells")
+C26_Monocytes_macrophages <- subset(C26_combined, idents = "Monocytes/macrophages")
+C26_Neutrophils <- subset(C26_combined, idents = "Neutrophils")
+C26_B_cells <- subset(C26_combined, idents = "B cells")
+C26_T_NK_cells <- subset(C26_combined, idents = "T cells/NK cells")
+C26_Neural_glial_cells <- subset(C26_combined, idents = "Neural/glial cells")
+C26_Schwann_cells <- subset(C26_combined, idents = "Schwann cells")
+```
+
+
+
+## DEGs per condition for each cluster
+
+```{r, include=FALSE}
+Idents(C26_MuSCs) <- "orig.ident"
+Idents(C26_Myonuclei) <- "orig.ident"
+Idents(C26_Endothelial_cells) <- "orig.ident"
+Idents(C26_vSMCs_pericytes) <- "orig.ident"
+Idents(C26_FAPs) <- "orig.ident"
+Idents(C26_Tenocytes) <- "orig.ident"
+Idents(C26_Platelets) <- "orig.ident"
+Idents(C26_Mast_cells) <- "orig.ident"
+Idents(C26_Dendritic_cells) <- "orig.ident"
+Idents(C26_Monocytes_macrophages) <- "orig.ident"
+Idents(C26_Neutrophils) <- "orig.ident"
+Idents(C26_B_cells) <- "orig.ident"
+Idents(C26_T_NK_cells) <- "orig.ident"
+Idents(C26_Neural_glial_cells) <- "orig.ident"
+Idents(C26_Schwann_cells) <- "orig.ident"
+
+DEGs_C26_MuSCs <- FindAllMarkers(object = C26_MuSCs, group.by = "orig.ident", test.use = "LR", only.pos = TRUE, min.pct = 0.25, logfc.threshold = 0.25)
+DEGs_C26_Myonuclei <- FindAllMarkers(object = C26_Myonuclei, group.by = "orig.ident", test.use = "LR", only.pos = TRUE, min.pct = 0.25, logfc.threshold = 0.25)
+DEGs_C26_Endothelial_cells <- FindAllMarkers(object = C26_Endothelial_cells, group.by = "orig.ident", test.use = "LR", only.pos = TRUE, min.pct = 0.25, logfc.threshold = 0.25)
+DEGs_C26_vSMCs_pericytes <- FindAllMarkers(object = C26_vSMCs_pericytes, group.by = "orig.ident", test.use = "LR", only.pos = TRUE, min.pct = 0.25, logfc.threshold = 0.25)
+DEGs_C26_FAPs <- FindAllMarkers(object = C26_FAPs, group.by = "orig.ident", test.use = "LR", only.pos = TRUE, min.pct = 0.25, logfc.threshold = 0.25)
+DEGs_C26_Tenocytes <- FindAllMarkers(object = C26_Tenocytes, group.by = "orig.ident", test.use = "LR", only.pos = TRUE, min.pct = 0.25, logfc.threshold = 0.25)
+DEGs_C26_Platelets <- FindAllMarkers(object = C26_Platelets, group.by = "orig.ident", test.use = "LR", only.pos = TRUE, min.pct = 0.25, logfc.threshold = 0.25)
+DEGs_C26_Mast_cells <- FindAllMarkers(object = C26_Mast_cells, group.by = "orig.ident", test.use = "LR", only.pos = TRUE, min.pct = 0.25, logfc.threshold = 0.25)
+DEGs_C26_Dendritic_cells <- FindAllMarkers(object = C26_Dendritic_cells, group.by = "orig.ident", test.use = "LR", only.pos = TRUE, min.pct = 0.25, logfc.threshold = 0.25)
+DEGs_C26_Monocytes_macrophages <- FindAllMarkers(object = C26_Monocytes_macrophages, group.by = "orig.ident", test.use = "LR", only.pos = TRUE, min.pct = 0.25, logfc.threshold = 0.25)
+DEGs_C26_Neutrophils <- FindAllMarkers(object = C26_Neutrophils, group.by = "orig.ident", test.use = "LR", only.pos = TRUE, min.pct = 0.25, logfc.threshold = 0.25)
+DEGs_C26_B_cells <- FindAllMarkers(object = C26_B_cells, group.by = "orig.ident", test.use = "LR", only.pos = TRUE, min.pct = 0.25, logfc.threshold = 0.25)
+DEGs_C26_T_NK_cells <- FindAllMarkers(object = C26_T_NK_cells, group.by = "orig.ident", test.use = "LR", only.pos = TRUE, min.pct = 0.25, logfc.threshold = 0.25)
+DEGs_C26_Neural_glial_cells <- FindAllMarkers(object = C26_Neural_glial_cells, group.by = "orig.ident", test.use = "LR", only.pos = TRUE, min.pct = 0.25, logfc.threshold = 0.25)
+DEGs_C26_Schwann_cells <- FindAllMarkers(object = C26_Schwann_cells, group.by = "orig.ident", test.use = "LR", only.pos = TRUE, min.pct = 0.25, logfc.threshold = 0.25)
+```
+
+```{r, include=FALSE}
+write.csv(DEGs_C26_MuSCs, file = "DEGs_C26_MuSCs.csv", row.names = FALSE)
+
+write.csv(DEGs_C26_Myonuclei, file = "DEGs_C26_Myonuclei.csv", row.names = FALSE)
+
+write.csv(DEGs_C26_Endothelial_cells, file = "DEGs_C26_Endothelial_cells.csv", row.names = FALSE)
+
+write.csv(DEGs_C26_vSMCs_pericytes, file = "DEGs_C26_vSMCs_pericytes.csv", row.names = FALSE)
+
+write.csv(DEGs_C26_FAPs, file = "DEGs_C26_FAPs.csv", row.names = FALSE)
+
+write.csv(DEGs_C26_Tenocytes, file = "DEGs_C26_Tenocytes.csv", row.names = FALSE)
+
+write.csv(DEGs_C26_Platelets, file = "DEGs_C26_Platelets.csv", row.names = FALSE)
+
+write.csv(DEGs_C26_Mast_cells, file = "DEGs_C26_Mast_cells.csv", row.names = FALSE)
+
+write.csv(DEGs_C26_Dendritic_cells, file = "DEGs_C26_Dendritic_cells.csv", row.names = FALSE)
+
+write.csv(DEGs_C26_Monocytes_macrophages, file = "DEGs_C26_Monocytes_macrophages.csv", row.names = FALSE)
+
+write.csv(DEGs_C26_Neutrophils, file = "DEGs_C26_Neutrophils.csv", row.names = FALSE)
+
+write.csv(DEGs_C26_B_cells, file = "DEGs_C26_B_cells.csv", row.names = FALSE)
+
+write.csv(DEGs_C26_T_NK_cells, file = "DEGs_C26_T_cells_NK_cells.csv", row.names = FALSE)
+
+write.csv(DEGs_C26_Neural_glial_cells, file = "DEGs_C26_Neural_glial_cells.csv", row.names = FALSE)
+
+write.csv(DEGs_C26_Schwann_cells, file = "DEGs_C26_Schwann_cells.csv", row.names = FALSE)
+```
+
+
+### SAVE THE DATA FIRST
+# Heatmaps for top DEGs per condition for each cluster
+
+```{r, include=FALSE}
+DefaultAssay(C26_MuSCs) <- "RNA"
+DefaultAssay(C26_Myonuclei) <- "RNA"
+DefaultAssay(C26_Endothelial_cells) <- "RNA"
+DefaultAssay(C26_vSMCs_pericytes) <- "RNA"
+DefaultAssay(C26_FAPs) <- "RNA"
+DefaultAssay(C26_Tenocytes) <- "RNA"
+DefaultAssay(C26_Platelets) <- "RNA"
+DefaultAssay(C26_Mast_cells) <- "RNA"
+DefaultAssay(C26_Dendritic_cells) <- "RNA"
+DefaultAssay(C26_Monocytes_macrophages) <- "RNA"
+DefaultAssay(C26_Neutrophils) <- "RNA"
+DefaultAssay(C26_B_cells) <- "RNA"
+DefaultAssay(C26_T_NK_cells) <- "RNA"
+DefaultAssay(C26_Neural_glial_cells) <- "RNA"
+DefaultAssay(C26_Schwann_cells) <- "RNA"
+```
+
+
+## Scale data
+
+```{r, include=FALSE}
+C26_MuSCs <- ScaleData(C26_MuSCs, features = rownames(C26_MuSCs))
+C26_Myonuclei <- ScaleData(C26_Myonuclei, features = rownames(C26_Myonuclei))
+C26_Endothelial_cells <- ScaleData(C26_Endothelial_cells, features = rownames(C26_Endothelial_cells))
+C26_vSMCs_pericytes <- ScaleData(C26_vSMCs_pericytes, features = rownames(C26_vSMCs_pericytes))
+C26_FAPs <- ScaleData(C26_FAPs, features = rownames(C26_FAPs))
+C26_Platelets <- ScaleData(C26_Platelets, features = rownames(C26_Platelets))
+C26_Monocytes_macrophages <- ScaleData(C26_Monocytes_macrophages, features = rownames(C26_Monocytes_macrophages))
+C26_Neutrophils <- ScaleData(C26_Neutrophils, features = rownames(C26_Neutrophils))
+C26_B_cells <- ScaleData(C26_B_cells, features = rownames(C26_B_cells))
+C26_T_NK_cells <- ScaleData(C26_T_NK_cells, features = rownames(C26_T_NK_cells))
+C26_Neural_glial_cells <- ScaleData(C26_Neural_glial_cells, features = rownames(C26_Neural_glial_cells))
+C26_Schwann_cells <- ScaleData(C26_Schwann_cells, features = rownames(C26_Schwann_cells))
+```
+
+
+## Top 5 DE genes by condition
+### NOTE - "cluster" is actually "orig.ident" because that is what I specified with FindAllMarkers
+
+```{r, include=FALSE}
+top5_C26_MuSCs <- DEGs_C26_MuSCs %>%
+  group_by(cluster) %>% 
+  top_n(n = 5, wt = avg_log2FC)
+top5_C26_Myonuclei <- DEGs_C26_Myonuclei %>%
+  group_by(cluster) %>% 
+  top_n(n = 5, wt = avg_log2FC)
+top5_C26_Endothelial_cells <- DEGs_C26_Endothelial_cells %>%
+  group_by(cluster) %>% 
+  top_n(n = 5, wt = avg_log2FC)
+top5_C26_vSMCs_pericytes <- DEGs_C26_vSMCs_pericytes %>%
+  group_by(cluster) %>% 
+  top_n(n = 5, wt = avg_log2FC)
+top5_C26_FAPs <- DEGs_C26_FAPs %>%
+  group_by(cluster) %>% 
+  top_n(n = 5, wt = avg_log2FC)
+top5_C26_Tenocytes <- DEGs_C26_Tenocytes %>%
+  group_by(cluster) %>% 
+  top_n(n = 5, wt = avg_log2FC)
+top5_C26_Platelets <- DEGs_C26_Platelets %>%
+  group_by(cluster) %>% 
+  top_n(n = 5, wt = avg_log2FC)
+top5_C26_Mast_cells <- DEGs_C26_Mast_cells %>%
+  group_by(cluster) %>% 
+  top_n(n = 5, wt = avg_log2FC)
+top5_C26_Dendritic_cells <- DEGs_C26_Dendritic_cells %>%
+  group_by(cluster) %>% 
+  top_n(n = 5, wt = avg_log2FC)
+top5_C26_Monocytes_macrophages <- DEGs_C26_Monocytes_macrophages %>%
+  group_by(cluster) %>% 
+  top_n(n = 5, wt = avg_log2FC)
+top5_C26_Neutrophils <- DEGs_C26_Neutrophils %>%
+  group_by(cluster) %>% 
+  top_n(n = 5, wt = avg_log2FC)
+top5_C26_B_cells <- DEGs_C26_B_cells %>%
+  group_by(cluster) %>% 
+  top_n(n = 5, wt = avg_log2FC)
+top5_C26_T_NK_cells <- DEGs_C26_T_NK_cells %>%
+  group_by(cluster) %>% 
+  top_n(n = 5, wt = avg_log2FC)
+top5_C26_Neural_glial_cells <- DEGs_C26_Neural_glial_cells %>%
+  group_by(cluster) %>% 
+  top_n(n = 5, wt = avg_log2FC)
+top5_C26_Schwann_cells <- DEGs_C26_Schwann_cells %>%
+  group_by(cluster) %>% 
+  top_n(n = 5, wt = avg_log2FC)
+```
+
+
+## Run Heatmap
+
+```{r}
+DoHeatmap(C26_MuSCs, features = top5_C26_MuSCs$gene, draw.lines = TRUE, angle = 90, size = 3, raster = FALSE, label = FALSE, group.colors = c("C26_CTL" = "#E87D72", "C26_C26" = "#BC7FF8")) + 
+  scale_fill_gradientn(colors = c("#D73027", "#FEE090", "#FFFFFF", "#91BFDB", "#4575B4"), limits = c(-2.5, 2.5)) +
+  theme(legend.position = "right", legend.key.size = unit(0.5, "lines"))
+
+DoHeatmap(C26_Myonuclei, features = top5_C26_Myonuclei$gene, draw.lines = TRUE, angle = 90, size = 3, raster = FALSE, label = FALSE, group.colors = c("C26_CTL" = "#E87D72", "C26_C26" = "#BC7FF8")) +
+  scale_fill_gradientn(colors = c("#D73027", "#FEE090", "#FFFFFF", "#91BFDB", "#4575B4"), limits = c(-2.5, 2.5)) +
+  theme(legend.position = "right", legend.key.size = unit(0.5, "lines"))
+
+DoHeatmap(C26_Endothelial_cells, features = top5_C26_Endothelial_cells$gene, draw.lines = TRUE, angle = 90, size = 3, raster = FALSE, label = FALSE, group.colors = c("C26_CTL" = "#E87D72", "C26_C26" = "#BC7FF8")) +
+  scale_fill_gradientn(colors = c("#D73027", "#FEE090", "#FFFFFF", "#91BFDB", "#4575B4"), limits = c(-2.5, 2.5)) +
+  theme(legend.position = "right", legend.key.size = unit(0.5, "lines"))
+
+DoHeatmap(C26_vSMCs_pericytes, features = top5_C26_vSMCs_pericytes$gene, draw.lines = TRUE, angle = 90, size = 3, raster = FALSE, label = FALSE, group.colors = c("C26_CTL" = "#E87D72", "C26_C26" = "#BC7FF8")) +
+  scale_fill_gradientn(colors = c("#D73027", "#FEE090", "#FFFFFF", "#91BFDB", "#4575B4"), limits = c(-2.5, 2.5)) +
+  theme(legend.position = "right", legend.key.size = unit(0.5, "lines"))
+
+DoHeatmap(C26_FAPs, features = top5_C26_FAPs$gene, draw.lines = TRUE, angle = 90, size = 3, raster = FALSE, label = FALSE, group.colors = c("C26_CTL" = "#E87D72", "C26_C26" = "#BC7FF8")) +
+  scale_fill_gradientn(colors = c("#D73027", "#FEE090", "#FFFFFF", "#91BFDB", "#4575B4"), limits = c(-2.5, 2.5)) +
+  theme(legend.position = "right", legend.key.size = unit(0.5, "lines"))
+
+DoHeatmap(C26_Platelets, features = top5_C26_Platelets$gene, draw.lines = TRUE, angle = 90, size = 3, raster = FALSE, label = FALSE, group.colors = c("C26_CTL" = "#E87D72", "C26_C26" = "#BC7FF8")) +
+  scale_fill_gradientn(colors = c("#D73027", "#FEE090", "#FFFFFF", "#91BFDB", "#4575B4"), limits = c(-2.5, 2.5)) +
+  theme(legend.position = "right", legend.key.size = unit(0.5, "lines"))
+
+DoHeatmap(C26_Mast_cells, features = top5_C26_Mast_cells$gene, draw.lines = TRUE, angle = 90, size = 3, raster = FALSE, label = FALSE, group.colors = c("C26_CTL" = "#E87D72", "C26_C26" = "#BC7FF8")) +
+  scale_fill_gradientn(colors = c("#D73027", "#FEE090", "#FFFFFF", "#91BFDB", "#4575B4"), limits = c(-2.5, 2.5)) +
+  theme(legend.position = "right", legend.key.size = unit(0.5, "lines"))
+
+DoHeatmap(C26_Dendritic_cells, features = top5_C26_Dendritic_cells$gene, draw.lines = TRUE, angle = 90, size = 3, raster = FALSE, label = FALSE, group.colors = c("C26_CTL" = "#E87D72", "C26_C26" = "#BC7FF8")) +
+  scale_fill_gradientn(colors = c("#D73027", "#FEE090", "#FFFFFF", "#91BFDB", "#4575B4"), limits = c(-2.5, 2.5)) +
+  theme(legend.position = "right", legend.key.size = unit(0.5, "lines"))
+
+DoHeatmap(C26_Monocytes_macrophages, features = top5_C26_Monocytes_macrophages$gene, draw.lines = TRUE, angle = 90, size = 3, raster = FALSE, label = FALSE, group.colors = c("C26_CTL" = "#E87D72", "C26_C26" = "#BC7FF8")) +
+  scale_fill_gradientn(colors = c("#D73027", "#FEE090", "#FFFFFF", "#91BFDB", "#4575B4"), limits = c(-2.5, 2.5)) +
+  theme(legend.position = "right", legend.key.size = unit(0.5, "lines"))
+
+DoHeatmap(C26_Neutrophils, features = top5_C26_Neutrophils$gene, draw.lines = TRUE, angle = 90, size = 3, raster = FALSE, label = FALSE, group.colors = c("C26_CTL" = "#E87D72", "C26_C26" = "#BC7FF8")) +
+  scale_fill_gradientn(colors = c("#D73027", "#FEE090", "#FFFFFF", "#91BFDB", "#4575B4"), limits = c(-2.5, 2.5)) +
+  theme(legend.position = "right", legend.key.size = unit(0.5, "lines"))
+
+DoHeatmap(C26_B_cells, features = top5_C26_B_cells$gene, draw.lines = TRUE, angle = 90, size = 3, raster = FALSE, label = FALSE, group.colors = c("C26_CTL" = "#E87D72", "C26_C26" = "#BC7FF8")) +
+  scale_fill_gradientn(colors = c("#D73027", "#FEE090", "#FFFFFF", "#91BFDB", "#4575B4"), limits = c(-2.5, 2.5)) +
+  theme(legend.position = "right", legend.key.size = unit(0.5, "lines"))
+
+DoHeatmap(C26_T_NK_cells, features = top5_C26_T_NK_cells$gene, draw.lines = TRUE, angle = 90, size = 3, raster = FALSE, label = FALSE, group.colors = c("C26_CTL" = "#E87D72", "C26_C26" = "#BC7FF8")) +
+  scale_fill_gradientn(colors = c("#D73027", "#FEE090", "#FFFFFF", "#91BFDB", "#4575B4"), limits = c(-2.5, 2.5)) +
+  theme(legend.position = "right", legend.key.size = unit(0.5, "lines"))
+
+DoHeatmap(C26_Neural_glial_cells, features = top5_C26_Neural_glial_cells$gene, draw.lines = TRUE, angle = 90, size = 3, raster = FALSE, label = FALSE, group.colors = c("C26_CTL" = "#E87D72", "C26_C26" = "#BC7FF8")) +
+  scale_fill_gradientn(colors = c("#D73027", "#FEE090", "#FFFFFF", "#91BFDB", "#4575B4"), limits = c(-2.5, 2.5)) +
+  theme(legend.position = "right", legend.key.size = unit(0.5, "lines"))
+
+DoHeatmap(C26_Schwann_cells, features = top5_C26_Schwann_cells$gene, draw.lines = TRUE, angle = 90, size = 3, raster = FALSE, label = FALSE, group.colors = c("C26_CTL" = "#E87D72", "C26_C26" = "#BC7FF8")) +
+  scale_fill_gradientn(colors = c("#D73027", "#FEE090", "#FFFFFF", "#91BFDB", "#4575B4"), limits = c(-2.5, 2.5)) +
+  theme(legend.position = "right", legend.key.size = unit(0.5, "lines"))
+```

@@ -1,0 +1,488 @@
+---
+title: "LLC_timecourse_Immune_cells"
+author: "Alex Brown"
+date: "2025-07-16"
+output: html_document
+---
+
+
+
+# Load packages
+
+```{r, include=FALSE}
+library(Seurat)
+library(SeuratWrappers)
+library(tidyverse)
+library(Biobase)
+library(BiocGenerics)
+library(ggplot2)
+library(cowplot)
+library(grid)
+library(gridExtra)
+library(RColorBrewer)
+library(ggbeeswarm)
+library(pheatmap)
+library(monocle3)
+library(presto)
+library(clusterProfiler)
+library(AnnotationDbi)
+library(org.Mm.eg.db)
+```
+
+
+
+
+# Load data
+
+```{r, include=FALSE}
+load("C:/Users/nwb_l/Documents/r_projects/LLC_timecourse/LLC_timecourse_processed.RData")
+```
+
+### Already subsetted cells "LLC_Platelets", "LLC_Monocytes_macrophages", "LLC_Neutrophils", "LLC_B_cells", "LLC_T_NK_cells"
+
+
+## Create an "Immune_cells" object
+
+```{r, include=FALSE}
+immune_cells <- subset(LLC_combined, idents = c("Platelets",
+                                                   "Monocytes/macrophages",
+                                                    "Neutrophils",
+                                                    "B cells",
+                                                    "T cells/NK cells"))
+```
+
+
+## Remove unnecessary objects to improve processing
+
+```{r, include=FALSE}
+rm(LLC_Endothelial_cells, LLC_FAPs, LLC_MuSCs, LLC_Myonuclei, LLC_Neural_glial_cells, LLC_Schwann_cells, LLC_vSMCs, LLC_Pericytes, Sham, two_weeks, two.five_weeks, three.five_weeks, DEGs_LLC_Endothelial_cells, DEGs_LLC_FAPs, DEGs_LLC_MuSCs, DEGs_LLC_Neural_glial_cells, DEGs_LLC_Schwann_cells, DEGs_LLC_vSMCs, DEGs_LLC_Pericytes, DEGs_LLC_clusters, ordered_datasets, cluster_proportions)
+```
+
+
+## UMAP plot highlighting Immune cells
+
+```{r}
+DimPlot(
+  LLC_combined,
+  reduction = "umap",
+  group.by = "seurat_clusters",
+  cells.highlight = list("Platelets" = WhichCells(LLC_combined, expression = seurat_clusters == "Platelets")),
+  sizes.highlight = 1,
+  pt.size = 1,
+  cols.highlight = "#57BEAB" 
+) +
+  ggplot2::labs(title = "", x = "UMAP1", y = "UMAP2") +
+  theme(
+    axis.text.x = element_blank(),
+    axis.text.y = element_blank(),
+    axis.ticks = element_blank()) +
+  theme(legend.position = "none")
+
+DimPlot(
+  LLC_combined,
+  reduction = "umap",
+  group.by = "seurat_clusters",
+  cells.highlight = list("Monocytes/macrophages" = WhichCells(LLC_combined, expression = seurat_clusters == "Monocytes/macrophages")),
+  sizes.highlight = 1,
+  pt.size = 1,
+  cols.highlight = "#54B8D6" 
+) +
+  ggplot2::labs(title = "", x = "UMAP1", y = "UMAP2") +
+  theme(
+    axis.text.x = element_blank(),
+    axis.text.y = element_blank(),
+    axis.ticks = element_blank()) +
+  theme(legend.position = "none")
+
+DimPlot(
+  LLC_combined,
+  reduction = "umap",
+  group.by = "seurat_clusters",
+  cells.highlight = list("Neutrophils" = WhichCells(LLC_combined, expression = seurat_clusters == "Neutrophils")),
+  sizes.highlight = 1,
+  pt.size = 1,
+  cols.highlight = "#4CA9F5" 
+) +
+  ggplot2::labs(title = "", x = "UMAP1", y = "UMAP2") +
+  theme(
+    axis.text.x = element_blank(),
+    axis.text.y = element_blank(),
+    axis.ticks = element_blank()) +
+  theme(legend.position = "none")
+
+DimPlot(
+  LLC_combined,
+  reduction = "umap",
+  group.by = "seurat_clusters",
+  cells.highlight = list("B cells" = WhichCells(LLC_combined, expression = seurat_clusters == "B cells")),
+  sizes.highlight = 1,
+  pt.size = 1,
+  cols.highlight = "#8C93F8" 
+) +
+  ggplot2::labs(title = "", x = "UMAP1", y = "UMAP2") +
+  theme(
+    axis.text.x = element_blank(),
+    axis.text.y = element_blank(),
+    axis.ticks = element_blank()) +
+  theme(legend.position = "none")
+
+DimPlot(
+  LLC_combined,
+  reduction = "umap",
+  group.by = "seurat_clusters",
+  cells.highlight = list("T cells/NK cells" = WhichCells(LLC_combined, expression = seurat_clusters == "T cells/NK cells")),
+  sizes.highlight = 1,
+  pt.size = 1,
+  cols.highlight = "#C87AF7" 
+) +
+  ggplot2::labs(title = "", x = "UMAP1", y = "UMAP2") +
+  theme(
+    axis.text.x = element_blank(),
+    axis.text.y = element_blank(),
+    axis.ticks = element_blank()) +
+  theme(legend.position = "none")
+```
+
+```{r}
+DimPlot(
+  LLC_combined,
+  reduction = "umap",
+  group.by = "seurat_clusters",
+  cells.highlight = list(
+    "Platelets" = WhichCells(LLC_combined, expression = seurat_clusters == "Platelets"),
+    "Monocytes/macrophages" = WhichCells(LLC_combined, expression = seurat_clusters == "Monocytes/macrophages"),
+    "Neutrophils" = WhichCells(LLC_combined, expression = seurat_clusters == "Neutrophils"),
+    "B cells" = WhichCells(LLC_combined, expression = seurat_clusters == "B cells"),
+    "T cells/NK cells" = WhichCells(LLC_combined, expression = seurat_clusters == "T cells/NK cells")
+  ),
+  sizes.highlight = 1,
+  pt.size = 1,
+  cols.highlight = c(
+    "Platelets" = "#57BEAB",
+    "Monocytes/macrophages" = "#54B8D6",
+    "Neutrophils" = "#4CA9F5",
+    "B cells" = "#8C93F8",
+    "T cells/NK cells" = "#C87AF7"
+  )
+) +
+  ggplot2::labs(title = "", x = "UMAP1", y = "UMAP2") +
+  theme(
+    axis.text.x = element_blank(),
+    axis.text.y = element_blank(),
+    axis.ticks = element_blank(),
+    legend.position = "none"
+  )
+```
+
+
+
+# Cell numbers per cluster for each timepoint
+
+```{r, include=FALSE}
+cell_counts_immune_cells <- table(immune_cells@meta.data$seurat_clusters, immune_cells@meta.data$orig.ident)
+```
+
+```{r, include=FALSE}
+write.csv(cell_counts_immune_cells, file = "cell_counts_immune_cells.csv", row.names = TRUE)
+```
+
+
+## Make stacked bar chart to represent cell proportions
+
+### Extract the proportions from the Seurat object
+
+```{r, include=FALSE}
+immune_proportions <- immune_cells@meta.data %>%
+  dplyr::select(orig.ident, seurat_clusters) %>%
+  group_by(orig.ident, seurat_clusters) %>%
+  summarize(count = n()) %>%
+  group_by(orig.ident) %>%
+  mutate(percentage = count / sum(count) * 100)
+```
+
+
+## Create stacked bar plot relative to immune cells
+
+```{r}
+immune_proportions$orig.ident <- factor(
+  immune_proportions$orig.ident,
+  levels = c("Sham", "2_weeks", "2.5_weeks", "3.5_weeks"),
+  labels = c("Sham", "2 weeks", "2.5 weeks", "3.5 weeks"))
+
+ggplot(immune_proportions, aes(x = orig.ident, y = percentage, fill = seurat_clusters)) +
+  geom_bar(stat = "identity", width = 0.75, color = "black") +
+  scale_y_continuous(labels = scales::percent_format(scale = 1), expand = c(0, 0)) +
+  scale_fill_manual(values = c(
+    "Platelets" = "#57BEAB",
+    "Monocytes/macrophages" = "#54B8D6",
+    "Neutrophils" = "#4DA9F5",
+    "B cells" = "#8C93F8",
+    "T cells/NK cells" = "#C87AF7")) +
+  labs(title = "", x = "", y = "Proportion") +
+  theme(
+    legend.position = "right",
+    panel.background = element_blank(),
+    axis.line = element_line(color = "black"),
+    axis.text.x = element_text(angle = 45, hjust = 1)
+  ) +
+  guides(fill = guide_legend(title = NULL))
+```
+
+
+## Create stacked bar plot relative to all cells
+
+```{r, include=FALSE}
+immune_relative_proportions <- immune_cells@meta.data %>%
+  dplyr::select(orig.ident, seurat_clusters) %>%
+  group_by(orig.ident, seurat_clusters) %>%
+  summarize(count = n()) %>%
+  group_by(orig.ident) %>%
+  mutate(percentage = count / c(7793, 8565, 6824, 6124) * 100)
+```
+
+```{r}
+immune_relative_proportions$orig.ident <- factor(
+  immune_relative_proportions$orig.ident,
+  levels = c("Sham", "2_weeks", "2.5_weeks", "3.5_weeks"),
+  labels = c("Sham", "2 weeks", "2.5 weeks", "3.5 weeks"))
+
+ggplot(immune_relative_proportions, aes(x = orig.ident, y = percentage, fill = seurat_clusters)) +
+  geom_bar(stat = "identity", width = 0.75, color = "black") +
+  scale_y_continuous(labels = scales::percent_format(scale = 1), expand = c(0, 0)) +
+  scale_fill_manual(values = c(
+    "Platelets" = "#57BEAB",
+    "Monocytes/macrophages" = "#54B8D6",
+    "Neutrophils" = "#4DA9F5",
+    "B cells" = "#8C93F8",
+    "T cells/NK cells" = "#C87AF7")) +
+  labs(title = "", x = "", y = "Proportion") +
+  theme(
+    legend.position = "right",
+    panel.background = element_blank(),
+    axis.line = element_line(color = "black"),
+    axis.text.x = element_text(angle = 45, hjust = 1)
+  ) +
+  guides(fill = guide_legend(title = NULL))
+```
+
+
+
+# GO terms
+
+## DEGs for each cluster at each timepoint relative to sham
+
+```{r, include=FALSE}
+Idents(immune_cells) <- "orig.ident"
+immune_cells_2vSham <- FindMarkers(immune_cells, ident.1 = "2_weeks", ident.2 = "Sham", logfc.threshold = 0, min.pct = 0.10, verbose = FALSE)
+immune_cells_2.5vSham <- FindMarkers(immune_cells, ident.1 = "2.5_weeks", ident.2 = "Sham", logfc.threshold = 0, min.pct = 0.10, verbose = FALSE)
+immune_cells_3.5vSham <- FindMarkers(immune_cells, ident.1 = "3.5_weeks", ident.2 = "Sham", logfc.threshold = 0, min.pct = 0.10, verbose = FALSE)
+```
+
+
+## Subset DEG for p_val_adj < 0.05 and 0.2 < log2FC < -0.2
+
+```{r, include=FALSE}
+immune_cells_2vSham_up <- na.omit(immune_cells_2vSham)
+immune_cells_2vSham_up <- subset(immune_cells_2vSham, p_val_adj < 0.05 & avg_log2FC > 0.2)
+
+immune_cells_2.5vSham_up <- na.omit(immune_cells_2.5vSham)
+immune_cells_2.5vSham_up <- subset(immune_cells_2.5vSham, p_val_adj < 0.05 & avg_log2FC > 0.2)
+
+immune_cells_3.5vSham_up <- na.omit(immune_cells_3.5vSham)
+immune_cells_3.5vSham_up <- subset(immune_cells_3.5vSham, p_val_adj < 0.05 & avg_log2FC > 0.2)
+
+
+immune_cells_2vSham_down <- na.omit(immune_cells_2vSham)
+immune_cells_2vSham_down <- subset(immune_cells_2vSham, p_val_adj < 0.05 & avg_log2FC < -0.2)
+
+immune_cells_2.5vSham_down <- na.omit(immune_cells_2.5vSham)
+immune_cells_2.5vSham_down <- subset(immune_cells_2.5vSham, p_val_adj < 0.05 & avg_log2FC < -0.2)
+
+immune_cells_3.5vSham_down <- na.omit(immune_cells_3.5vSham)
+immune_cells_3.5vSham_down <- subset(immune_cells_3.5vSham, p_val_adj < 0.05 & avg_log2FC < -0.2)
+```
+
+
+## Take rownames of specified genes in each condition
+
+```{r, include=FALSE}
+immune_cells_2vSham_upgenes <- rownames(immune_cells_2vSham_up)
+
+immune_cells_2.5vSham_upgenes <- rownames(immune_cells_2.5vSham_up)
+
+immune_cells_3.5vSham_upgenes <- rownames(immune_cells_3.5vSham_up)
+
+immune_cells_2vSham_downgenes <- rownames(immune_cells_2vSham_down)
+
+immune_cells_2.5vSham_downgenes <- rownames(immune_cells_2.5vSham_down)
+
+immune_cells_3.5vSham_downgenes <- rownames(immune_cells_3.5vSham_down)
+```
+
+
+## Run GO analyses
+
+```{r, include=FALSE}
+immune_cells_2vSham_upgo <- enrichGO(gene = immune_cells_2vSham_upgenes, OrgDb = "org.Mm.eg.db", keyType = "SYMBOL", ont = "BP")
+
+immune_cells_2vSham_downgo <- enrichGO(gene = immune_cells_2vSham_downgenes, OrgDb = "org.Mm.eg.db", keyType = "SYMBOL", ont = "BP")
+
+immune_cells_2.5vSham_upgo <- enrichGO(gene = immune_cells_2.5vSham_upgenes, OrgDb = "org.Mm.eg.db", keyType = "SYMBOL", ont = "BP")
+
+immune_cells_2.5vSham_downgo <- enrichGO(gene = immune_cells_2.5vSham_downgenes, OrgDb = "org.Mm.eg.db", keyType = "SYMBOL", ont = "BP")
+
+immune_cells_3.5vSham_upgo <- enrichGO(gene = immune_cells_3.5vSham_upgenes, OrgDb = "org.Mm.eg.db", keyType = "SYMBOL", ont = "BP")
+
+immune_cells_3.5vSham_downgo <- enrichGO(gene = immune_cells_3.5vSham_downgenes, OrgDb = "org.Mm.eg.db", keyType = "SYMBOL", ont = "BP")
+```
+
+
+## Plot the top 10 GO terms
+
+```{r}
+ggplot(data = immune_cells_2vSham_upgo[1:10, ], 
+       aes(x = Count, y = reorder(Description, Count), fill = p.adjust)) +
+  geom_col() +
+  labs(title = "IMMUNE CELLS UP 2 weeks", y = "") +
+  theme(panel.background = element_blank(),
+        plot.background = element_rect(fill = "transparent", color = NA),
+        axis.line = element_line(color = "black")) +
+  scale_fill_gradient(low = "#4575B4", high = "#91BFDB")
+
+ggplot(data = immune_cells_2vSham_downgo[1:10, ], 
+       aes(x = Count, y = reorder(Description, Count), fill = p.adjust)) +
+  geom_col() +
+  labs(title = "IMMUNE CELLS DOWN 2 weeks", y = "") +
+  theme(panel.background = element_blank(),
+        plot.background = element_rect(fill = "transparent", color = NA),
+        axis.line = element_line(color = "black")) +
+  scale_fill_gradient(low = "#D73027", high = "#FEE090")
+
+
+ggplot(data = immune_cells_2.5vSham_upgo[1:10, ], 
+       aes(x = Count, y = reorder(Description, Count), fill = p.adjust)) +
+  geom_col() +
+  labs(title = "IMMUNE CELLS UP 2.5 weeks", y = "") +
+  theme(panel.background = element_blank(),
+        plot.background = element_rect(fill = "transparent", color = NA),
+        axis.line = element_line(color = "black")) +
+  scale_fill_gradient(low = "#4575B4", high = "#91BFDB")
+
+ggplot(data = immune_cells_2.5vSham_downgo[1:10, ], 
+       aes(x = Count, y = reorder(Description, Count), fill = p.adjust)) +
+  geom_col() +
+  labs(title = "IMMUNE CELLS DOWN 2.5 weeks", y = "") +
+  theme(panel.background = element_blank(),
+        plot.background = element_rect(fill = "transparent", color = NA),
+        axis.line = element_line(color = "black")) +
+  scale_fill_gradient(low = "#D73027", high = "#FEE090")
+
+
+ggplot(data = immune_cells_3.5vSham_upgo[1:10, ], 
+       aes(x = Count, y = reorder(Description, Count), fill = p.adjust)) +
+  geom_col() +
+  labs(title = "IMMUNE CELLS UP 3.5 weeks", y = "") +
+  theme(panel.background = element_blank(),
+        plot.background = element_rect(fill = "transparent", color = NA),
+        axis.line = element_line(color = "black")) +
+  scale_fill_gradient(low = "#4575B4", high = "#91BFDB")
+
+ggplot(data = immune_cells_3.5vSham_downgo[1:10, ], 
+       aes(x = Count, y = reorder(Description, Count), fill = p.adjust)) +
+  geom_col() +
+  labs(title = "IMMUNE CELLS DOWN 3.5 weeks", y = "") +
+  theme(panel.background = element_blank(),
+        plot.background = element_rect(fill = "transparent", color = NA),
+        axis.line = element_line(color = "black")) +
+  scale_fill_gradient(low = "#D73027", high = "#FEE090")
+```
+
+
+
+# Heatmap
+
+## By cluster
+
+```{r, include=FALSE}
+DefaultAssay(immune_cells) <- "RNA"
+Idents(immune_cells) <- "seurat_clusters"
+
+DEGs_immune_cells_cluster <- FindAllMarkers(object = immune_cells, group.by = "seurat_clusters", test.use = "LR", only.pos = TRUE, min.pct = 0.25, logfc.threshold = 0.25)
+
+immune_cells <- ScaleData(immune_cells, features = rownames(immune_cells))
+
+top5_immune_cells_cluster <- DEGs_immune_cells_cluster %>%
+  group_by(cluster) %>% 
+  top_n(n = 5, wt = avg_log2FC)
+
+immune_cluster_colors <- c(
+  "Platelets" = "#57BEAB",
+  "Monocytes / macrophages" = "#54B8D6",
+  "Neutrophils" = "#4DA9F5",
+  "B cells" = "#8C93F8",
+  "T cells / NK cells" = "#C87AF7")
+```
+
+```{r}
+DoHeatmap(
+  immune_cells,
+  features = top5_immune_cells_cluster$gene,
+  draw.lines = TRUE,
+  angle = 90,
+  size = 3,
+  raster = FALSE,
+  label = FALSE,
+  group.colors = immune_cluster_colors
+) +
+  scale_fill_gradientn(
+    colors = c("#D73027", "#FEE090", "#FFFFFF", "#91BFDB", "#4575B4"),
+    limits = c(-2.5, 2.5)
+  ) +
+  theme(
+    legend.position = "right",
+    legend.key.size = unit(0.5, "lines")
+  )
+```
+
+
+## By condition
+
+```{r, include=FALSE}
+DefaultAssay(immune_cells) <- "RNA"
+Idents(immune_cells) <- "orig.ident"
+
+DEGs_immune_cells_condition <- FindAllMarkers(object = immune_cells, group.by = "orig.ident", test.use = "LR", only.pos = TRUE, min.pct = 0.25, logfc.threshold = 0.25)
+
+immune_cells <- ScaleData(immune_cells, features = rownames(immune_cells))
+
+top5_immune_cells_condition <- DEGs_immune_cells_condition %>%
+  group_by(cluster) %>% 
+  top_n(n = 5, wt = avg_log2FC)
+
+immune_cluster_colors <- c(
+  "Sham" = "#E87D72",
+  "2_weeks" = "#87AD34",
+  "2.5_weeks" = "#56BCC2",
+  "3.5_weeks" = "#BC7FF8")
+```
+
+```{r}
+DoHeatmap(
+  immune_cells,
+  features = top5_immune_cells_condition$gene,
+  draw.lines = TRUE,
+  angle = 90,
+  size = 3,
+  raster = FALSE,
+  label = FALSE,
+  group.colors = immune_cluster_colors
+) +
+  scale_fill_gradientn(
+    colors = c("#D73027", "#FEE090", "#FFFFFF", "#91BFDB", "#4575B4"),
+    limits = c(-2.5, 2.5)
+  ) +
+  theme(
+    legend.position = "right",
+    legend.key.size = unit(0.5, "lines")
+  )
+```
