@@ -255,7 +255,7 @@ sham_data_seurat_norm <- sham_data_seurat_norm %>%
 two_weeks_data_seurat_norm <- two_weeks_data_seurat_filtered %>%
   NormalizeData(normalization.method = "LogNormalize", scale.factor = 10000) %>%
   FindVariableFeatures(selection.method = "vst", nfeatures = 2000) %>%
-  ScaleData(features = all_genes_sham) %>%
+  ScaleData(features = all_genes_two_weeks) %>%
   RunPCA(npcs = 50)
 ```
 
@@ -277,7 +277,7 @@ two_weeks_data_seurat_norm <- two_weeks_data_seurat_norm %>%
 two.five_weeks_data_seurat_norm <- two.five_weeks_data_seurat_filtered %>%
   NormalizeData(normalization.method = "LogNormalize", scale.factor = 10000) %>%
   FindVariableFeatures(selection.method = "vst", nfeatures = 2000) %>%
-  ScaleData(features = all_genes_sham) %>%
+  ScaleData(features = all_genes_two.five_weeks) %>%
   RunPCA(npcs = 50)
 ```
 
@@ -299,7 +299,7 @@ two.five_weeks_data_seurat_norm <- two.five_weeks_data_seurat_norm %>%
 three.five_weeks_data_seurat_norm <- three.five_weeks_data_seurat_filtered %>%
   NormalizeData(normalization.method = "LogNormalize", scale.factor = 10000) %>%
   FindVariableFeatures(selection.method = "vst", nfeatures = 2000) %>%
-  ScaleData(features = all_genes_sham) %>%
+  ScaleData(features = all_genes_three.five_weeks) %>%
   RunPCA(npcs = 50)
 ```
 
